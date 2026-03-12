@@ -1,0 +1,1774 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#020202" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Black Templars" />
+  <title>Black Templars — Codex</title>
+
+  <!-- PWA manifest inline -->
+  <script>
+    const manifest = {
+      name: "Black Templars Codex",
+      short_name: "BT Codex",
+      start_url: ".",
+      display: "standalone",
+      background_color: "#020202",
+      theme_color: "#020202",
+      icons: [{
+        src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%23020202'/><text x='256' y='340' font-size='320' text-anchor='middle' fill='%23b8922a' font-family='serif'>✠</text></svg>`),
+        sizes: "512x512", type: "image/svg+xml", purpose: "any maskable"
+      }]
+    };
+    const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = URL.createObjectURL(blob);
+    document.head.appendChild(link);
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet" />
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; background: #020202; overflow: hidden; }
+    #root { height: 100%; }
+
+    @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    @keyframes breathe { 0%,100%{opacity:.4;transform:scale(1)} 50%{opacity:.8;transform:scale(1.01)} }
+    @keyframes slideUp { from{transform:translateY(6px);opacity:0} to{transform:translateY(0);opacity:1} }
+    @keyframes goldPulse { 0%,100%{text-shadow:0 0 10px #b8922a33} 50%{text-shadow:0 0 25px #b8922a77,0 0 50px #b8922a22} }
+    @keyframes splashIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes splashFade { 0%{opacity:1} 80%{opacity:1} 100%{opacity:0} }
+    @keyframes crossGrow { from{transform:scale(0.6);opacity:0} to{transform:scale(1);opacity:1} }
+    @keyframes statSlide { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+
+    body {
+      background: #020202 !important;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E") !important;
+    }
+    ::-webkit-scrollbar       { width: 2px; }
+    ::-webkit-scrollbar-track { background: #020202; }
+    ::-webkit-scrollbar-thumb { background: #b8922a33; }
+    input, button { font-family: inherit; }
+    input::placeholder { color: #1a1a1a; font-style: italic; font-family: 'Crimson Pro', serif; }
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    button { transition: opacity 0.1s, transform 0.1s; }
+    button:active { opacity: 0.55; transform: scale(0.97); }
+    .hcard:active  { border-color: #b8922a66 !important; }
+    .card-appear   { animation: slideUp 0.25s ease both; }
+    .vignette-wrap::after {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 999;
+      background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,.55) 100%);
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useRef } = React;
+
+    // ══════════════════════════════════════════════════════════
+    // CONFIG
+    // ══════════════════════════════════════════════════════════
+
+    const FACTIONS = {
+      "SM": { label: "Space Marines",    short: "SM", accent: "#b8922a", icon: "✠", bg: "#0a0a0a" },
+      "TY": { label: "Tyranides",        short: "TY", accent: "#7a1515", icon: "☠", bg: "#0a0505" },
+      "IK": { label: "Chevaliers Imp.",  short: "IK", accent: "#b8922a", icon: "⚜", bg: "#0a0a05" },
+    };
+
+    const UNITS_DB = {
+      "SM": [
+        { id:"sm001", name:"Captain",                         role:"QG", chapter:"Générique" },
+        { id:"sm002", name:"Captain in Gravis Armour",        role:"QG", chapter:"Générique" },
+        { id:"sm003", name:"Captain in Phobos Armour",        role:"QG", chapter:"Générique" },
+        { id:"sm004", name:"Captain in Terminator Armour",    role:"QG", chapter:"Générique" },
+        { id:"sm005", name:"Librarian",                       role:"QG", chapter:"Générique" },
+        { id:"sm006", name:"Librarian in Phobos Armour",      role:"QG", chapter:"Générique" },
+        { id:"sm007", name:"Librarian in Terminator Armour",  role:"QG", chapter:"Générique" },
+        { id:"sm008", name:"Chaplain",                        role:"QG", chapter:"Générique" },
+        { id:"sm009", name:"Chaplain in Terminator Armour",   role:"QG", chapter:"Générique" },
+        { id:"sm010", name:"Chaplain on Bike",                role:"QG", chapter:"Générique" },
+        { id:"sm011", name:"Apothecary",                      role:"QG", chapter:"Générique" },
+        { id:"sm012", name:"Apothecary Biologis",             role:"QG", chapter:"Générique" },
+        { id:"sm013", name:"Techmarine",                      role:"QG", chapter:"Générique" },
+        { id:"sm014", name:"Lieutenant",                      role:"QG", chapter:"Générique" },
+        { id:"sm015", name:"Lieutenant in Phobos Armour",     role:"QG", chapter:"Générique" },
+        { id:"sm016", name:"Lieutenant in Reiver Armour",     role:"QG", chapter:"Générique" },
+        { id:"sm017", name:"Master of the Forge",             role:"QG", chapter:"Générique" },
+        { id:"sm018", name:"Chief Apothecary",                role:"QG", chapter:"Générique" },
+        { id:"sm019", name:"Master of Sanctity",              role:"QG", chapter:"Générique" },
+        { id:"sm020", name:"Roboute Guilliman",               role:"QG", chapter:"Ultramarines" },
+        { id:"sm021", name:"Marneus Calgar",                  role:"QG", chapter:"Ultramarines" },
+        { id:"sm022", name:"Tigurius",                        role:"QG", chapter:"Ultramarines" },
+        { id:"sm023", name:"Uriel Ventris",                   role:"QG", chapter:"Ultramarines" },
+        { id:"sm024", name:"Sicarius",                        role:"QG", chapter:"Ultramarines" },
+        { id:"sm025", name:"Severus Agemman",                 role:"QG", chapter:"Ultramarines" },
+        { id:"sm026", name:"High Marshal Helbrecht",          role:"QG", chapter:"Black Templars" },
+        { id:"sm027", name:"Grimaldus",                       role:"QG", chapter:"Black Templars" },
+        { id:"sm028", name:"The Emperor's Champion",          role:"Élite", chapter:"Black Templars" },
+        { id:"sm029", name:"Castellan",                       role:"QG", chapter:"Black Templars" },
+        { id:"sm030", name:"Marshal",                         role:"QG", chapter:"Black Templars" },
+        { id:"sm031", name:"Reclusiarch",                     role:"QG", chapter:"Black Templars" },
+        { id:"sm032", name:"Ezekiel",                         role:"QG", chapter:"Dark Angels" },
+        { id:"sm033", name:"Azrael",                          role:"QG", chapter:"Dark Angels" },
+        { id:"sm034", name:"Asmodai",                         role:"QG", chapter:"Dark Angels" },
+        { id:"sm035", name:"Belial",                          role:"QG", chapter:"Dark Angels" },
+        { id:"sm036", name:"Sammael",                         role:"QG", chapter:"Dark Angels" },
+        { id:"sm037", name:"Mephiston",                       role:"QG", chapter:"Blood Angels" },
+        { id:"sm038", name:"Commander Dante",                 role:"QG", chapter:"Blood Angels" },
+        { id:"sm039", name:"Astorath",                        role:"QG", chapter:"Blood Angels" },
+        { id:"sm040", name:"Lemartes",                        role:"QG", chapter:"Blood Angels" },
+        { id:"sm041", name:"Sanguinor",                       role:"QG", chapter:"Blood Angels" },
+        { id:"sm042", name:"Tycho",                           role:"QG", chapter:"Blood Angels" },
+        { id:"sm043", name:"Ragnar Blackmane",                role:"QG", chapter:"Space Wolves" },
+        { id:"sm044", name:"Logan Grimnar",                   role:"QG", chapter:"Space Wolves" },
+        { id:"sm045", name:"Njal Stormcaller",                role:"QG", chapter:"Space Wolves" },
+        { id:"sm046", name:"Ulrik the Slayer",                role:"QG", chapter:"Space Wolves" },
+        { id:"sm047", name:"Bjorn the Fell-Handed",           role:"Lourd", chapter:"Space Wolves" },
+        { id:"sm048", name:"Pedro Kantor",                    role:"QG", chapter:"Crimson Fists" },
+        { id:"sm049", name:"Lysander",                        role:"QG", chapter:"Imperial Fists" },
+        { id:"sm050", name:"Tor Garadon",                     role:"QG", chapter:"Imperial Fists" },
+        { id:"sm051", name:"Shrike",                          role:"QG", chapter:"Raven Guard" },
+        { id:"sm052", name:"Aethon Shaan",                    role:"QG", chapter:"Raven Guard" },
+        { id:"sm053", name:"Vulkan He'stan",                  role:"QG", chapter:"Salamanders" },
+        { id:"sm054", name:"Kor'sarro Khan",                  role:"QG", chapter:"White Scars" },
+        { id:"sm055", name:"Iron Father Feirros",             role:"QG", chapter:"Iron Hands" },
+        { id:"sm056", name:"Kayvaan Shrike",                  role:"QG", chapter:"Raven Guard" },
+        { id:"sm060", name:"Intercessors",                    role:"Troupes", chapter:"Générique" },
+        { id:"sm061", name:"Assault Intercessors",            role:"Troupes", chapter:"Générique" },
+        { id:"sm062", name:"Scouts",                          role:"Troupes", chapter:"Générique" },
+        { id:"sm063", name:"Tactical Squad",                  role:"Troupes", chapter:"Générique" },
+        { id:"sm064", name:"Crusader Squad",                  role:"Troupes", chapter:"Black Templars" },
+        { id:"sm065", name:"Infiltrators",                    role:"Troupes", chapter:"Générique" },
+        { id:"sm066", name:"Incursors",                       role:"Troupes", chapter:"Générique" },
+        { id:"sm070", name:"Terminators",                     role:"Élite", chapter:"Générique" },
+        { id:"sm071", name:"Assault Terminators",             role:"Élite", chapter:"Générique" },
+        { id:"sm072", name:"Bladeguard Veterans",             role:"Élite", chapter:"Générique" },
+        { id:"sm073", name:"Sternguard Veterans",             role:"Élite", chapter:"Générique" },
+        { id:"sm074", name:"Vanguard Veterans",               role:"Élite", chapter:"Générique" },
+        { id:"sm075", name:"Hellblasters",                    role:"Élite", chapter:"Générique" },
+        { id:"sm076", name:"Aggressors",                      role:"Élite", chapter:"Générique" },
+        { id:"sm077", name:"Reivers",                         role:"Élite", chapter:"Générique" },
+        { id:"sm078", name:"Eliminators",                     role:"Élite", chapter:"Générique" },
+        { id:"sm079", name:"Suppressors",                     role:"Élite", chapter:"Générique" },
+        { id:"sm080", name:"Eradicators",                     role:"Élite", chapter:"Générique" },
+        { id:"sm081", name:"Centurion Assault Squad",         role:"Élite", chapter:"Générique" },
+        { id:"sm082", name:"Dreadnought",                     role:"Élite", chapter:"Générique" },
+        { id:"sm083", name:"Venerable Dreadnought",           role:"Élite", chapter:"Générique" },
+        { id:"sm084", name:"Redemptor Dreadnought",           role:"Élite", chapter:"Générique" },
+        { id:"sm085", name:"Brutalis Dreadnought",            role:"Élite", chapter:"Générique" },
+        { id:"sm086", name:"Ballistus Dreadnought",           role:"Élite", chapter:"Générique" },
+        { id:"sm087", name:"Ironclad Dreadnought",            role:"Élite", chapter:"Générique" },
+        { id:"sm088", name:"Company Ancient",                 role:"Élite", chapter:"Générique" },
+        { id:"sm089", name:"Company Champion",                role:"Élite", chapter:"Générique" },
+        { id:"sm090", name:"Judiciar",                        role:"Élite", chapter:"Générique" },
+        { id:"sm091", name:"Assault Centurions",              role:"Élite", chapter:"Générique" },
+        { id:"sm092", name:"Death Company Marines",           role:"Élite", chapter:"Blood Angels" },
+        { id:"sm093", name:"Death Company Dreadnought",       role:"Élite", chapter:"Blood Angels" },
+        { id:"sm094", name:"Sanguinary Guard",                role:"Élite", chapter:"Blood Angels" },
+        { id:"sm095", name:"Sanguinary Ancient",              role:"Élite", chapter:"Blood Angels" },
+        { id:"sm096", name:"Wolf Guard",                      role:"Élite", chapter:"Space Wolves" },
+        { id:"sm097", name:"Wolf Guard Terminators",          role:"Élite", chapter:"Space Wolves" },
+        { id:"sm098", name:"Wulfen",                          role:"Élite", chapter:"Space Wolves" },
+        { id:"sm099", name:"Deathwing Knights",               role:"Élite", chapter:"Dark Angels" },
+        { id:"sm100", name:"Inner Circle Companions",         role:"Élite", chapter:"Dark Angels" },
+        { id:"sm101", name:"Helbrecht's Crusaders",           role:"Élite", chapter:"Black Templars" },
+        { id:"sm110", name:"Inceptors",                       role:"Rapide", chapter:"Générique" },
+        { id:"sm111", name:"Outriders",                       role:"Rapide", chapter:"Générique" },
+        { id:"sm112", name:"Assault Squad",                   role:"Rapide", chapter:"Générique" },
+        { id:"sm113", name:"Bike Squad",                      role:"Rapide", chapter:"Générique" },
+        { id:"sm114", name:"Attack Bike Squad",               role:"Rapide", chapter:"Générique" },
+        { id:"sm115", name:"Land Speeder",                    role:"Rapide", chapter:"Générique" },
+        { id:"sm116", name:"Land Speeder Storm",              role:"Rapide", chapter:"Générique" },
+        { id:"sm117", name:"Land Speeder Tornado",            role:"Rapide", chapter:"Générique" },
+        { id:"sm118", name:"Stormhawk Interceptor",           role:"Rapide", chapter:"Générique" },
+        { id:"sm119", name:"Stormtalon Gunship",              role:"Rapide", chapter:"Générique" },
+        { id:"sm120", name:"Stormraven Gunship",              role:"Rapide", chapter:"Générique" },
+        { id:"sm121", name:"Storm Speeder Hailstrike",        role:"Rapide", chapter:"Générique" },
+        { id:"sm122", name:"Storm Speeder Hammerstrike",      role:"Rapide", chapter:"Générique" },
+        { id:"sm123", name:"Storm Speeder Thunderstrike",     role:"Rapide", chapter:"Générique" },
+        { id:"sm124", name:"Swiftclaws",                      role:"Rapide", chapter:"Space Wolves" },
+        { id:"sm125", name:"Ravenwing Black Knights",         role:"Rapide", chapter:"Dark Angels" },
+        { id:"sm126", name:"Ravenwing Darkshroud",            role:"Rapide", chapter:"Dark Angels" },
+        { id:"sm127", name:"Ravenwing Land Speeder Vengeance",role:"Rapide", chapter:"Dark Angels" },
+        { id:"sm130", name:"Devastators",                     role:"Lourd", chapter:"Générique" },
+        { id:"sm131", name:"Centurion Devastators",           role:"Lourd", chapter:"Générique" },
+        { id:"sm132", name:"Predator Annihilator",            role:"Lourd", chapter:"Générique" },
+        { id:"sm133", name:"Predator Destructor",             role:"Lourd", chapter:"Générique" },
+        { id:"sm134", name:"Land Raider",                     role:"Lourd", chapter:"Générique" },
+        { id:"sm135", name:"Land Raider Crusader",            role:"Lourd", chapter:"Générique" },
+        { id:"sm136", name:"Land Raider Redeemer",            role:"Lourd", chapter:"Générique" },
+        { id:"sm137", name:"Vindicator",                      role:"Lourd", chapter:"Générique" },
+        { id:"sm138", name:"Whirlwind",                       role:"Lourd", chapter:"Générique" },
+        { id:"sm139", name:"Gladiator Lancer",                role:"Lourd", chapter:"Générique" },
+        { id:"sm140", name:"Gladiator Reaper",                role:"Lourd", chapter:"Générique" },
+        { id:"sm141", name:"Gladiator Valiant",               role:"Lourd", chapter:"Générique" },
+        { id:"sm142", name:"Repulsor Executioner",            role:"Lourd", chapter:"Générique" },
+        { id:"sm143", name:"Astraeus Super-heavy Tank",       role:"Lourd", chapter:"Générique" },
+        { id:"sm150", name:"Rhino",                           role:"Transport", chapter:"Générique" },
+        { id:"sm151", name:"Razorback",                       role:"Transport", chapter:"Générique" },
+        { id:"sm152", name:"Drop Pod",                        role:"Transport", chapter:"Générique" },
+        { id:"sm153", name:"Impulsor",                        role:"Transport", chapter:"Générique" },
+        { id:"sm154", name:"Repulsor",                        role:"Transport", chapter:"Générique" },
+      ],
+      "TY": [
+        { id:"ty001", name:"Hive Tyrant",              role:"QG" },
+        { id:"ty002", name:"Winged Hive Tyrant",       role:"QG" },
+        { id:"ty003", name:"The Swarmlord",            role:"QG" },
+        { id:"ty004", name:"Tervigon",                 role:"QG" },
+        { id:"ty005", name:"Broodlord",                role:"QG" },
+        { id:"ty006", name:"Neurotyrant",              role:"QG" },
+        { id:"ty007", name:"Norn Emissary",            role:"QG" },
+        { id:"ty008", name:"Norn Assimilator",         role:"QG" },
+        { id:"ty009", name:"Parasite of Mortrex",      role:"QG" },
+        { id:"ty010", name:"Termagants",               role:"Troupes" },
+        { id:"ty011", name:"Hormagaunts",              role:"Troupes" },
+        { id:"ty012", name:"Ripper Swarms",            role:"Troupes" },
+        { id:"ty013", name:"Neurogaunts",              role:"Troupes" },
+        { id:"ty020", name:"Genestealers",             role:"Élite" },
+        { id:"ty021", name:"Tyranid Warriors",         role:"Élite" },
+        { id:"ty022", name:"Tyranid Warriors (Ranged)",role:"Élite" },
+        { id:"ty023", name:"Lictors",                  role:"Élite" },
+        { id:"ty024", name:"Deathleaper",              role:"Élite" },
+        { id:"ty025", name:"Zoanthropes",              role:"Élite" },
+        { id:"ty026", name:"Neurothropes",             role:"Élite" },
+        { id:"ty027", name:"Venomthropes",             role:"Élite" },
+        { id:"ty028", name:"Pyrovores",                role:"Élite" },
+        { id:"ty029", name:"Tyrant Guard",             role:"Élite" },
+        { id:"ty030", name:"Hive Guard",               role:"Élite" },
+        { id:"ty031", name:"Von Ryan's Leapers",       role:"Élite" },
+        { id:"ty032", name:"Barbgaunts",               role:"Élite" },
+        { id:"ty033", name:"Neurolictor",              role:"Élite" },
+        { id:"ty034", name:"Winged Tyranid Warriors",  role:"Élite" },
+        { id:"ty040", name:"Gargoyles",                role:"Rapide" },
+        { id:"ty041", name:"Raveners",                 role:"Rapide" },
+        { id:"ty042", name:"Harpy",                    role:"Rapide" },
+        { id:"ty043", name:"Hive Crone",               role:"Rapide" },
+        { id:"ty044", name:"Spore Mines",              role:"Rapide" },
+        { id:"ty045", name:"Mucolid Spores",           role:"Rapide" },
+        { id:"ty050", name:"Carnifex",                 role:"Lourd" },
+        { id:"ty051", name:"Screamer-Killer",          role:"Lourd" },
+        { id:"ty052", name:"Old One Eye",              role:"Lourd" },
+        { id:"ty053", name:"Trygon",                   role:"Lourd" },
+        { id:"ty054", name:"Trygon Prime",             role:"Lourd" },
+        { id:"ty055", name:"Mawloc",                   role:"Lourd" },
+        { id:"ty056", name:"Tyrannofex",               role:"Lourd" },
+        { id:"ty057", name:"Exocrine",                 role:"Lourd" },
+        { id:"ty058", name:"Haruspex",                 role:"Lourd" },
+        { id:"ty059", name:"Toxicrene",                role:"Lourd" },
+        { id:"ty060", name:"Biovores",                 role:"Lourd" },
+        { id:"ty061", name:"Maleceptor",               role:"Lourd" },
+        { id:"ty062", name:"Psychophage",              role:"Lourd" },
+        { id:"ty063", name:"Stone Crusher Carnifex",   role:"Lourd" },
+        { id:"ty064", name:"Sporocyst",                role:"Lourd" },
+        { id:"ty065", name:"Hierophant Bio-Titan",     role:"Lourd" },
+        { id:"ty066", name:"Dimachaeron",              role:"Lourd" },
+      ],
+      "IK": [
+        { id:"ik001", name:"Armiger Warglaive",              role:"Armiger" },
+        { id:"ik002", name:"Armiger Helverin",               role:"Armiger" },
+        { id:"ik003", name:"Moirax",                         role:"Armiger" },
+        { id:"ik010", name:"Knight Paladin",                 role:"Chevalier Questoris" },
+        { id:"ik011", name:"Knight Errant",                  role:"Chevalier Questoris" },
+        { id:"ik012", name:"Knight Crusader",                role:"Chevalier Questoris" },
+        { id:"ik013", name:"Knight Gallant",                 role:"Chevalier Questoris" },
+        { id:"ik014", name:"Knight Warden",                  role:"Chevalier Questoris" },
+        { id:"ik015", name:"Knight Preceptor",               role:"Chevalier Questoris" },
+        { id:"ik016", name:"Knight Wardog",                  role:"Chevalier Questoris" },
+        { id:"ik020", name:"Knight Castellan",               role:"Chevalier Dominus" },
+        { id:"ik021", name:"Knight Valiant",                 role:"Chevalier Dominus" },
+        { id:"ik030", name:"Cerastus Knight Castigator",     role:"Chevalier Cerastus" },
+        { id:"ik031", name:"Cerastus Knight Acheron",        role:"Chevalier Cerastus" },
+        { id:"ik032", name:"Cerastus Knight Lancer",         role:"Chevalier Cerastus" },
+        { id:"ik033", name:"Cerastus Knight Atrapos",        role:"Chevalier Cerastus" },
+        { id:"ik035", name:"Acastus Knight Porphyrion",      role:"Chevalier Acastus" },
+        { id:"ik036", name:"Acastus Knight Asterius",        role:"Chevalier Acastus" },
+        { id:"ik040", name:"Canis Rex",                      role:"Seigneur de guerre" },
+        { id:"ik041", name:"Gerantius",                      role:"Seigneur de guerre" },
+      ],
+    };
+
+    const PAINT_STATUS = {
+      "unpainted": { label: "Non peint", color: "#46402a" },
+      "primed":    { label: "Apprêté",   color: "#7a6a00" },
+      "wip":       { label: "En cours",  color: "#8a5a00" },
+      "painted":   { label: "Peint",     color: "#2a7a2a" },
+    };
+
+    const STORAGE_KEY = "wh40k-live-v1";
+
+    // ══════════════════════════════════════════════════════════
+    // ══════════════════════════════════════════════════════════
+    // STORAGE (IndexedDB — fonctionne en file://, PWA, Android)
+    // ══════════════════════════════════════════════════════════
+    // ══════════════════════════════════════════════════════════
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open("wh40k-codex", 1);
+        req.onupgradeneeded = e => e.target.result.createObjectStore("appdata");
+        req.onsuccess = e => resolve(e.target.result);
+        req.onerror   = e => reject(e.target.error);
+      });
+    }
+    async function loadApp() {
+      try {
+        const db = await openDB();
+        return new Promise((resolve) => {
+          const tx = db.transaction("appdata", "readonly");
+          const req = tx.objectStore("appdata").get("state");
+          req.onsuccess = e => resolve(e.target.result || null);
+          req.onerror   = () => resolve(null);
+        });
+      } catch { return null; }
+    }
+    async function saveApp(d) {
+      try {
+        const db = await openDB();
+        return new Promise((resolve) => {
+          const tx = db.transaction("appdata", "readwrite");
+          tx.objectStore("appdata").put(d, "state");
+          tx.oncomplete = resolve;
+          tx.onerror    = resolve;
+        });
+      } catch {}
+    }
+
+
+
+    // ══════════════════════════════════════════════════════════
+    // ICONS
+    // ══════════════════════════════════════════════════════════
+
+    const Ic = {
+      Plus:    () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+      Back:    () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>,
+      Trash:   () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
+      Refresh: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>,
+    };
+
+    // ══════════════════════════════════════════════════════════
+    // SHARED STYLES
+    // ══════════════════════════════════════════════════════════
+
+    const btnSm     = { background:"transparent", border:"1px solid #1c1c1c", color:"#48402e", padding:"5px 12px", cursor:"pointer", fontSize:"11px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" };
+    const qtyBtn    = { background:"#030303", border:"1px solid #1c1c1c", color:"#b8922a", width:"36px", height:"36px", cursor:"pointer", fontSize:"18px", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"serif" };
+    const iconMiniBtn = { background:"none", border:"1px solid #131313", cursor:"pointer", padding:"4px", display:"flex", alignItems:"center", justifyContent:"center" };
+    const pageStyle = { background:"#020202", minHeight:"100%", display:"flex", flexDirection:"column", fontFamily:"'Crimson Pro',Georgia,serif" };
+
+    // ══════════════════════════════════════════════════════════
+    // SHARED UI COMPONENTS
+    // ══════════════════════════════════════════════════════════
+
+    const CrossDivider = ({ color="#151515" }) => (
+      <div style={{ display:"flex", alignItems:"center", gap:"8px", margin:"4px 0" }}>
+        <div style={{ flex:1, height:"1px", background:color }} />
+        <span style={{ color, fontSize:"10px" }}>✠</span>
+        <div style={{ flex:1, height:"1px", background:color }} />
+      </div>
+    );
+
+    const Overlay = ({ children }) => (
+      <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.92)", display:"flex", alignItems:"flex-end", justifyContent:"center", zIndex:100, overflow:"hidden" }}>
+        {children}
+      </div>
+    );
+    const Sheet = ({ children, accent }) => (
+      <div style={{
+        background:"linear-gradient(180deg,#0d0b08 0%,#080808 100%)",
+        borderTop:`2px solid ${accent}`, borderLeft:"1px solid #131313", borderRight:"1px solid #131313",
+        padding:"20px 20px 48px", width:"100%", maxWidth:"560px",
+        maxHeight:"80vh", overflowY:"auto", overflowX:"hidden",
+        boxShadow:`0 -12px 60px rgba(0,0,0,0.9)`, position:"relative",
+        WebkitOverflowScrolling:"touch",
+      }}>
+        <div style={{ position:"absolute", top:"8px", left:"8px", color:accent, fontSize:"10px", opacity:0.4 }}>✠</div>
+        <div style={{ position:"absolute", top:"8px", right:"8px", color:accent, fontSize:"10px", opacity:0.4 }}>✠</div>
+        <div style={{ position:"relative", zIndex:1 }}>{children}</div>
+      </div>
+    );
+    const SheetHeader = ({ title, onClose, accent }) => (
+      <div style={{ marginBottom:"20px" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"10px" }}>
+          <h2 style={{ color:accent, fontFamily:"'Cinzel Decorative','Cinzel',serif", margin:0, fontSize:"15px", letterSpacing:"3px", textTransform:"uppercase", textShadow:`0 0 20px ${accent}44` }}>{title}</h2>
+          <button onClick={onClose} style={{ background:"none", border:"1px solid #111", color:"#46402a", cursor:"pointer", fontSize:"16px", width:"28px", height:"28px", display:"flex", alignItems:"center", justifyContent:"center" }}>×</button>
+        </div>
+        <CrossDivider color={accent+"44"} />
+      </div>
+    );
+    const Label = ({ children }) => (
+      <div style={{ color:"#4a4a4a", fontSize:"10px", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"6px", fontFamily:"'Cinzel',serif" }}>{children}</div>
+    );
+    const Input = ({ style={}, ...p }) => (
+      <input style={{ background:"#050505", border:"1px solid #151515", borderBottom:"1px solid #1c1c1c", color:"#e8dfc0", padding:"10px 12px", fontSize:"14px", outline:"none", width:"100%", boxSizing:"border-box", marginBottom:"16px", fontFamily:"'Crimson Pro',serif", letterSpacing:"0.5px", ...style }} {...p} />
+    );
+    const FactionPill = ({ f, active, onClick }) => (
+      <button onClick={onClick} style={{ flex:1, background:active?`${f.accent}15`:"transparent", border:`1px solid ${active?f.accent:"#151515"}`, borderTop:active?`2px solid ${f.accent}`:"2px solid transparent", color:active?f.accent:"#444", padding:"10px 4px", cursor:"pointer", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>
+        <div style={{ fontSize:"20px", marginBottom:"2px" }}>{f.icon}</div>
+        <div style={{ fontSize:"9px", letterSpacing:"2px" }}>{f.short}</div>
+      </button>
+    );
+    const PrimaryBtn = ({ children, color, onClick }) => (
+      <button onClick={onClick} style={{ width:"100%", padding:"14px", background:"linear-gradient(180deg,#131313 0%,#0d0d0d 100%)", border:`1px solid ${color}`, borderTop:`2px solid ${color}`, color, fontFamily:"'Cinzel',serif", fontSize:"13px", letterSpacing:"3px", cursor:"pointer", textTransform:"uppercase", textShadow:`0 0 10px ${color}66` }}>{children}</button>
+    );
+    const IconBtn = ({ children, onClick }) => (
+      <button onClick={onClick} style={{ background:"#030303", border:"1px solid #151515", width:"36px", height:"36px", cursor:"pointer", color:"#48402e", display:"flex", alignItems:"center", justifyContent:"center" }}>{children}</button>
+    );
+    const EmptyState = ({ icon, title, sub }) => (
+      <div style={{ textAlign:"center", padding:"60px 20px" }}>
+        <div style={{ fontSize:"36px", marginBottom:"16px", opacity:0.3 }}>{icon}</div>
+        <CrossDivider color="#131313" />
+        <div style={{ color:"#1c1c1c", fontFamily:"'Cinzel',serif", fontSize:"14px", letterSpacing:"2px", margin:"16px 0 8px", textTransform:"uppercase" }}>{title}</div>
+        <div style={{ fontSize:"12px", color:"#222" }}>{sub}</div>
+      </div>
+    );
+
+
+
+    // ══════════════════════════════════════════════════════════
+    // PTS BADGE — saisie manuelle
+    // ══════════════════════════════════════════════════════════
+
+    function PtsBadge({ unitId, faction, qty=1, pts, onSetPts }) {
+      const f = FACTIONS[faction];
+      const [editing, setEditing] = useState(false);
+      const [editVal, setEditVal] = useState("");
+      const inputRef = useRef(null);
+      useEffect(() => { if (editing && inputRef.current) inputRef.current.focus(); }, [editing]);
+      const total = pts ? pts * qty : null;
+      const confirm = () => {
+        const n = parseInt(editVal);
+        if (!isNaN(n) && n > 0) onSetPts(unitId, faction, n);
+        setEditing(false); setEditVal("");
+      };
+      return (
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"3px" }}>
+          {editing ? (
+            <div style={{ display:"flex", gap:"4px", alignItems:"center" }}>
+              <input ref={inputRef} type="number" value={editVal} onChange={e => setEditVal(e.target.value)}
+                onKeyDown={e => { if(e.key==="Enter") confirm(); if(e.key==="Escape") setEditing(false); }}
+                placeholder={pts||"pts"}
+                style={{ width:"60px", background:"#030303", border:`1px solid ${f.accent}`, color:f.accent, padding:"4px 6px", fontSize:"13px", fontFamily:"monospace", outline:"none", textAlign:"center" }} />
+              <button onClick={confirm} style={{ background:`${f.accent}33`, border:`1px solid ${f.accent}`, color:f.accent, cursor:"pointer", padding:"3px 7px", fontSize:"12px" }}>✓</button>
+              <button onClick={() => setEditing(false)} style={{ background:"none", border:"1px solid #131313", color:"#48402e", cursor:"pointer", padding:"3px 7px", fontSize:"12px" }}>✕</button>
+            </div>
+          ) : (
+            <div onClick={() => { setEditVal(pts||""); setEditing(true); }} title="Toucher pour saisir les points"
+              style={{ background:pts?`${f.accent}22`:"#131313", border:`1px solid ${pts?f.accent+"66":"#333"}`, padding:"4px 10px", display:"flex", alignItems:"center", minWidth:"70px", justifyContent:"center", cursor:"pointer" }}>
+              {pts
+                ? <span style={{ color:f.accent, fontWeight:"900", fontFamily:"monospace", fontSize:"15px" }}>{total} pts</span>
+                : <span style={{ color:"#46402a", fontSize:"11px" }}>+ pts</span>
+              }
+            </div>
+          )}
+          {pts && !editing && <span style={{ color:"#2a4a2a", fontSize:"9px" }}>✎ manuel</span>}
+        </div>
+      );
+    }
+
+    function useTotalPts(entries, faction, ptsMap) {
+      return entries.reduce((sum, e) => {
+        const p = ptsMap[`${faction}:${e.unitId}`];
+        return sum + (p ? p * e.qty : 0);
+      }, 0);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // UNIT ROW
+    // ══════════════════════════════════════════════════════════
+
+    // Wahapedia URL: spaces→hyphens, Title-Case each word, remove apostrophes/special chars
+    // Format: wahapedia.ru/wh40k10ed/factions/[faction]/[Unit-Name]
+    const WAHA_FACTIONS = {
+      "SM": "space-marines",
+      "TY": "tyranids",
+      "IK": "imperial-knights",
+    };
+
+    function wahapediaUrl(unitName, faction) {
+      const factionSlug = WAHA_FACTIONS[faction] || "space-marines";
+      const slug = unitName
+        .replace(/'/g, "")           // remove apostrophes
+        .replace(/[^a-zA-Z0-9\s-]/g, "") // remove special chars
+        .trim()
+        .split(/\s+/)
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1)) // Title-Case
+        .join("-");
+      return `https://wahapedia.ru/wh40k10ed/factions/${factionSlug}/${slug}`;
+    }
+
+    const WahapediaBtn = ({ unitName, faction, accent }) => (
+      <a href={wahapediaUrl(unitName, faction)} target="_blank" rel="noopener noreferrer"
+        onClick={e => e.stopPropagation()}
+        title={`Ouvrir ${unitName} sur Wahapedia`}
+        style={{ display:"flex", alignItems:"center", gap:"4px", padding:"3px 7px", background:"#0a0806", border:`1px solid ${accent}33`, color:`${accent}99`, textDecoration:"none", fontSize:"9px", fontFamily:"'Cinzel',serif", letterSpacing:"1px", cursor:"pointer", flexShrink:0 }}>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        WAHA
+      </a>
+    );
+
+    function UnitRow({ entry, faction, ptsMap, onSetPts, onDelete, onToggleWarlord }) {
+      const [open, setOpen] = useState(false);
+      const f = FACTIONS[faction];
+      const unit = UNITS_DB[faction]?.find(u => u.id === entry.unitId);
+      const inv = entry.inv;
+      if (!unit) return null;
+      return (
+        <div style={{ marginBottom:"6px" }}>
+          <div style={{ background:"linear-gradient(180deg,#1a1714 0%,#141210 100%)", border:`1px solid ${entry.warlord?"#b8922a44":"#222"}`, borderLeft:`2px solid ${entry.warlord?"#b8922a":f.accent+"44"}`, overflow:"hidden" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:"12px", padding:"10px 12px" }}>
+              <div style={{ width:"46px", height:"46px", flexShrink:0, background:"#020202", border:`1px solid ${f.accent}22`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"20px", position:"relative" }}>
+                {f.icon}
+                <div style={{ position:"absolute", bottom:"1px", right:"2px", fontSize:"7px", color:f.accent, opacity:0.3 }}>✠</div>
+              </div>
+              <div style={{ flex:1 }}>
+                {entry.warlord && (
+                  <div style={{ background:"#0d0a00", border:"1px solid #b8922a66", padding:"1px 8px", display:"inline-block", marginBottom:"4px" }}>
+                    <span style={{ color:"#b8922a", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Cinzel',serif" }}>✠ SEIGNEUR DE GUERRE</span>
+                  </div>
+                )}
+                <div style={{ color:"#e8dfc0", fontSize:"14px", fontFamily:"'Cinzel',serif", letterSpacing:"0.5px" }}>
+                  {entry.qty > 1 && <span style={{ color:f.accent, marginRight:"6px" }}>{entry.qty}×</span>}
+                  {unit.name}
+                </div>
+                <div style={{ display:"flex", alignItems:"center", gap:"8px", marginTop:"4px" }}>
+                  <span style={{ color:"#3a3020", fontSize:"10px", letterSpacing:"1px", fontFamily:"'Cinzel',serif", textTransform:"uppercase" }}>{unit.role}</span>
+                  <WahapediaBtn unitName={unit.name} faction={faction} accent={f.accent} />
+                </div>
+              </div>
+              <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"6px" }}>
+                <PtsBadge unitId={unit.id} faction={faction} qty={entry.qty} pts={ptsMap[`${faction}:${unit.id}`]} onSetPts={onSetPts} />
+                <div style={{ display:"flex", gap:"4px" }}>
+                  <button onClick={() => onToggleWarlord(entry.id)} title={entry.warlord?"Retirer Seigneur de Guerre":"Désigner comme Seigneur de Guerre"}
+                    style={{ ...iconMiniBtn, color: entry.warlord?"#b8922a":"#2a2215", background: entry.warlord?"#1a1000":"none", borderColor: entry.warlord?"#b8922a44":"#131313" }}>
+                    <span style={{ fontSize:"11px", lineHeight:1 }}>✠</span>
+                  </button>
+                  <button onClick={() => setOpen(!open)} style={{ ...iconMiniBtn, color:"#3a3020" }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points={open?"18 15 12 9 6 15":"6 9 12 15 18 9"}/></svg>
+                  </button>
+                  <button onClick={onDelete} style={{ ...iconMiniBtn, color:"#2a1a1a" }}><Ic.Trash /></button>
+                </div>
+              </div>
+            </div>
+            {open && inv && (
+              <div style={{ borderTop:"1px solid #0f0f0f", padding:"8px 12px", background:"#030303" }}>
+                <CrossDivider color="#111" />
+                <div style={{ display:"flex", gap:"8px", alignItems:"center", marginTop:"6px" }}>
+                  <span style={{ color:"#3a3020", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Cinzel',serif" }}>PEINTURE:</span>
+                  <span style={{ color:PAINT_STATUS[inv.paintStatus]?.color||"#333", fontSize:"11px", fontStyle:"italic" }}>{PAINT_STATUS[inv.paintStatus]?.label||"–"}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // PHOTO PICKER
+    // ══════════════════════════════════════════════════════════
+
+    function PhotoPicker({ photo, onPhoto, accent, size=64 }) {
+      const cameraRef = useRef(null);
+      const galleryRef = useRef(null);
+      const handleFile = (e) => {
+        const file = e.target.files[0]; if (!file) return;
+        e.target.value = "";
+        const reader = new FileReader();
+        reader.onload = (ev) => onPhoto(ev.target.result);
+        reader.readAsDataURL(file);
+      };
+      if (size > 100) return (
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"12px", width:"100%" }}>
+          <div style={{ width:size, height:size, overflow:"hidden", border:`1px solid ${photo?accent+"66":"#1c1c1c"}`, background:"#040404", display:"flex", alignItems:"center", justifyContent:"center" }}>
+            {photo ? <img src={photo} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+              : <div style={{ textAlign:"center", opacity:0.3 }}><div style={{ fontSize:"36px" }}>✠</div><div style={{ color:accent, fontSize:"9px", marginTop:"6px", letterSpacing:"2px", fontFamily:"'Cinzel',serif" }}>AUCUNE PHOTO</div></div>}
+          </div>
+          <div style={{ display:"flex", gap:"10px", width:"100%" }}>
+            <button onClick={() => cameraRef.current?.click()} style={{ flex:1, padding:"11px 0", background:"#060504", border:`1px solid ${accent}55`, color:accent, fontFamily:"'Cinzel',serif", fontSize:"11px", letterSpacing:"1px", cursor:"pointer" }}>📷 APPAREIL</button>
+            <button onClick={() => galleryRef.current?.click()} style={{ flex:1, padding:"11px 0", background:"#060504", border:"1px solid #1c1c1c", color:"#6a5a4a", fontFamily:"'Cinzel',serif", fontSize:"11px", letterSpacing:"1px", cursor:"pointer" }}>🖼 GALERIE</button>
+          </div>
+          <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={handleFile} style={{ display:"none" }} />
+          <input ref={galleryRef} type="file" accept="image/*" onChange={handleFile} style={{ display:"none" }} />
+        </div>
+      );
+      return (
+        <div style={{ display:"flex", gap:"10px", alignItems:"center" }}>
+          <div style={{ width:size, height:size, overflow:"hidden", border:`1px solid ${photo?accent+"55":"#1c1c1c"}`, background:"#040404", display:"flex", alignItems:"center", justifyContent:"center" }}>
+            {photo ? <img src={photo} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} /> : <span style={{ fontSize:"20px", opacity:0.2 }}>✠</span>}
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:"6px" }}>
+            <button onClick={() => cameraRef.current?.click()} style={{ padding:"7px 14px", background:"#060504", border:`1px solid ${accent}55`, color:accent, fontFamily:"'Cinzel',serif", fontSize:"10px", letterSpacing:"1px", cursor:"pointer" }}>📷 Appareil photo</button>
+            <button onClick={() => galleryRef.current?.click()} style={{ padding:"7px 14px", background:"#060504", border:"1px solid #1c1c1c", color:"#6a5a4a", fontFamily:"'Cinzel',serif", fontSize:"10px", letterSpacing:"1px", cursor:"pointer" }}>🖼 Galerie</button>
+          </div>
+          <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={handleFile} style={{ display:"none" }} />
+          <input ref={galleryRef} type="file" accept="image/*" onChange={handleFile} style={{ display:"none" }} />
+        </div>
+      );
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // MODAL EDIT PHOTO
+    // ══════════════════════════════════════════════════════════
+
+    function ModalEditPhoto({ item, faction, onClose, onSave }) {
+      const f = FACTIONS[faction];
+      const unit = UNITS_DB[faction]?.find(u => u.id === item.unitId);
+      const [photo, setPhoto] = useState(item.photo||null);
+      return (
+        <Overlay>
+          <Sheet accent={f.accent}>
+            <SheetHeader title="Photo de la figurine" onClose={onClose} accent={f.accent} />
+            <div style={{ color:"#4a4038", fontSize:"12px", textAlign:"center", marginBottom:"16px", fontStyle:"italic" }}>{unit?.name}</div>
+            <PhotoPicker photo={photo} onPhoto={setPhoto} accent={f.accent} size={180} />
+            {photo && <button onClick={() => setPhoto(null)} style={{ display:"block", width:"100%", marginTop:"12px", background:"none", border:"1px solid #1c1c1c", color:"#3a2020", padding:"8px", cursor:"pointer", fontFamily:"'Cinzel',serif", fontSize:"10px", letterSpacing:"2px" }}>✕ SUPPRIMER LA PHOTO</button>}
+            <div style={{ marginTop:"20px" }}>
+              <PrimaryBtn color={f.accent} onClick={() => { onSave(photo); onClose(); }}>ENREGISTRER</PrimaryBtn>
+            </div>
+          </Sheet>
+        </Overlay>
+      );
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // MODAL CREATE LIST
+    // ══════════════════════════════════════════════════════════
+
+    function ModalCreateList({ onClose, onCreate }) {
+      const [name, setName] = useState("");
+      const [faction, setFaction] = useState("IK");
+      const [maxPts, setMaxPts] = useState(2000);
+      const f = FACTIONS[faction];
+      return (
+        <Overlay>
+          <Sheet accent={f.accent}>
+            <SheetHeader title="Nouvelle liste" onClose={onClose} accent={f.accent} />
+            <Label>Nom de la liste</Label>
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Tournoi Paris…" />
+            <Label>Faction</Label>
+            <div style={{ display:"flex", gap:"8px", marginBottom:"16px" }}>
+              {Object.entries(FACTIONS).map(([k,v]) => <FactionPill key={k} f={v} active={faction===k} onClick={() => setFaction(k)} />)}
+            </div>
+            <Label>Points maximum</Label>
+            <div style={{ display:"flex", gap:"8px", marginBottom:"20px", flexWrap:"wrap" }}>
+              {[500,1000,1500,2000,2500,3000].map(p => (
+                <button key={p} onClick={() => setMaxPts(p)} style={{ ...btnSm, borderColor:maxPts===p?f.accent:"#333", color:maxPts===p?f.accent:"#666", background:maxPts===p?`${f.accent}15`:"transparent" }}>{p}</button>
+              ))}
+            </div>
+            <PrimaryBtn color={f.accent} onClick={() => { if(name.trim()) { onCreate({ name:name.trim(), faction, maxPts }); onClose(); } }}>CRÉER LA LISTE</PrimaryBtn>
+          </Sheet>
+        </Overlay>
+      );
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // MODAL ADD UNIT
+    // ══════════════════════════════════════════════════════════
+
+    function ModalAddUnit({ faction, inventory, onClose, onAdd, mode="list" }) {
+      const f = FACTIONS[faction];
+      const units = UNITS_DB[faction]||[];
+      const [selected, setSelected] = useState(null);
+      const [qty, setQty] = useState(1);
+      const [paint, setPaint] = useState("unpainted");
+      const [search, setSearch] = useState("");
+      const [chapterFilter, setChapterFilter] = useState("Tous");
+      const [photo, setPhoto] = useState(null);
+
+      const chapters = faction==="SM" ? ["Tous",...new Set(units.map(u=>u.chapter).filter(Boolean))] : [];
+      const available = mode==="list" ? units.filter(u => inventory.some(i => i.unitId===u.id && i.faction===faction)) : units;
+      const filtered = available
+        .filter(u => chapterFilter==="Tous" || !u.chapter || u.chapter===chapterFilter || u.chapter==="Générique")
+        .filter(u => u.name.toLowerCase().includes(search.toLowerCase()));
+      const grouped = filtered.reduce((acc,u) => { if(!acc[u.role]) acc[u.role]=[]; acc[u.role].push(u); return acc; }, {});
+
+      return (
+        <Overlay>
+          <Sheet accent={f.accent}>
+            <SheetHeader title={mode==="list"?"Ajouter à la liste":"Ajouter à l'inventaire"} onClose={onClose} accent={f.accent} />
+            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher…" style={{ marginBottom:"8px" }} />
+            {faction==="SM" && (
+              <div style={{ display:"flex", gap:"6px", overflowX:"auto", marginBottom:"10px", paddingBottom:"4px" }}>
+                {chapters.map(ch => (
+                  <button key={ch} onClick={() => setChapterFilter(ch)} style={{ ...btnSm, whiteSpace:"nowrap", fontSize:"10px", borderColor:chapterFilter===ch?f.accent:"#333", color:chapterFilter===ch?f.accent:"#555", background:chapterFilter===ch?`${f.accent}15`:"transparent" }}>{ch}</button>
+                ))}
+              </div>
+            )}
+            <div style={{ overflowY:"auto", maxHeight:"28vh", marginBottom:"16px" }}>
+              {Object.entries(grouped).map(([role,roleUnits]) => (
+                <div key={role}>
+                  <div style={{ color:"#35281a", fontSize:"10px", letterSpacing:"2px", padding:"6px 4px 4px", fontFamily:"'Cinzel',serif" }}>{role.toUpperCase()}</div>
+                  {roleUnits.map(u => (
+                    <div key={u.id} onClick={() => setSelected(u.id)} style={{ padding:"9px 12px", marginBottom:"3px", background:selected===u.id?`${f.accent}22`:"#111", border:`1px solid ${selected===u.id?f.accent:"#222"}`, cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                      <div>
+                        <div style={{ color:selected===u.id?"#fff":"#ccc", fontSize:"13px" }}>{u.name}</div>
+                        {u.chapter && u.chapter!=="Générique" && <div style={{ color:f.accent, fontSize:"10px", opacity:0.7 }}>{u.chapter}</div>}
+                      </div>
+                      <span style={{ color:f.accent, fontSize:"16px" }}>✦</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+              {filtered.length===0 && <div style={{ color:"#46402a", textAlign:"center", padding:"20px", fontSize:"13px" }}>Aucun résultat</div>}
+            </div>
+            {selected && (
+              <>
+                <Label>Quantité</Label>
+                <div style={{ display:"flex", gap:"10px", alignItems:"center", marginBottom:"16px" }}>
+                  <button onClick={() => setQty(Math.max(1,qty-1))} style={qtyBtn}>−</button>
+                  <span style={{ color:"#e8dfc0", fontSize:"20px", fontWeight:"700", minWidth:"30px", textAlign:"center" }}>{qty}</span>
+                  <button onClick={() => setQty(qty+1)} style={qtyBtn}>+</button>
+                </div>
+                {mode==="inventory" && (
+                  <>
+                    <Label>Statut peinture</Label>
+                    <div style={{ display:"flex", gap:"6px", marginBottom:"16px", flexWrap:"wrap" }}>
+                      {Object.entries(PAINT_STATUS).map(([k,v]) => (
+                        <button key={k} onClick={() => setPaint(k)} style={{ ...btnSm, borderColor:paint===k?v.color:"#333", color:paint===k?"#fff":"#666", background:paint===k?`${v.color}33`:"transparent" }}>{v.label}</button>
+                      ))}
+                    </div>
+                    <Label>Photo (optionnel)</Label>
+                    <div style={{ marginBottom:"16px" }}>
+                      <PhotoPicker photo={photo} onPhoto={setPhoto} accent={f.accent} size={80} />
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+            <PrimaryBtn color={f.accent} onClick={() => {
+              if(!selected) return;
+              const invItem = inventory.find(i => i.unitId===selected && i.faction===faction);
+              onAdd({ unitId:selected, faction, qty, paintStatus:paint, photo, inventoryId:invItem?.id });
+              onClose();
+            }}>
+              {selected ? "AJOUTER (pts automatiques)" : "AJOUTER"}
+            </PrimaryBtn>
+          </Sheet>
+        </Overlay>
+      );
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // VIEW: Lists
+    // ══════════════════════════════════════════════════════════
+
+    function ViewLists({ lists, inventory, ptsMap, onSelect, onCreate, onDelete }) {
+      const [showModal, setShowModal] = useState(false);
+      return (
+        <div style={pageStyle}>
+          <div style={{ background:"linear-gradient(180deg,#0a0808 0%,#050505 100%)", borderBottom:"1px solid #131313", padding:"20px 16px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"relative", overflow:"hidden" }}>
+            <div style={{ position:"absolute", right:"60px", top:"50%", transform:"translateY(-50%)", fontSize:"80px", color:"#0f0f0f", fontFamily:"serif", pointerEvents:"none", lineHeight:1 }}>✠</div>
+            <div>
+              <div style={{ color:"#b8922a", fontSize:"9px", letterSpacing:"5px", fontFamily:"'Cinzel',serif", marginBottom:"4px", opacity:0.6 }}>CODEX ASTARTES</div>
+              <div style={{ color:"#e8dfc0", fontSize:"22px", fontFamily:"'Cinzel Decorative','Cinzel',serif", letterSpacing:"3px", fontWeight:"900", textShadow:"0 0 30px #b8922a33", lineHeight:1 }}>CROISADE</div>
+              <div style={{ color:"#35281a", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Cinzel',serif", marginTop:"4px" }}>
+                {lists.length} LISTE{lists.length!==1?"S":""} · {lists.reduce((s,l)=>s+(l.entries||[]).length,0)} UNITÉS
+              </div>
+            </div>
+            <IconBtn onClick={() => setShowModal(true)}><Ic.Plus /></IconBtn>
+          </div>
+          <div style={{ padding:"12px 16px", flex:1, overflowY:"auto" }}>
+            <div style={{ background:"#100e0c", border:"1px solid #222", borderLeft:"3px solid #b8922a", padding:"10px 14px", marginBottom:"20px", display:"flex", alignItems:"center", gap:"12px" }}>
+              <span style={{ fontSize:"18px", opacity:0.7 }}>✠</span>
+              <div>
+                <div style={{ color:"#b8922a", fontSize:"10px", fontFamily:"'Cinzel',serif", letterSpacing:"2px" }}>POINTS VIA WAHAPEDIA</div>
+                <div style={{ color:"#35281a", fontSize:"11px", marginTop:"2px", fontStyle:"italic" }}>Mis à jour automatiquement par l'oracle</div>
+              </div>
+            </div>
+            {lists.length===0 && <EmptyState icon="✠" title="Aucune croisade" sub="Forgez votre première liste d'armée" />}
+            {lists.map(list => {
+              const f = FACTIONS[list.faction];
+              const pts = (list.entries||[]).reduce((sum,e) => sum + ((ptsMap[`${list.faction}:${e.unitId}`]||0)*e.qty), 0);
+              const pct = Math.min(100, pts/list.maxPts*100);
+              return (
+                <div key={list.id} onClick={() => onSelect(list.id)} className="hcard" style={{ background:"linear-gradient(180deg,#1c1916 0%,#151210 100%)", border:"1px solid #252220", borderTop:`2px solid ${f.accent}`, padding:"16px", marginBottom:"10px", cursor:"pointer", position:"relative", overflow:"hidden" }}>
+                  <div style={{ position:"absolute", top:"6px", right:"8px", color:f.accent, fontSize:"10px", opacity:0.25 }}>✠</div>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+                    <div>
+                      <div style={{ color:"#e8dfc0", fontSize:"16px", fontFamily:"'Cinzel',serif", letterSpacing:"1px", fontWeight:"700" }}>{list.name}</div>
+                      <div style={{ color:f.accent, fontSize:"11px", marginTop:"4px", letterSpacing:"1px", fontFamily:"'Cinzel',serif" }}>{f.icon}  {f.label.toUpperCase()}</div>
+                    </div>
+                    <div style={{ textAlign:"right" }}>
+                      <div style={{ color:"#e8dfc0", fontSize:"24px", fontWeight:"900", fontFamily:"'Cinzel',serif" }}>{pts}</div>
+                      <div style={{ color:"#35281a", fontSize:"10px", letterSpacing:"1px" }}>/ {list.maxPts} pts</div>
+                    </div>
+                  </div>
+                  <div style={{ marginTop:"14px", background:"#0d0d0d", height:"3px", overflow:"hidden" }}>
+                    <div style={{ width:`${pct}%`, height:"100%", background:pct>95?"#7a1515":f.accent, transition:"width 0.4s" }} />
+                  </div>
+                  <div style={{ display:"flex", justifyContent:"space-between", marginTop:"8px", alignItems:"center" }}>
+                    <div style={{ color:"#35281a", fontSize:"11px", fontStyle:"italic" }}>{(list.entries||[]).length} frères de bataille</div>
+                    <button onClick={e => { e.stopPropagation(); onDelete(list.id); }} style={{ background:"none", border:"none", color:"#151515", cursor:"pointer" }}><Ic.Trash /></button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {showModal && <ModalCreateList onClose={() => setShowModal(false)} onCreate={onCreate} />}
+        </div>
+      );
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // VIEW: List Detail
+    // ══════════════════════════════════════════════════════════
+
+    function ViewListDetail({ list, inventory, ptsMap, onSetPts, onBack, onAddEntry, onDeleteEntry, onToggleWarlord }) {
+      const [showModal, setShowModal] = useState(false);
+      const f = FACTIONS[list.faction];
+      const entries = (list.entries||[]).map(e => ({ ...e, inv:inventory.find(i=>i.id===e.inventoryId) }));
+      const pts = useTotalPts(list.entries||[], list.faction, ptsMap);
+      const pct = Math.min(100, pts/list.maxPts*100);
+      const chars  = entries.filter(e => { const u=UNITS_DB[list.faction]?.find(u=>u.id===e.unitId); return u&&(u.role==="QG"||u.role==="Seigneur de guerre"); });
+      const others = entries.filter(e => { const u=UNITS_DB[list.faction]?.find(u=>u.id===e.unitId); return u&&u.role!=="QG"&&u.role!=="Seigneur de guerre"; });
+
+      const SectionPts = ({ items }) => {
+        const s = items.reduce((sum,e) => sum+((ptsMap[`${list.faction}:${e.unitId}`]||0)*e.qty),0);
+        return s>0 ? <span style={{ color:"#48402e", fontFamily:"monospace", fontSize:"13px" }}>{s} pts</span> : null;
+      };
+      const Section = ({ title, items, startIndex=0 }) => items.length===0 ? null : (
+        <div style={{ marginBottom:"28px" }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"12px" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+              <div style={{ width:"2px", height:"14px", background:"#b8922a", opacity:0.5 }} />
+              <span style={{ color:"#6a5a4a", fontFamily:"'Cinzel',serif", fontSize:"11px", letterSpacing:"4px" }}>{title}</span>
+            </div>
+            <SectionPts items={items} />
+          </div>
+          {items.map((e,idx) => <UnitRow key={idx} entry={e} faction={list.faction} ptsMap={ptsMap} onSetPts={onSetPts} onDelete={() => onDeleteEntry(e.id)} onToggleWarlord={onToggleWarlord} />)}
+        </div>
+      );
+
+      return (
+        <div style={pageStyle}>
+          <div style={{ background:"linear-gradient(180deg,#0a0808 0%,#060606 100%)", borderBottom:`1px solid ${f.accent}33`, padding:"12px 16px", display:"flex", alignItems:"center", gap:"12px" }}>
+            <IconBtn onClick={onBack}><Ic.Back /></IconBtn>
+            <div style={{ display:"flex", alignItems:"center", gap:"12px", flex:1 }}>
+              <div style={{ width:"38px", height:"38px", border:`1px solid ${f.accent}55`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"20px", background:"#050505", flexShrink:0 }}>{f.icon}</div>
+              <div>
+                <div style={{ color:"#e8dfc0", fontSize:"15px", fontFamily:"'Cinzel',serif", letterSpacing:"1px", fontWeight:"700" }}>{list.name}</div>
+                <div style={{ color:f.accent, fontSize:"10px", letterSpacing:"2px", fontFamily:"'Cinzel',serif" }}>{f.label.toUpperCase()}</div>
+              </div>
+            </div>
+            <IconBtn onClick={() => setShowModal(true)}><Ic.Plus /></IconBtn>
+          </div>
+          <div style={{ background:"#030303", padding:"12px 16px", borderBottom:"1px solid #131313" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:"8px" }}>
+              <div>
+                <div style={{ color:"#35281a", fontSize:"9px", letterSpacing:"3px", fontFamily:"'Cinzel',serif", marginBottom:"4px" }}>POINTS DE CROISADE</div>
+                <div style={{ display:"flex", alignItems:"baseline", gap:"4px" }}>
+                  <span style={{ color:pct>95?"#7a1515":"#e8dfc0", fontSize:"28px", fontFamily:"'Cinzel',serif", fontWeight:"900", lineHeight:1 }}>{pts}</span>
+                  <span style={{ color:"#35281a", fontSize:"13px", fontFamily:"'Cinzel',serif" }}>/ {list.maxPts}</span>
+                </div>
+              </div>
+              <div style={{ textAlign:"right" }}>
+                <div style={{ color:"#35281a", fontSize:"9px", fontStyle:"italic" }}>✠ wahapedia</div>
+                <div style={{ color:pct>95?"#7a1515":"#3a3028", fontSize:"11px", marginTop:"2px" }}>{list.maxPts-pts} pts restants</div>
+              </div>
+            </div>
+            <div style={{ background:"#060606", height:"4px", position:"relative" }}>
+              <div style={{ width:`${pct}%`, height:"100%", background:pct>95?"#7a1515":`linear-gradient(90deg,${f.accent}88,${f.accent})`, transition:"width 0.5s" }} />
+              {[25,50,75].map(p => <div key={p} style={{ position:"absolute", top:0, left:`${p}%`, width:"1px", height:"100%", background:"#131313" }} />)}
+            </div>
+          </div>
+          <div style={{ flex:1, overflowY:"auto", padding:"16px" }}>
+            {entries.length===0 && <EmptyState icon={f.icon} title="Liste vide" sub="Ajoutez des unités depuis votre inventaire" />}
+            <Section title="CHARACTERS" items={chars} startIndex={0} />
+            <Section title="OTHER DATASHEETS" items={others} startIndex={chars.length} />
+          </div>
+          {showModal && <ModalAddUnit faction={list.faction} inventory={inventory} mode="list" onClose={() => setShowModal(false)} onAdd={entry => onAddEntry(list.id, entry)} />}
+        </div>
+      );
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // VIEW: Inventory
+    // ══════════════════════════════════════════════════════════
+
+    // Ordre des rôles pour l'affichage
+    const ROLE_ORDER = ["QG","Seigneur de guerre","Troupes","Élite","Rapide","Lourd","Transport",
+      "Armiger","Chevalier Questoris","Chevalier Dominus","Chevalier Cerastus","Chevalier Acastus"];
+
+    const PAINT_KEYS = ["unpainted","primed","wip","painted"];
+
+    function PaintCycleBtn({ status, onCycle }) {
+      const ps = PAINT_STATUS[status]||PAINT_STATUS.unpainted;
+      return (
+        <button onClick={onCycle} title="Changer le statut de peinture"
+          style={{ display:"flex", alignItems:"center", gap:"5px", padding:"3px 8px",
+            background:"#080604", border:`1px solid ${ps.color}44`, cursor:"pointer",
+            transition:"all 0.15s" }}>
+          <div style={{ width:"7px", height:"7px", borderRadius:"50%", background:ps.color, flexShrink:0 }} />
+          <span style={{ fontSize:"9px", color:ps.color, fontFamily:"'Cinzel',serif", letterSpacing:"1px", whiteSpace:"nowrap" }}>{ps.label}</span>
+          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke={ps.color} strokeWidth="2.5" opacity="0.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      );
+    }
+
+    function QtyEditor({ qty, onUpdate, accent }) {
+      return (
+        <div style={{ display:"flex", alignItems:"center", gap:"1px" }}>
+          <button onClick={() => qty>1 && onUpdate(qty-1)}
+            style={{ width:"20px", height:"20px", background:"#0a0806", border:`1px solid ${accent}33`, color: qty>1?accent:"#252015", cursor: qty>1?"pointer":"default", fontSize:"13px", lineHeight:1, display:"flex", alignItems:"center", justifyContent:"center" }}>−</button>
+          <div style={{ minWidth:"24px", textAlign:"center", fontSize:"12px", color:accent, fontFamily:"monospace", background:"#060402", border:`1px solid ${accent}22`, padding:"1px 4px" }}>{qty}</div>
+          <button onClick={() => onUpdate(qty+1)}
+            style={{ width:"20px", height:"20px", background:"#0a0806", border:`1px solid ${accent}33`, color:accent, cursor:"pointer", fontSize:"13px", lineHeight:1, display:"flex", alignItems:"center", justifyContent:"center" }}>+</button>
+        </div>
+      );
+    }
+
+    function InventoryItem({ item, faction, ptsMap, onSetPts, onDelete, onEditPhoto, onUpdatePaint, onUpdateQty, accent, viewMode, dragHandleProps }) {
+      const ps = PAINT_STATUS[item.paintStatus]||PAINT_STATUS.unpainted;
+      const cycleStatus = () => {
+        const idx = PAINT_KEYS.indexOf(item.paintStatus||"unpainted");
+        const next = PAINT_KEYS[(idx+1) % PAINT_KEYS.length];
+        onUpdatePaint(item.id, next);
+      };
+      const borderColor = item.paintStatus==="painted" ? PAINT_STATUS.painted.color
+        : item.paintStatus==="wip" ? PAINT_STATUS.wip.color
+        : item.paintStatus==="primed" ? PAINT_STATUS.primed.color
+        : accent;
+
+      // ── GRID CARD ─────────────────────────────────────────
+      if (viewMode === "grid") {
+        return (
+          <div className="hcard" style={{ background:"linear-gradient(180deg,#181512 0%,#0e0c0a 100%)", border:"1px solid #222018", borderTop:`2px solid ${borderColor}`, display:"flex", flexDirection:"column", overflow:"hidden", position:"relative", transition:"border-color 0.3s" }}>
+            {/* Photo zone — takes most of the card */}
+            <div onClick={() => onEditPhoto(item)} style={{ height:"110px", cursor:"pointer", background:"#040404", position:"relative", overflow:"hidden" }}>
+              {item.photo
+                ? <img src={item.photo} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+                : <div style={{ width:"100%", height:"100%", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:"4px" }}>
+                    <span style={{ fontSize:"28px", opacity:0.12 }}>{faction==="SM"?"✠":faction==="TY"?"☠":"⚜"}</span>
+                    <span style={{ color:accent, fontSize:"7px", opacity:0.3, fontFamily:"'Cinzel',serif", letterSpacing:"2px" }}>PHOTO</span>
+                  </div>
+              }
+              {/* Paint dot top-right */}
+              <div style={{ position:"absolute", top:"6px", right:"6px", width:"8px", height:"8px", borderRadius:"50%", background:ps.color, boxShadow:`0 0 6px ${ps.color}88` }} />
+              {/* Gradient overlay */}
+              <div style={{ position:"absolute", inset:0, background:"linear-gradient(to top,rgba(10,8,6,0.85) 0%,transparent 55%)" }} />
+              {/* Name at bottom of photo */}
+              <div style={{ position:"absolute", bottom:"6px", left:"7px", right:"7px" }}>
+                <div style={{ color:"#e8dfc0", fontSize:"10px", fontFamily:"'Cinzel',serif", lineHeight:1.2, textShadow:"0 1px 4px #000" }}>
+                  {item.qty>1 && <span style={{ color:accent, marginRight:"3px", fontSize:"9px" }}>×{item.qty}</span>}
+                  {item.unit.name}
+                </div>
+              </div>
+            </div>
+            {/* Bottom controls */}
+            <div style={{ padding:"7px 8px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"4px" }}>
+              <QtyEditor qty={item.qty} accent={accent} onUpdate={n => onUpdateQty(item.id, n)} />
+              <button onClick={cycleStatus} title="Changer statut peinture"
+                style={{ display:"flex", alignItems:"center", gap:"3px", padding:"2px 6px", background:"#060402", border:`1px solid ${ps.color}33`, cursor:"pointer" }}>
+                <div style={{ width:"5px", height:"5px", borderRadius:"50%", background:ps.color }} />
+                <span style={{ fontSize:"7px", color:ps.color, fontFamily:"'Cinzel',serif" }}>{ps.label}</span>
+              </button>
+              <button onClick={() => onDelete(item.id)} style={{ background:"none", border:"none", color:"#181410", cursor:"pointer", padding:"2px" }}><Ic.Trash /></button>
+            </div>
+          </div>
+        );
+      }
+
+      // ── LIST CARD (default) ────────────────────────────────
+      return (
+        <div className="hcard" style={{ background:"linear-gradient(180deg,#181512 0%,#121008 100%)", border:"1px solid #222018", borderLeft:`3px solid ${borderColor}`, marginBottom:"5px", display:"flex", alignItems:"stretch", transition:"border-color 0.3s" }}>
+          {/* Drag handle */}
+          <div {...dragHandleProps} style={{ width:"22px", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", cursor:"grab", borderRight:"1px solid #1a1a16", touchAction:"none" }}>
+            <svg width="10" height="16" viewBox="0 0 10 16" fill="none"><circle cx="3" cy="3" r="1.5" fill="#3a3020"/><circle cx="7" cy="3" r="1.5" fill="#3a3020"/><circle cx="3" cy="8" r="1.5" fill="#3a3020"/><circle cx="7" cy="8" r="1.5" fill="#3a3020"/><circle cx="3" cy="13" r="1.5" fill="#3a3020"/><circle cx="7" cy="13" r="1.5" fill="#3a3020"/></svg>
+          </div>
+          {/* Photo */}
+          <div onClick={() => onEditPhoto(item)} style={{ width:"52px", flexShrink:0, cursor:"pointer", borderRight:"1px solid #0c0c0c", overflow:"hidden", position:"relative" }}>
+            {item.photo ? (
+              <>
+                <img src={item.photo} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+                <div style={{ position:"absolute", inset:0, background:"linear-gradient(to top,rgba(0,0,0,0.65) 0%,transparent 45%)" }} />
+                <div style={{ position:"absolute", bottom:"3px", right:"3px", fontSize:"8px" }}>📷</div>
+              </>
+            ) : (
+              <div style={{ width:"100%", minHeight:"62px", height:"100%", background:"#040404", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"3px" }}>
+                <span style={{ fontSize:"16px", opacity:0.2 }}>📷</span>
+              </div>
+            )}
+          </div>
+          {/* Content */}
+          <div style={{ flex:1, padding:"10px 10px", display:"flex", alignItems:"center", gap:"8px" }}>
+            <div style={{ flex:1 }}>
+              <div style={{ color:"#e8dfc0", fontSize:"13px", fontFamily:"'Cinzel',serif", lineHeight:1.3 }}>
+                {item.unit.name}
+              </div>
+              <div style={{ display:"flex", gap:"6px", marginTop:"6px", alignItems:"center", flexWrap:"wrap" }}>
+                <PaintCycleBtn status={item.paintStatus||"unpainted"} onCycle={cycleStatus} />
+                <WahapediaBtn unitName={item.unit.name} faction={faction} accent={accent} />
+              </div>
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"6px" }}>
+              <QtyEditor qty={item.qty} accent={accent} onUpdate={n => onUpdateQty(item.id, n)} />
+              <PtsBadge unitId={item.unit.id} faction={faction} qty={item.qty} pts={ptsMap[`${faction}:${item.unit.id}`]} onSetPts={onSetPts} />
+              <button onClick={() => onDelete(item.id)} style={{ background:"none", border:"none", color:"#181410", cursor:"pointer", padding:"2px" }}><Ic.Trash /></button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function ViewInventory({ inventory, ptsMap, onSetPts, onAdd, onDelete, onUpdatePhoto, onUpdatePaint, onUpdateQty, onReorder }) {
+      const [showModal, setShowModal] = useState(false);
+      const [editPhotoItem, setEditPhotoItem] = useState(null);
+      const [faction, setFaction] = useState("IK");
+      const [viewMode, setViewMode] = useState("list"); // "list" | "grid"
+      const [collapsedRoles, setCollapsedRoles] = useState({});
+      const dragState = useRef(null);
+      const [draggingId, setDraggingId] = useState(null);
+      const [dragOverId, setDragOverId] = useState(null);
+      const f = FACTIONS[faction];
+
+      const rawItems = inventory
+        .filter(i=>i.faction===faction)
+        .map(i => ({ ...i, unit:UNITS_DB[i.faction]?.find(u=>u.id===i.unitId) }))
+        .filter(i=>i.unit);
+
+      // Group by role, respecting custom order (inventory order within each role)
+      const grouped = {};
+      ROLE_ORDER.forEach(r => { grouped[r] = []; });
+      rawItems.forEach(item => {
+        const role = item.unit.role;
+        if (!grouped[role]) grouped[role] = [];
+        grouped[role].push(item);
+      });
+      const usedRoles = ROLE_ORDER.filter(r => grouped[r]?.length > 0);
+
+      const toggleRole = (role) => setCollapsedRoles(prev => ({ ...prev, [role]: !prev[role] }));
+
+      // Drag-and-drop handlers
+      const onDragStart = (e, item, role) => {
+        dragState.current = { id: item.id, role, startY: e.touches?.[0]?.clientY ?? e.clientY };
+        setDraggingId(item.id);
+        if (e.dataTransfer) { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", item.id); }
+      };
+      const onDragOver = (e, item) => {
+        e.preventDefault();
+        if (item.id !== draggingId) setDragOverId(item.id);
+      };
+      const onDrop = (e, targetItem) => {
+        e.preventDefault();
+        if (!dragState.current || dragState.current.id === targetItem.id) return;
+        onReorder(dragState.current.id, targetItem.id, faction);
+        setDraggingId(null); setDragOverId(null); dragState.current = null;
+      };
+      const onDragEnd = () => { setDraggingId(null); setDragOverId(null); dragState.current = null; };
+
+      // Touch drag
+      const onTouchStart = (e, item, role) => {
+        dragState.current = { id: item.id, role, startY: e.touches[0].clientY };
+        setDraggingId(item.id);
+      };
+      const onTouchMove = (e) => {
+        if (!dragState.current) return;
+        const touch = e.touches[0];
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        const card = el?.closest("[data-itemid]");
+        if (card) setDragOverId(card.dataset.itemid);
+      };
+      const onTouchEnd = () => {
+        if (!dragState.current || !dragOverId) { setDraggingId(null); setDragOverId(null); dragState.current = null; return; }
+        onReorder(dragState.current.id, dragOverId, faction);
+        setDraggingId(null); setDragOverId(null); dragState.current = null;
+      };
+
+      return (
+        <div style={pageStyle}>
+          <div style={{ background:"#030202", borderBottom:"1px solid #0f0f0f", padding:"18px 16px 14px", position:"relative", overflow:"hidden" }}>
+            <div style={{ position:"absolute", right:"14px", top:"50%", transform:"translateY(-50%)", fontSize:"72px", color:"#0b0a09", lineHeight:1, pointerEvents:"none", fontFamily:"serif" }}>✠</div>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+              <div>
+                <div style={{ color:"#b8922a", fontSize:"8px", letterSpacing:"5px", fontFamily:"'Cinzel',serif", opacity:0.6, marginBottom:"4px" }}>REGISTRE DES RELIQUES</div>
+                <div style={{ color:"#e8dfc0", fontSize:"18px", fontFamily:"'Cinzel Decorative','Cinzel',serif", letterSpacing:"3px", fontWeight:"700", textShadow:"0 0 20px #b8922a22" }}>INVENTAIRE</div>
+                <div style={{ color:"#252012", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Cinzel',serif", marginTop:"3px" }}>{inventory.length} RÉFÉRENCES</div>
+              </div>
+              <div style={{ display:"flex", gap:"6px", alignItems:"center" }}>
+                <button onClick={() => setViewMode(v => v==="list"?"grid":"list")}
+                  title={viewMode==="list"?"Vue grille":"Vue liste"}
+                  style={{ background:"none", border:"1px solid #1c1c1c", color: viewMode==="grid"?"#b8922a":"#2a2218", cursor:"pointer", padding:"7px 9px", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                  {viewMode==="list"
+                    ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                    : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                  }
+                </button>
+                <IconBtn onClick={() => setShowModal(true)}><Ic.Plus /></IconBtn>
+              </div>
+            </div>
+          </div>
+          <div style={{ display:"flex", background:"#020202", borderBottom:"1px solid #0f0f0f" }}>
+            {Object.entries(FACTIONS).map(([k,v]) => {
+              const fItems = inventory.filter(i=>i.faction===k);
+              const painted = fItems.filter(i=>i.paintStatus==="painted").length;
+              const total   = fItems.length;
+              const pct     = total ? Math.round(painted/total*100) : 0;
+              return (
+                <button key={k} onClick={() => setFaction(k)} style={{ flex:1, background:"none", border:"none", borderBottom:faction===k?`2px solid ${v.accent}`:"2px solid transparent", color:faction===k?v.accent:"#181410", padding:"10px 0 8px", cursor:"pointer", fontFamily:"'Cinzel',serif", fontSize:"9px", letterSpacing:"2px", textShadow:faction===k?`0 0 10px ${v.accent}66`:"none" }}>
+                  <div style={{ fontSize:"16px", marginBottom:"3px" }}>{v.icon}</div>
+                  {v.short}
+                  {total>0 && (
+                    <div style={{ margin:"5px 8px 0", height:"2px", background:"#0f0f0f", position:"relative" }}>
+                      <div style={{ width:`${pct}%`, height:"100%", background: pct===100 ? "#2a7a2a" : v.accent, transition:"width 0.4s", opacity: faction===k?1:0.4 }} />
+                    </div>
+                  )}
+                  {total>0 && (
+                    <div style={{ fontSize:"7px", color: faction===k?(pct===100?"#2a7a2a":v.accent):"#252015", marginTop:"3px", letterSpacing:"1px" }}>
+                      {painted}/{total}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ flex:1, overflowY:"auto", padding:"12px 16px" }} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+            {rawItems.length===0 && <EmptyState icon={f.icon} title="Aucune figurine" sub={`Ajoutez des ${f.label}`} />}
+            {usedRoles.map(role => (
+              <div key={role} style={{ marginBottom:"16px" }}>
+                {/* Role header */}
+                <button onClick={() => toggleRole(role)} style={{ width:"100%", background:"none", border:"none", display:"flex", alignItems:"center", gap:"10px", marginBottom:"8px", cursor:"pointer", padding:"4px 0" }}>
+                  <div style={{ width:"2px", height:"12px", background:f.accent, opacity:0.6, flexShrink:0 }} />
+                  <span style={{ color:"#6a5a4a", fontFamily:"'Cinzel',serif", fontSize:"10px", letterSpacing:"4px", flex:1, textAlign:"left" }}>{role.toUpperCase()}</span>
+                  <span style={{ color:"#3a3020", fontSize:"10px" }}>{grouped[role].length} — </span>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#3a3020" strokeWidth="2.5"><polyline points={collapsedRoles[role]?"6 9 12 15 18 9":"18 15 12 9 6 15"}/></svg>
+                </button>
+                {!collapsedRoles[role] && (
+                  viewMode==="grid" ? (
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px", marginBottom:"4px" }}>
+                      {grouped[role].map(item => (
+                        <InventoryItem key={item.id}
+                          item={item} faction={faction} ptsMap={ptsMap} onSetPts={onSetPts}
+                          onDelete={onDelete} onEditPhoto={setEditPhotoItem}
+                          onUpdatePaint={onUpdatePaint} onUpdateQty={onUpdateQty}
+                          accent={f.accent} viewMode="grid"
+                          dragHandleProps={{}}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    grouped[role].map(item => (
+                      <div key={item.id} data-itemid={item.id}
+                        style={{ opacity: draggingId===item.id ? 0.4 : 1, outline: dragOverId===item.id ? `1px solid ${f.accent}88` : "none", transition:"opacity 0.15s" }}
+                        onDragOver={e => onDragOver(e, item)}
+                        onDrop={e => onDrop(e, item)}
+                        onTouchStart={e => onTouchStart(e, item, role)}
+                      >
+                        <InventoryItem
+                          item={item} faction={faction} ptsMap={ptsMap} onSetPts={onSetPts}
+                          onDelete={onDelete} onEditPhoto={setEditPhotoItem}
+                          onUpdatePaint={onUpdatePaint} onUpdateQty={onUpdateQty}
+                          accent={f.accent} viewMode="list"
+                          dragHandleProps={{
+                            draggable: true,
+                            onDragStart: e => onDragStart(e, item, role),
+                            onDragEnd,
+                          }}
+                        />
+                      </div>
+                    ))
+                  )
+                )}
+              </div>
+            ))}
+          </div>
+          {showModal && <ModalAddUnit faction={faction} inventory={inventory} mode="inventory" onClose={() => setShowModal(false)} onAdd={onAdd} />}
+          {editPhotoItem && <ModalEditPhoto item={editPhotoItem} faction={faction} onClose={() => setEditPhotoItem(null)} onSave={photo => onUpdatePhoto(editPhotoItem.id, photo)} />}
+        </div>
+      );
+    }
+
+
+    // ══════════════════════════════════════════════════════════
+    // VIEW: Stats
+    // ══════════════════════════════════════════════════════════
+
+    function StatBar({ pct, color, height=4, bg="#0a0906" }) {
+      return (
+        <div style={{ background:bg, height, position:"relative", flex:1 }}>
+          <div style={{ width:`${Math.min(100,pct)}%`, height:"100%", background:color, transition:"width 0.6s ease" }} />
+        </div>
+      );
+    }
+
+    function ViewStats({ inventory, lists, ptsMap }) {
+      const totalModels   = inventory.reduce((s,i) => s+i.qty, 0);
+      const totalUnique   = inventory.length;
+      const totalPainted  = inventory.filter(i=>i.paintStatus==="painted").reduce((s,i)=>s+i.qty,0);
+      const totalPrimed   = inventory.filter(i=>i.paintStatus==="primed").reduce((s,i)=>s+i.qty,0);
+      const totalWip      = inventory.filter(i=>i.paintStatus==="wip").reduce((s,i)=>s+i.qty,0);
+      const totalUnpainted= inventory.filter(i=>i.paintStatus==="unpainted"||!i.paintStatus).reduce((s,i)=>s+i.qty,0);
+      const paintPct      = totalModels ? Math.round(totalPainted/totalModels*100) : 0;
+
+      // Points investis par faction
+      const factionStats = Object.entries(FACTIONS).map(([k,f]) => {
+        const items = inventory.filter(i=>i.faction===k);
+        const models = items.reduce((s,i)=>s+i.qty,0);
+        const painted = items.filter(i=>i.paintStatus==="painted").reduce((s,i)=>s+i.qty,0);
+        const pts = items.reduce((s,i)=>s+(ptsMap[`${k}:${i.unitId}`]||0)*i.qty,0);
+        // Répartition par rôle
+        const byRole = {};
+        items.forEach(i => {
+          const unit = UNITS_DB[k]?.find(u=>u.id===i.unitId);
+          if (!unit) return;
+          byRole[unit.role] = (byRole[unit.role]||0) + i.qty;
+        });
+        return { key:k, f, models, painted, pts, byRole, uniqueUnits:items.length };
+      }).filter(s=>s.models>0);
+
+      // Unités les plus présentes dans les listes
+      const unitUsage = {};
+      lists.forEach(list => {
+        (list.entries||[]).forEach(e => {
+          const key = `${list.faction}:${e.unitId}`;
+          unitUsage[key] = (unitUsage[key]||{ count:0, faction:list.faction, unitId:e.unitId });
+          unitUsage[key].count += 1;
+        });
+      });
+      const topUnits = Object.values(unitUsage)
+        .sort((a,b)=>b.count-a.count)
+        .slice(0,5)
+        .map(u => ({ ...u, unit: UNITS_DB[u.faction]?.find(un=>un.id===u.unitId), f: FACTIONS[u.faction] }))
+        .filter(u=>u.unit);
+
+      const totalPts = Object.entries(ptsMap).reduce((s,[k,v])=>{
+        const [faction,unitId] = k.split(":");
+        const inv = inventory.filter(i=>i.faction===faction&&i.unitId===unitId);
+        return s + inv.reduce((ss,i)=>ss+v*i.qty,0);
+      },0);
+
+      const accent = "#b8922a";
+
+      return (
+        <div style={pageStyle}>
+          {/* Header */}
+          <div style={{ background:"#030202", borderBottom:"1px solid #0f0f0f", padding:"18px 16px 14px", position:"relative", overflow:"hidden" }}>
+            <div style={{ position:"absolute", right:"14px", top:"50%", transform:"translateY(-50%)", fontSize:"72px", color:"#0b0a09", lineHeight:1, pointerEvents:"none", fontFamily:"serif" }}>✠</div>
+            <div style={{ color:"#b8922a", fontSize:"8px", letterSpacing:"5px", fontFamily:"'Cinzel',serif", opacity:0.6, marginBottom:"4px" }}>ÉTAT DES FORCES</div>
+            <div style={{ color:"#e8dfc0", fontSize:"18px", fontFamily:"'Cinzel Decorative','Cinzel',serif", letterSpacing:"3px", fontWeight:"700" }}>STATISTIQUES</div>
+          </div>
+
+          <div style={{ flex:1, overflowY:"auto", padding:"16px" }}>
+
+            {/* ── GLOBAL ─────────────────────── */}
+            <div style={{ marginBottom:"20px" }}>
+              <div style={{ color:"#3a3020", fontSize:"9px", letterSpacing:"4px", fontFamily:"'Cinzel',serif", marginBottom:"10px" }}>COLLECTION GLOBALE</div>
+
+              {/* Big paint ring simulation via stacked bars */}
+              <div style={{ background:"linear-gradient(180deg,#131110 0%,#0d0b0a 100%)", border:"1px solid #1c1a18", borderTop:`2px solid ${accent}`, padding:"16px", marginBottom:"8px" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:"12px" }}>
+                  <div>
+                    <div style={{ color:"#e8dfc0", fontSize:"32px", fontFamily:"'Cinzel',serif", fontWeight:"900", lineHeight:1 }}>{paintPct}<span style={{ fontSize:"16px", color:accent }}>%</span></div>
+                    <div style={{ color:"#3a3020", fontSize:"9px", letterSpacing:"2px", marginTop:"2px" }}>PEINT</div>
+                  </div>
+                  <div style={{ textAlign:"right" }}>
+                    <div style={{ color:"#e8dfc0", fontSize:"20px", fontFamily:"'Cinzel',serif", fontWeight:"700" }}>{totalModels}</div>
+                    <div style={{ color:"#3a3020", fontSize:"9px", letterSpacing:"2px" }}>FIGURINES</div>
+                  </div>
+                </div>
+                {/* Stacked bar */}
+                <div style={{ display:"flex", height:"6px", gap:"1px", marginBottom:"10px" }}>
+                  {totalPainted>0  && <div style={{ flex:totalPainted,  background:PAINT_STATUS.painted.color }} />}
+                  {totalWip>0      && <div style={{ flex:totalWip,      background:PAINT_STATUS.wip.color }} />}
+                  {totalPrimed>0   && <div style={{ flex:totalPrimed,   background:PAINT_STATUS.primed.color }} />}
+                  {totalUnpainted>0&& <div style={{ flex:totalUnpainted,background:"#1c1a16" }} />}
+                </div>
+                {/* Legend */}
+                <div style={{ display:"flex", gap:"12px", flexWrap:"wrap" }}>
+                  {[
+                    {key:"painted",   label:"Peint",    val:totalPainted},
+                    {key:"wip",       label:"En cours", val:totalWip},
+                    {key:"primed",    label:"Apprêté",  val:totalPrimed},
+                    {key:"unpainted", label:"Nu",       val:totalUnpainted},
+                  ].map(s => s.val>0 && (
+                    <div key={s.key} style={{ display:"flex", alignItems:"center", gap:"5px" }}>
+                      <div style={{ width:"6px", height:"6px", borderRadius:"50%", background:PAINT_STATUS[s.key].color }} />
+                      <span style={{ color:"#4a3c28", fontSize:"9px" }}>{s.label} <span style={{ color:"#8a7050" }}>{s.val}</span></span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Summary chips */}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"6px" }}>
+                {[
+                  { label:"RÉFÉRENCES", val:totalUnique },
+                  { label:"LISTES", val:lists.length },
+                  { label:"PTS TOTAL", val:totalPts||"—" },
+                ].map(c => (
+                  <div key={c.label} style={{ background:"#0d0b0a", border:"1px solid #1a1816", padding:"10px 8px", textAlign:"center" }}>
+                    <div style={{ color:"#e8dfc0", fontSize:"18px", fontFamily:"'Cinzel',serif", fontWeight:"700" }}>{c.val}</div>
+                    <div style={{ color:"#2a2215", fontSize:"7px", letterSpacing:"2px", marginTop:"3px" }}>{c.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── PAR FACTION ────────────────── */}
+            {factionStats.length>0 && (
+              <div style={{ marginBottom:"20px" }}>
+                <div style={{ color:"#3a3020", fontSize:"9px", letterSpacing:"4px", fontFamily:"'Cinzel',serif", marginBottom:"10px" }}>PAR FACTION</div>
+                {factionStats.map(({ key, f, models, painted, pts, byRole, uniqueUnits }) => {
+                  const pct = models ? Math.round(painted/models*100) : 0;
+                  const topRoles = Object.entries(byRole).sort((a,b)=>b[1]-a[1]).slice(0,4);
+                  return (
+                    <div key={key} style={{ background:"linear-gradient(180deg,#131110 0%,#0d0b0a 100%)", border:"1px solid #1c1a18", borderLeft:`3px solid ${f.accent}`, padding:"12px 14px", marginBottom:"8px" }}>
+                      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"10px" }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+                          <span style={{ fontSize:"20px" }}>{f.icon}</span>
+                          <div>
+                            <div style={{ color:"#e8dfc0", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>{f.label}</div>
+                            <div style={{ color:"#3a3020", fontSize:"9px", marginTop:"1px" }}>{uniqueUnits} unités · {models} figurines</div>
+                          </div>
+                        </div>
+                        <div style={{ textAlign:"right" }}>
+                          <div style={{ color: pct===100?"#2a7a2a":f.accent, fontSize:"20px", fontFamily:"'Cinzel',serif", fontWeight:"900" }}>{pct}%</div>
+                          {pts>0 && <div style={{ color:"#3a3020", fontSize:"9px" }}>{pts} pts</div>}
+                        </div>
+                      </div>
+                      {/* Paint bar */}
+                      <div style={{ display:"flex", height:"3px", marginBottom:"10px", gap:"1px" }}>
+                        {painted>0   && <div style={{ flex:painted,         background:PAINT_STATUS.painted.color }} />}
+                        {(models-painted)>0 && <div style={{ flex:models-painted, background:"#1c1a16" }} />}
+                      </div>
+                      {/* Role breakdown */}
+                      {topRoles.length>0 && (
+                        <div style={{ display:"flex", gap:"6px", flexWrap:"wrap" }}>
+                          {topRoles.map(([role,cnt]) => (
+                            <div key={role} style={{ background:"#080604", border:`1px solid ${f.accent}22`, padding:"2px 8px", display:"flex", gap:"5px", alignItems:"center" }}>
+                              <span style={{ color:f.accent, fontSize:"11px", fontWeight:"700" }}>{cnt}</span>
+                              <span style={{ color:"#3a3020", fontSize:"8px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>{role}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ── TOP UNITÉS EN LISTE ─────────── */}
+            {topUnits.length>0 && (
+              <div style={{ marginBottom:"20px" }}>
+                <div style={{ color:"#3a3020", fontSize:"9px", letterSpacing:"4px", fontFamily:"'Cinzel',serif", marginBottom:"10px" }}>FAVORIS EN LISTE</div>
+                {topUnits.map((u,i) => (
+                  <div key={i} style={{ background:"#0d0b0a", border:"1px solid #1a1816", borderLeft:`2px solid ${u.f.accent}44`, padding:"8px 12px", marginBottom:"5px", display:"flex", alignItems:"center", gap:"10px" }}>
+                    <span style={{ color:"#2a2215", fontSize:"11px", fontFamily:"'Cinzel',serif", width:"16px", textAlign:"center" }}>{i+1}</span>
+                    <div style={{ flex:1 }}>
+                      <div style={{ color:"#c8b890", fontSize:"12px", fontFamily:"'Cinzel',serif" }}>{u.unit.name}</div>
+                      <div style={{ color:"#3a3020", fontSize:"9px", marginTop:"1px" }}>{u.f.label} · {u.unit.role}</div>
+                    </div>
+                    <div style={{ display:"flex", alignItems:"center", gap:"4px" }}>
+                      <div style={{ background:`${u.f.accent}22`, border:`1px solid ${u.f.accent}44`, padding:"2px 8px" }}>
+                        <span style={{ color:u.f.accent, fontSize:"11px", fontFamily:"'Cinzel',serif" }}>{u.count}×</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {inventory.length===0 && (
+              <div style={{ textAlign:"center", padding:"48px 0", color:"#252015" }}>
+                <div style={{ fontSize:"40px", marginBottom:"12px", opacity:0.3 }}>✠</div>
+                <div style={{ fontFamily:"'Cinzel',serif", fontSize:"11px", letterSpacing:"3px" }}>AUCUNE DONNÉE</div>
+                <div style={{ fontSize:"10px", marginTop:"6px", fontStyle:"italic" }}>Ajoutez des figurines à votre inventaire</div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // VIEW: Codex (paramètres + données)
+    // ══════════════════════════════════════════════════════════
+
+    function ViewCodex({ onExport, onImport, inventory, lists }) {
+      const importRef = useRef(null);
+      const totalModels = inventory.reduce((s,i)=>s+i.qty,0);
+      const totalWithPhoto = inventory.filter(i=>i.photo).length;
+
+      return (
+        <div style={pageStyle}>
+          {/* Header */}
+          <div style={{ background:"#030202", borderBottom:"1px solid #0f0f0f", padding:"18px 16px 14px", position:"relative", overflow:"hidden" }}>
+            <div style={{ position:"absolute", right:"14px", top:"50%", transform:"translateY(-50%)", fontSize:"72px", color:"#0b0a09", lineHeight:1, pointerEvents:"none", fontFamily:"serif" }}>✠</div>
+            <div style={{ color:"#b8922a", fontSize:"8px", letterSpacing:"5px", fontFamily:"'Cinzel',serif", opacity:0.6, marginBottom:"4px" }}>ADMINISTRATION</div>
+            <div style={{ color:"#e8dfc0", fontSize:"18px", fontFamily:"'Cinzel Decorative','Cinzel',serif", letterSpacing:"3px", fontWeight:"700" }}>CODEX</div>
+          </div>
+
+          <div style={{ flex:1, overflowY:"auto", padding:"16px" }}>
+
+            {/* ── SAUVEGARDE ───────────────── */}
+            <div style={{ color:"#3a3020", fontSize:"9px", letterSpacing:"4px", fontFamily:"'Cinzel',serif", marginBottom:"10px" }}>SAUVEGARDE DES DONNÉES</div>
+
+            <div style={{ background:"linear-gradient(180deg,#131110 0%,#0d0b0a 100%)", border:"1px solid #1c1a18", borderTop:"2px solid #b8922a", padding:"16px", marginBottom:"8px" }}>
+              <div style={{ color:"#6a5a3a", fontSize:"11px", fontFamily:"'Crimson Pro','Crimson Text',serif", fontStyle:"italic", lineHeight:1.6, marginBottom:"16px" }}>
+                Tes données sont stockées localement sur cet appareil. Exporte régulièrement une sauvegarde pour ne rien perdre si tu changes de navigateur ou d'appareil.
+              </div>
+
+              {/* Summary chips */}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"6px", marginBottom:"16px" }}>
+                {[
+                  { val: inventory.length, label:"RÉFÉRENCES" },
+                  { val: lists.length,     label:"LISTES"     },
+                  { val: totalModels,      label:"FIGURINES"  },
+                ].map(c => (
+                  <div key={c.label} style={{ background:"#080604", border:"1px solid #1a1714", padding:"8px", textAlign:"center" }}>
+                    <div style={{ color:"#b8922a", fontSize:"16px", fontFamily:"'Cinzel',serif", fontWeight:"700" }}>{c.val}</div>
+                    <div style={{ color:"#252015", fontSize:"7px", letterSpacing:"2px", marginTop:"2px" }}>{c.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Export button */}
+              <button onClick={onExport}
+                style={{ width:"100%", padding:"14px", background:"linear-gradient(180deg,#1a1200 0%,#120d00 100%)", border:"1px solid #b8922a55", borderTop:"2px solid #b8922a", color:"#b8922a", fontFamily:"'Cinzel',serif", fontSize:"12px", letterSpacing:"3px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:"10px", marginBottom:"8px" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                EXPORTER LA SAUVEGARDE
+              </button>
+
+              {/* Import button */}
+              <input ref={importRef} type="file" accept=".json" style={{ display:"none" }}
+                onChange={e => { if(e.target.files[0]) { onImport(e.target.files[0]); e.target.value=""; } }} />
+              <button onClick={() => importRef.current?.click()}
+                style={{ width:"100%", padding:"14px", background:"#080604", border:"1px solid #252015", color:"#4a4028", fontFamily:"'Cinzel',serif", fontSize:"12px", letterSpacing:"3px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:"10px" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                IMPORTER UNE SAUVEGARDE
+              </button>
+            </div>
+
+            {/* ── NOTE ─────────────────────── */}
+            <div style={{ background:"#080604", border:"1px solid #141210", borderLeft:"2px solid #35281a", padding:"12px 14px", marginTop:"8px" }}>
+              <div style={{ color:"#2a2215", fontSize:"9px", fontFamily:"'Cinzel',serif", letterSpacing:"2px", marginBottom:"6px" }}>NOTE</div>
+              <div style={{ color:"#3a3020", fontSize:"10px", fontFamily:"'Crimson Pro','Crimson Text',serif", fontStyle:"italic", lineHeight:1.7 }}>
+                Les photos sont incluses dans la sauvegarde (encodées en base64). Le fichier peut donc être volumineux si tu as beaucoup de photos.
+                <br/><br/>
+                Pour transférer vers un autre appareil, exporte le fichier JSON, transfère-le, puis importe-le depuis l'onglet Codex.
+              </div>
+            </div>
+
+          </div>
+        </div>
+      );
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // ROOT APP
+    // ══════════════════════════════════════════════════════════
+
+    function SplashOverlay({ inventory, lists, ptsMap, onDone }) {
+      const [phase, setPhase] = useState("in"); // "in" | "hold" | "out"
+      const totalModels  = inventory.reduce((s,i)=>s+i.qty,0);
+      const painted      = inventory.filter(i=>i.paintStatus==="painted").reduce((s,i)=>s+i.qty,0);
+      const paintPct     = totalModels ? Math.round(painted/totalModels*100) : 0;
+      const totalPts     = Object.entries(ptsMap).reduce((s,[k,v])=>{
+        const [faction,unitId] = k.split(":");
+        return s + inventory.filter(i=>i.faction===faction&&i.unitId===unitId).reduce((ss,i)=>ss+v*i.qty,0);
+      },0);
+
+      useEffect(() => {
+        const t1 = setTimeout(() => setPhase("out"), 2600);
+        const t2 = setTimeout(() => onDone(), 3200);
+        return () => { clearTimeout(t1); clearTimeout(t2); };
+      }, []);
+
+      const factionSummary = Object.entries(FACTIONS).map(([k,f]) => {
+        const items = inventory.filter(i=>i.faction===k);
+        const models = items.reduce((s,i)=>s+i.qty,0);
+        const p = items.filter(i=>i.paintStatus==="painted").reduce((s,i)=>s+i.qty,0);
+        return { key:k, f, models, painted:p };
+      }).filter(s=>s.models>0);
+
+      return (
+        <div onClick={onDone} style={{
+          position:"fixed", inset:0, zIndex:9999, background:"#020202",
+          display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+          fontFamily:"'Cinzel',serif", cursor:"pointer",
+          opacity: phase==="out" ? 0 : 1,
+          transition: phase==="out" ? "opacity 0.6s ease" : "none",
+          maxWidth:"430px", margin:"0 auto",
+        }}>
+          {/* BG cross watermark */}
+          <div style={{ position:"absolute", fontSize:"300px", color:"#050403", lineHeight:1, fontFamily:"serif", pointerEvents:"none", animation:"breathe 4s ease-in-out infinite" }}>✠</div>
+          <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse at center, transparent 20%, #020202 80%)", pointerEvents:"none" }} />
+
+          <div style={{ position:"relative", width:"100%", maxWidth:"320px", padding:"0 24px", animation:"splashIn 0.5s ease both" }}>
+            {/* Title */}
+            <div style={{ textAlign:"center", marginBottom:"32px" }}>
+              <div style={{ fontSize:"52px", color:"#b8922a", textShadow:"0 0 60px #b8922a55", lineHeight:1, marginBottom:"14px", animation:"crossGrow 0.5s cubic-bezier(0.34,1.56,0.64,1) both" }}>✠</div>
+              <div style={{ color:"#e8dfc0", fontSize:"19px", letterSpacing:"7px", fontFamily:"'Cinzel Decorative',serif", fontWeight:"900", textShadow:"0 0 30px #b8922a33" }}>BLACK TEMPLARS</div>
+              <div style={{ color:"#252015", fontSize:"8px", letterSpacing:"4px", marginTop:"5px" }}>CODEX ASTARTES</div>
+            </div>
+
+            {inventory.length > 0 && (<>
+              {/* Divider */}
+              <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"20px" }}>
+                <div style={{ flex:1, height:"1px", background:"linear-gradient(90deg,transparent,#2a2215)" }} />
+                <div style={{ color:"#2a2215", fontSize:"8px", letterSpacing:"4px" }}>ÉTAT DE LA FORCE</div>
+                <div style={{ flex:1, height:"1px", background:"linear-gradient(90deg,#2a2215,transparent)" }} />
+              </div>
+
+              {/* Big stats row */}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"8px", marginBottom:"20px", animation:"statSlide 0.5s 0.2s ease both" }}>
+                {[
+                  { val: totalModels, label:"FIGURINES" },
+                  { val: `${paintPct}%`, label:"PEINT" },
+                  { val: lists.length, label:"LISTES" },
+                ].map(s => (
+                  <div key={s.label} style={{ background:"#0a0806", border:"1px solid #1a1714", padding:"12px 8px", textAlign:"center" }}>
+                    <div style={{ color:"#b8922a", fontSize:"22px", fontWeight:"900", lineHeight:1 }}>{s.val}</div>
+                    <div style={{ color:"#252015", fontSize:"7px", letterSpacing:"2px", marginTop:"4px" }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Paint bar */}
+              <div style={{ marginBottom:"20px", animation:"statSlide 0.5s 0.35s ease both" }}>
+                <div style={{ display:"flex", height:"3px", gap:"1px", marginBottom:"6px" }}>
+                  {["painted","wip","primed","unpainted"].map(status => {
+                    const cnt = inventory.filter(i=>(i.paintStatus||"unpainted")===status).reduce((s,i)=>s+i.qty,0);
+                    return cnt>0 ? <div key={status} style={{ flex:cnt, background:PAINT_STATUS[status].color, transition:"flex 0.8s" }} /> : null;
+                  })}
+                </div>
+              </div>
+
+              {/* Faction breakdown */}
+              {factionSummary.length>0 && (
+                <div style={{ display:"flex", flexDirection:"column", gap:"6px", animation:"statSlide 0.5s 0.5s ease both" }}>
+                  {factionSummary.map(({ key, f, models, painted }) => {
+                    const pct = models ? Math.round(painted/models*100) : 0;
+                    return (
+                      <div key={key} style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+                        <span style={{ fontSize:"14px", width:"20px", textAlign:"center" }}>{f.icon}</span>
+                        <div style={{ flex:1 }}>
+                          <div style={{ display:"flex", height:"2px", background:"#0f0f0f", marginBottom:"3px" }}>
+                            <div style={{ width:`${pct}%`, background: pct===100?"#2a7a2a":f.accent, transition:"width 1s 0.5s" }} />
+                          </div>
+                        </div>
+                        <span style={{ color:"#2a2215", fontSize:"8px", width:"28px", textAlign:"right" }}>{models}fig</span>
+                        <span style={{ color: pct===100?"#2a7a2a":f.accent, fontSize:"9px", fontWeight:"700", width:"32px", textAlign:"right" }}>{pct}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>)}
+
+            {/* Tap hint */}
+            <div style={{ textAlign:"center", marginTop:"28px", color:"#1a1610", fontSize:"8px", letterSpacing:"3px", animation:"pulse 2s 1s infinite" }}>
+              TOUCHER POUR ENTRER
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [appState, setAppState] = useState({ inventory:[], lists:[], ptsMap:{} });
+      const [loaded, setLoaded] = useState(false);
+      const [splashDone, setSplashDone] = useState(false);
+      const [activeView, setActiveView] = useState("lists");
+      const [activeListId, setActiveListId] = useState(null);
+      const [lastSaved, setLastSaved] = useState(null); // timestamp
+      const [saveAnim, setSaveAnim] = useState(false);   // flash animation
+
+      useEffect(() => {
+        loadApp().then(saved => {
+          if (saved) setAppState({ inventory:[], lists:[], ptsMap:{}, ...saved });
+          setLoaded(true);
+        });
+      }, []);
+
+      const persist = useCallback((s) => {
+        setSaveAnim(true);
+        setLastSaved(Date.now());
+        saveApp(s);
+        setTimeout(() => setSaveAnim(false), 800);
+      }, []);
+
+      // Human-readable "il y a X" label, refreshed every 30s
+      const [, forceRender] = useState(0);
+      useEffect(() => {
+        const t = setInterval(() => forceRender(n => n+1), 30000);
+        return () => clearInterval(t);
+      }, []);
+      const savedLabel = (() => {
+        if (!lastSaved) return null;
+        const sec = Math.floor((Date.now() - lastSaved) / 1000);
+        if (sec < 10)  return "à l'instant";
+        if (sec < 60)  return `il y a ${sec}s`;
+        const min = Math.floor(sec / 60);
+        if (min < 60)  return `il y a ${min} min`;
+        return `il y a ${Math.floor(min/60)}h`;
+      })();
+      const updateApp = useCallback((fn) => { setAppState(prev => { const next=fn(prev); persist(next); return next; }); }, [persist]);
+
+      // Set pts for a unit (stored in ptsMap keyed by "faction:unitId")
+      const handleSetPts = useCallback((unitId, faction, pts) => {
+        updateApp(s => ({ ...s, ptsMap:{ ...s.ptsMap, [`${faction}:${unitId}`]: pts } }));
+      }, [updateApp]);
+
+      // ── Export / Import ──────────────────────────────────────
+      const exportData = () => {
+        const data = JSON.stringify(appState, null, 2);
+        const blob = new Blob([data], { type:"application/json" });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement("a");
+        const date = new Date().toISOString().slice(0,10);
+        a.href = url; a.download = `black-templars-${date}.json`;
+        a.click(); URL.revokeObjectURL(url);
+      };
+      const importData = (file) => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          try {
+            const parsed = JSON.parse(e.target.result);
+            if (!parsed.inventory || !parsed.lists) { alert("Fichier invalide."); return; }
+            const confirmed = window.confirm(`Importer ${parsed.inventory.length} figurines et ${parsed.lists.length} listes ?
+
+Cela remplacera les données actuelles.`);
+            if (!confirmed) return;
+            const next = { inventory:[], lists:[], ptsMap:{}, ...parsed };
+            setAppState(next);
+            saveApp(next);
+            setSplashDone(true);
+            alert("Import réussi ✓");
+          } catch { alert("Erreur de lecture du fichier."); }
+        };
+        reader.readAsText(file);
+      };
+
+      const createList    = m  => updateApp(s => ({ ...s, lists:[...s.lists,{id:Date.now(),...m,entries:[]}] }));
+      const deleteList    = id => updateApp(s => ({ ...s, lists:s.lists.filter(l=>l.id!==id) }));
+      const deleteEntry   = (listId,entryId) => updateApp(s => ({ ...s, lists:s.lists.map(l=>l.id!==listId?l:{...l,entries:l.entries.filter(e=>e.id!==entryId)}) }));
+      const toggleWarlord = (listId,entryId) => updateApp(s => ({
+        ...s, lists: s.lists.map(l => l.id!==listId ? l : {
+          ...l, entries: l.entries.map(e => ({ ...e, warlord: e.id===entryId ? !e.warlord : false }))
+        })
+      }));
+      const addInventory  = entry => updateApp(s => {
+        const ex = s.inventory.find(i=>i.unitId===entry.unitId&&i.faction===entry.faction);
+        if(ex) return {...s,inventory:s.inventory.map(i=>i.id===ex.id?{...i,qty:i.qty+entry.qty}:i)};
+        return {...s,inventory:[...s.inventory,{id:Date.now(),...entry}]};
+      });
+      const deleteInventory = id => updateApp(s => ({ ...s, inventory:s.inventory.filter(i=>i.id!==id) }));
+      const updatePhoto     = (id,photo) => updateApp(s => ({ ...s, inventory:s.inventory.map(i=>i.id===id?{...i,photo}:i) }));
+      const updatePaint     = (id,status) => updateApp(s => ({ ...s, inventory:s.inventory.map(i=>i.id===id?{...i,paintStatus:status}:i) }));
+      const updateQty       = (id,qty)    => updateApp(s => ({ ...s, inventory:s.inventory.map(i=>i.id===id?{...i,qty:Math.max(1,qty)}:i) }));
+      // Reorder: move draggedId to position of targetId within same faction
+      const reorderInventory = (draggedId, targetId, faction) => updateApp(s => {
+        const inv = [...s.inventory];
+        const dragIdx  = inv.findIndex(i=>i.id==draggedId);
+        const targetIdx = inv.findIndex(i=>i.id==targetId);
+        if (dragIdx<0||targetIdx<0) return s;
+        const [moved] = inv.splice(dragIdx,1);
+        inv.splice(targetIdx,0,moved);
+        return { ...s, inventory: inv };
+      });
+      const addEntry = (listId,entry) => updateApp(s => {
+        let inv=s.inventory, invId=entry.inventoryId;
+        if(!invId) {
+          const ni={id:Date.now(),unitId:entry.unitId,faction:entry.faction,qty:entry.qty,paintStatus:"unpainted"};
+          inv=[...inv,ni]; invId=ni.id;
+        }
+        return {...s,inventory:inv,lists:s.lists.map(l=>l.id!==listId?l:{...l,entries:[...(l.entries||[]),{id:Date.now()+1,inventoryId:invId,unitId:entry.unitId,qty:entry.qty}]})};
+      });
+
+      if (!loaded) return (
+        <div style={{ background:"#020202", height:"100vh", maxWidth:"430px", margin:"0 auto", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", position:"relative", overflow:"hidden", fontFamily:"'Cinzel',serif" }}>
+          {/* Background texture cross */}
+          <div style={{ position:"absolute", fontSize:"320px", color:"#060504", lineHeight:1, fontFamily:"serif", pointerEvents:"none", userSelect:"none", animation:"breathe 4s ease-in-out infinite" }}>✠</div>
+          {/* Vignette */}
+          <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse at center, transparent 30%, #020202 100%)", pointerEvents:"none" }} />
+          {/* Content */}
+          <div style={{ position:"relative", display:"flex", flexDirection:"column", alignItems:"center", gap:"0", animation:"splashIn 0.7s ease both" }}>
+            {/* Main cross */}
+            <div style={{ fontSize:"72px", color:"#b8922a", lineHeight:1, textShadow:"0 0 60px #b8922a66, 0 0 120px #b8922a22", animation:"crossGrow 0.6s cubic-bezier(0.34,1.56,0.64,1) both" }}>✠</div>
+            <div style={{ marginTop:"20px", textAlign:"center" }}>
+              <div style={{ color:"#e8dfc0", fontSize:"22px", letterSpacing:"8px", fontFamily:"'Cinzel Decorative',serif", fontWeight:"900", textShadow:"0 0 40px #b8922a33" }}>BLACK TEMPLARS</div>
+              <div style={{ color:"#2a2010", fontSize:"8px", letterSpacing:"6px", marginTop:"6px" }}>CODEX ASTARTES · REGISTRE DE CROISADE</div>
+            </div>
+            {/* Ornamental divider */}
+            <div style={{ display:"flex", alignItems:"center", gap:"10px", margin:"20px 0", width:"220px" }}>
+              <div style={{ flex:1, height:"1px", background:"linear-gradient(90deg,transparent,#b8922a44)" }} />
+              <div style={{ color:"#3a3020", fontSize:"10px" }}>✦</div>
+              <div style={{ flex:1, height:"1px", background:"linear-gradient(90deg,#b8922a44,transparent)" }} />
+            </div>
+            {/* Loading pulse */}
+            <div style={{ color:"#252015", fontSize:"8px", letterSpacing:"5px", animation:"pulse 1.5s ease-in-out infinite" }}>CHARGEMENT DU GRIMOIRE</div>
+          </div>
+        </div>
+      );
+
+
+
+      const ptsMap = appState.ptsMap || {};
+      const activeList = appState.lists.find(l=>l.id===activeListId);
+
+      return (
+        <div className="vignette-wrap" style={{ background:"#020202", maxWidth:"430px", margin:"0 auto", height:"100vh", display:"flex", flexDirection:"column", position:"relative", overflow:"hidden" }}>
+          {/* Splash overlay — shown on first open after load */}
+          {!splashDone && <SplashOverlay inventory={appState.inventory} lists={appState.lists} ptsMap={ptsMap} onDone={() => setSplashDone(true)} />}
+          {/* Save indicator — persistent bottom-right label */}
+          {savedLabel && (
+            <div style={{ position:"fixed", bottom:"72px", right:"12px", zIndex:200, display:"flex", alignItems:"center", gap:"5px",
+              background: saveAnim ? "#0f0c06" : "#060402",
+              border: `1px solid ${saveAnim ? "#b8922a66" : "#0f0f0f"}`,
+              padding:"4px 10px", transition:"all 0.4s", pointerEvents:"none" }}>
+              <div style={{ width:"5px", height:"5px", borderRadius:"50%",
+                background: saveAnim ? "#b8922a" : "#2a4a2a",
+                boxShadow: saveAnim ? "0 0 6px #b8922a" : "none",
+                transition:"all 0.4s" }} />
+              <span style={{ color: saveAnim ? "#b8922a" : "#2a4a2a", fontSize:"8px", fontFamily:"'Cinzel',serif", letterSpacing:"2px", transition:"color 0.4s" }}>
+                {saveAnim ? "SAUVEGARDE..." : `SAUVEGARDÉ ${savedLabel.toUpperCase()}`}
+              </span>
+            </div>
+          )}
+
+          <div style={{ flex:1, overflowY:"auto", paddingBottom:"64px" }}>
+            {activeView==="lists" && !activeList && <ViewLists lists={appState.lists} inventory={appState.inventory} ptsMap={ptsMap} onSelect={setActiveListId} onCreate={createList} onDelete={deleteList} />}
+            {activeView==="lists" && activeList && <ViewListDetail list={activeList} inventory={appState.inventory} ptsMap={ptsMap} onSetPts={handleSetPts} onBack={() => setActiveListId(null)} onAddEntry={addEntry} onDeleteEntry={id => deleteEntry(activeListId,id)} onToggleWarlord={id => toggleWarlord(activeListId,id)} />}
+            {activeView==="inventory" && <ViewInventory inventory={appState.inventory} ptsMap={ptsMap} onSetPts={handleSetPts} onAdd={addInventory} onDelete={deleteInventory} onUpdatePhoto={updatePhoto} onUpdatePaint={updatePaint} onUpdateQty={updateQty} onReorder={reorderInventory} />}
+            {activeView==="stats" && <ViewStats inventory={appState.inventory} lists={appState.lists} ptsMap={ptsMap} />}
+            {activeView==="codex" && <ViewCodex onExport={exportData} onImport={importData} inventory={appState.inventory} lists={appState.lists} />}
+          </div>
+
+          {!activeList && (
+            <div style={{ position:"fixed", bottom:0, left:"50%", transform:"translateX(-50%)", width:"100%", maxWidth:"430px", zIndex:50, background:"#030202", borderTop:"1px solid #0f0f0f", display:"flex" }}>
+              <div style={{ position:"absolute", top:0, left:"15%", right:"15%", height:"1px", background:"linear-gradient(90deg,transparent,#b8922a44,transparent)" }} />
+              <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", color:"#131313", fontSize:"14px" }}>✠</div>
+              {[
+                { key:"lists",     symbol:"✠", label:"CROISADE" },
+                { key:"inventory", symbol:"⚜", label:"RELIQUES" },
+                { key:"stats",     symbol:"◈", label:"STATS"    },
+                { key:"codex",     symbol:"⚙", label:"CODEX"    },
+              ].map(t => (
+                <button key={t.key} onClick={() => setActiveView(t.key)} style={{ flex:1, background:"none", border:"none", borderTop:activeView===t.key?"2px solid #b8922a":"2px solid transparent", padding:"13px 0 12px", cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", gap:"5px" }}>
+                  <span style={{ fontSize:"17px", lineHeight:1, color:activeView===t.key?"#b8922a":"#1c1a18", textShadow:activeView===t.key?"0 0 16px #b8922a99":"none" }}>{t.symbol}</span>
+                  <span style={{ fontSize:"7px", fontFamily:"'Cinzel',serif", letterSpacing:"3px", color:activeView===t.key?"#b8922a":"#1c1a18" }}>{t.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
