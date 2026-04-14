@@ -1,2 +1,2 @@
-# Inventaire-W40K
-Inventaire W40K
+# InventaireW40K
+InventaireW40K

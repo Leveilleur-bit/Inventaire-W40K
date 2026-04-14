@@ -1,0 +1,9 @@
+{
+  "name": "Warhammer 40K Collection",
+  "short_name": "WH40K",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#020202",
+  "theme_color": "#020202",
+  "icons": []
+}
