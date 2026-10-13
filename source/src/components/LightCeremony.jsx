@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { PuritySeal } from './Seal.jsx';
 import { GoldBurst } from './effects.jsx';
 import { playSfx } from '../lib/sfx.jsx';
 
@@ -63,12 +64,7 @@ export function LightCeremony({ data, onClose }) {
             </div>
           </div>
           {/* Sceau de pureté */}
-          {sealed && (
-            <div style={{ position:"absolute", right:"-16px", bottom:"-16px", width:"62px", height:"62px" }}>
-              <div style={{ position:"absolute", inset:0, borderRadius:"50%", border:`2px solid ${acc}`, animation:"sealRing 1s 0.3s ease-out both" }} />
-              <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:"radial-gradient(circle at 40% 35%, #c83030, #7a1010 70%)", boxShadow:"0 4px 14px #000", display:"flex", alignItems:"center", justifyContent:"center", color:"#f4dc94", fontSize:"25px", animation:"sealStamp 0.6s cubic-bezier(.3,1.4,.6,1) both" }}>✠</div>
-            </div>
-          )}
+          {sealed && <PuritySeal faction={data.faction} size={92} acc={acc} />}
         </div>
 
         {/* Nom, armée et points */}

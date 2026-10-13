@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { PuritySeal } from './Seal.jsx';
 import { GoldBurst } from './effects.jsx';
 import { IMG, SkullSVG, SIZE } from './ServoSkull.jsx';
 import { playSfx, playLong, vibrate } from '../lib/sfx.jsx';
@@ -114,7 +115,7 @@ export function ColossusCeremony({ data, onClose }) {
   const skullStyle = {
     position:"absolute", zIndex:5, width:`${SIZE}px`, height:`${SIZE}px`,
     left: skullOut ? "calc(100% + 80px)" : skullIn ? "calc(50% - 160px)" : "-130px",
-    top: skullOut ? "-170px" : skullIn ? "-8px" : "110px",
+    top: skullOut ? "-170px" : skullIn ? "14px" : "110px",
     transition: skullOut ? "left 2.5s ease-in, top 2.5s ease-in" : "left 2.6s cubic-bezier(.2,.8,.3,1), top 2.6s ease-out",
     animation: "skullBob 2.6s ease-in-out infinite", filter:"drop-shadow(0 4px 10px #000)",
   };
@@ -154,7 +155,7 @@ export function ColossusCeremony({ data, onClose }) {
         <Typed t={t} start={14} dur={4.5} text="Qu'il soit consigné que ce jour, une relique majeure a été consacrée." style={{ fontStyle:"italic", fontSize:"14px", color:"#c8b89a", marginTop:"8px", maxWidth:"320px", minHeight:"40px" }} />
 
         {/* Emplacement du servo-crâne et de sa bulle, au-dessus de la relique (la bulle ne recouvre plus la photo) */}
-        <div style={{ position:"relative", zIndex:5, width:"100%", height:"58px", marginTop:"6px", flexShrink:0 }}>
+        <div style={{ position:"relative", zIndex:5, width:"100%", height:"86px", marginTop:"10px", flexShrink:0 }}>
           <div style={skullStyle}>
             {imgFailed ? <SkullSVG /> : <img src={IMG(scanning)} alt="" width={SIZE} height={SIZE} onError={() => setImgFailed(true)} style={{ display:"block" }} />}
             {/* Faisceau de scan qui balaie la relique */}
@@ -164,7 +165,7 @@ export function ColossusCeremony({ data, onClose }) {
                 animation:"scanSweep 2.2s ease-in-out infinite alternate", filter:"blur(1px)" }} />
             )}
             {say && (
-              <div key={say} style={{ position:"absolute", left:`${SIZE + 8}px`, bottom:"8px", width:"200px", textAlign:"left", background:"rgba(10,8,6,0.94)", border:"1px solid #6a5a3a", padding:"7px 10px", fontStyle:"italic", fontSize:"13px", lineHeight:1.4, color:"#e0d4b4", animation:"viewFade 0.3s ease both", boxShadow:"0 4px 14px #000c" }}>{say}</div>
+              <div key={say} style={{ position:"absolute", left:`${SIZE + 8}px`, top:"-6px", width:"200px", textAlign:"left", background:"rgba(10,8,6,0.94)", border:"1px solid #6a5a3a", padding:"7px 10px", fontStyle:"italic", fontSize:"13px", lineHeight:1.4, color:"#e0d4b4", animation:"viewFade 0.3s ease both", boxShadow:"0 4px 14px #000c" }}>{say}</div>
             )}
           </div>
         </div>
@@ -182,12 +183,7 @@ export function ColossusCeremony({ data, onClose }) {
             </div>
           </div>
           {/* Sceau de pureté */}
-          {sealed && (
-            <div style={{ position:"absolute", right:"-18px", bottom:"-18px", width:"74px", height:"74px" }}>
-              <div style={{ position:"absolute", inset:0, borderRadius:"50%", border:`2px solid ${acc}`, animation:"sealRing 1s 0.3s ease-out both" }} />
-              <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:"radial-gradient(circle at 40% 35%, #c83030, #7a1010 70%)", boxShadow:"0 4px 14px #000", display:"flex", alignItems:"center", justifyContent:"center", color:"#f4dc94", fontSize:"30px", animation:"sealStamp 0.6s cubic-bezier(.3,1.4,.6,1) both" }}>✠</div>
-            </div>
-          )}
+          {sealed && <PuritySeal faction={data.faction} size={110} acc={acc} />}
         </div>
 
         {/* Nom gravé */}

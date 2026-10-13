@@ -211,6 +211,13 @@ Fond de l'Accueil (7 octobre)
 - Vite 8 minifie le CSS avec Lightning CSS, qui supprimait `backdrop-filter: none` dans `.hc-bare`
   (cartouches de nouveau floues). `cssMinify: false` dans `vite.config.js` : ne pas le retirer.
 
+### Nouveau sceau de pureté (13 octobre 2026)
+- `public/sceau-imperial.png` : sceau de cire à l'aquila fourni par moi, détouré par Claude (l'image
+  reçue avait un faux damier « transparent » imprimé dedans ; seul le sceau rond a été gardé).
+- `components/Seal.jsx` : armées impériales et Chevaliers → ce sceau ; Chaos, Tyranides, xénos →
+  l'ancien disque de cire rouge. Utilisé par les deux cérémonies (110 px colosse, 92 px courte).
+- Cérémonie du colosse : la bulle du servo-crâne ne recouvre plus le texte du décret.
+
 ## Ce qui a été vérifié, et ce qui ne l'a pas été
 
 - Vérifié par Claude : l'app compile ; aucune variable manquante ; sauvegarde locale testée avec

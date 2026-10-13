@@ -472,7 +472,7 @@ export function App() {
       const bigPiece = (u?.role||"").match(/Titan|Chevalier|Seigneur de guerre/i) || ((pm[`${item?.faction}:${item?.unitId}`] || (u?POINTS_DB[u.name]:0) || 0) >= 250);
       const f = FACTIONS[item?.faction] || {};
       setLightCeremony({ key: Date.now(), name: item?.nickname || u?.name || "Unité", unitName: u?.name || "Unité", pts, photo: item?.photo || null,
-        armyLabel: appState.listNames?.[item?.faction] || f.label || "", accent: f.accent, icon: f.icon, lore: celebrationLoreFor(item?.faction), big: !!bigPiece,
+        armyLabel: appState.listNames?.[item?.faction] || f.label || "", faction: item?.faction, accent: f.accent, icon: f.icon, lore: celebrationLoreFor(item?.faction), big: !!bigPiece,
         rank: item ? appState.inventory.filter(i => i.faction === item.faction && i.paintStatus === "painted" && i.id !== item.id).length + 1 : 0 });
       // Le son et la vibration partent avec le sceau, dans la cérémonie
       }
