@@ -1,0 +1,7 @@
+node_modules
+dist/
+# Les images et les sons vivent à la racine du dépôt (fonds/, tarot/, sons/) :
+# publier.sh les recopie ici juste avant la compilation.
+public/fonds/
+public/tarot/
+public/sons/
