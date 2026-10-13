@@ -98,5 +98,8 @@ export default defineConfig({
     })
   ],
   base: './',
-  build: { outDir: 'dist' }
+  // cssMinify désactivé : le minifieur CSS de Vite 8 (Lightning CSS) supprimait « backdrop-filter: none »
+  // et ne gardait que la version -webkit-, ignorée par Chrome : les cartouches .hc-bare redevenaient floues.
+  // Le CSS ne pèse que quelques Ko, le laisser tel quel ne coûte rien.
+  build: { outDir: 'dist', cssMinify: false }
 });

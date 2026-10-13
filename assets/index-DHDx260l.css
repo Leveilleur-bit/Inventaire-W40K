@@ -1,0 +1,457 @@
+/* ══════════════════════════════════════════════
+   RELIQUAIRE — Codex Warhammer 40K
+   Styles de base + animations
+   ══════════════════════════════════════════════ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  background: #020202;
+  color: #e8dfc0;
+  font-family: 'Crimson Pro', Georgia, serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+#root { height: 100dvh; }
+
+button { font-family: inherit; }
+input, select, textarea { font-family: inherit; }
+
+/* Scrollbar discrète */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1c1a16; border-radius: 2px; }
+
+/* ── Texture parchemin / grain ─────────────── */
+.vignette-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 48;
+  opacity: 0.5;
+  background-image:
+    /* grain fin */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E"),
+    /* taches / vieillissement */
+    radial-gradient(ellipse 60% 40% at 15% 12%, rgba(120, 95, 45, 0.05), transparent 70%),
+    radial-gradient(ellipse 45% 35% at 88% 78%, rgba(120, 95, 45, 0.045), transparent 70%),
+    radial-gradient(ellipse 30% 25% at 70% 25%, rgba(90, 70, 35, 0.035), transparent 70%);
+  mix-blend-mode: overlay;
+}
+
+/* Vignette globale */
+.vignette-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 120px rgba(0,0,0,0.8);
+  z-index: 50;
+}
+
+/* ── Fonds d'écran des vues (CROISADE / RELIQUES / STATS / CODEX / SOUHAITS / SHAME) ──
+   L'image + le voile sombre (linear-gradient superposé à l'url) sont posés en
+   inline style via pageFond(view) dans main.jsx — nécessaire pour que le chemin
+   passe par import.meta.env.BASE_URL et reste valide sous un sous-chemin GitHub
+   Pages (ex: /InventaireW40K/fonds/xxx.jpg), plutôt qu'un chemin absolu "/fonds/…"
+   codé en dur ici qui casserait tant que le domaine perso n'est pas en place.
+   Cette classe ne gère donc que le cadrage : !important reste nécessaire car
+   pageStyle pose déjà un `background` inline (qui réinitialise size/position/
+   repeat/attachment à leurs valeurs initiales). */
+.bg-lists,
+.bg-inventory,
+.bg-stats,
+.bg-codex,
+.bg-wishlist,
+.bg-shame {
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  /* fixed : ces vues défilent (flex:1/overflowY:auto est sur le PARENT,
+     pas sur ce div — sa hauteur suit tout le contenu). Avec "fixed", cover
+     se calcule par rapport au viewport et non à la hauteur totale scrollable,
+     ce qui évite une image écrasée/zoomée à l'extrême sur les listes longues. */
+  background-attachment: fixed !important;
+}
+
+/* ── TEST : cartouches d'accueil sans fond ──────────────
+   Le fond est retiré pour laisser voir la photo d'accueil ; la lisibilité
+   repose alors uniquement sur un halo sombre appliqué à tous les textes.
+   Pour revenir en arrière : retirer les className="hc-bare" dans main.jsx
+   (ou simplement neutraliser ce bloc). */
+.hc-bare {
+  background: none !important;
+  /* Le flou venait d'ici : les cartouches gardaient leur backdrop-filter inline
+     même une fois le fond retiré, d'où le rectangle voilé sur l'image. */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* Halo sombre en trois couches : une ombre nette pour détacher le glyphe, puis
+   deux diffuses qui assombrissent le fond juste autour du texte. C'est ce qui
+   remplace le fond des cartouches pour garantir la lisibilité. */
+.hc-bare, .hc-bare *,
+.enlum, .enlum * {
+  text-shadow: 0 1px 2px #000, 0 0 5px #000, 0 0 10px rgba(0,0,0,0.95), 0 0 20px rgba(0,0,0,0.75);
+}
+/* Les titres de section (VÉLOCITÉ DE PEINTURE, PAR FACTION…) sont hors cartouche :
+   on les remonte en luminosité, sinon ils se noient sur un fond clair. */
+.enlum { color: #c8b890 !important; }
+
+/* ── Typographie hiérarchisée ──────────────── */
+/* Grands chiffres : Cinzel Decorative pour le caractère */
+.stat-hero {
+  font-family: 'Cinzel Decorative', 'Cinzel', serif !important;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+/* ── Enluminures ───────────────────────────── */
+.enlum {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 0;
+}
+.enlum::before, .enlum::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+  opacity: 0.28;
+}
+.enlum-mark {
+  font-size: 11px;
+  opacity: 0.5;
+  line-height: 1;
+  letter-spacing: 3px;
+}
+
+/* ── Animations ────────────────────────────── */
+@keyframes slideLeft {
+  from { opacity: 0;  }
+  to   { opacity: 1; }
+}
+
+@keyframes paintPop {
+  0%   {  opacity: 0; }
+  60%  {  opacity: 1; }
+  100% {  opacity: 1; }
+}
+
+@keyframes splashIn {
+  from { opacity: 0;  }
+  to   { opacity: 1; }
+}
+
+@keyframes crossGrow {
+  0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+  70%  { transform: scale(1.15) rotate(3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.04); }
+}
+
+@keyframes viewFade {
+  from { opacity: 0;  }
+  to   { opacity: 1; }
+}
+
+@keyframes celebIn {
+  0%   { opacity: 0;  }
+  15%  { opacity: 1;  }
+  25%  {  }
+  80%  { opacity: 1; }
+  100% { opacity: 0;  }
+}
+
+/* ── Écran de chargement ───────────────────── */
+@keyframes bootCross {
+  0%   { opacity: 0; transform: scale(0.5) rotate(-25deg); filter: drop-shadow(0 0 0 #b8922a); }
+  55%  { opacity: 1; transform: scale(1.1) rotate(4deg); filter: drop-shadow(0 0 30px #b8922aaa); }
+  100% { opacity: 1; transform: scale(1) rotate(0); filter: drop-shadow(0 0 18px #b8922a66); }
+}
+@keyframes bootText {
+  from { opacity: 0; letter-spacing: 8px; }
+  to   { opacity: 1; letter-spacing: 4px; }
+}
+@keyframes bootBar {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+@keyframes bootOut {
+  to { opacity: 0; visibility: hidden; }
+}
+
+/* ── Impression (Registre PDF) ─────────────── */
+@media print {
+  body * { visibility: hidden; }
+  .print-zone, .print-zone * { visibility: visible; }
+  /* Important : ne PAS utiliser inset:0 ici. "bottom:0"/"right:0" bornent la boîte
+     à la hauteur d'une seule page (même avec overflow:visible), donc tout ce qui
+     dépasse la 1re page est perdu au lieu de couler sur les pages suivantes. */
+  .print-zone { position: absolute !important; top: 0 !important; left: 0 !important; right: auto !important; bottom: auto !important; width: 100% !important; height: auto !important; overflow: visible !important; }
+  /* .print-zone passe en position:absolute ci-dessus : il se positionne alors par
+     rapport à son ancêtre positionné le plus proche, .vignette-wrap (position:relative).
+     Or .vignette-wrap est figé à height:100dvh + overflow:hidden (nécessaire à l'écran
+     pour contenir le grain/vignette) — sans ce correctif, TOUT ce qui dépasse un écran
+     est encore rogné, même avec .print-zone en overflow:visible. C'est la vraie cause
+     du "1 page sur 1" : le contenu déborde bien de .print-zone mais se fait couper par
+     son ancêtre avant même d'atteindre le moteur de pagination du navigateur. */
+  .vignette-wrap { overflow: visible !important; height: auto !important; }
+  .tab-fade { overflow: visible !important; height: auto !important; flex: none !important; }
+  .no-print { display: none !important; }
+}
+
+/* ── Feedback tactile uniforme (press) ─────── */
+button { -webkit-tap-highlight-color: transparent; }
+button:active { transform: scale(0.97); }
+.press-btn { transition: transform 0.08s ease, background 0.2s ease, border-color 0.2s ease; }
+.press-btn:active { transform: scale(0.96); }
+
+/* Les boutons dans les zones scrollables/icônes ne doivent pas "sauter" trop */
+.hcard button:active { transform: scale(0.94); }
+
+/* ═══════════════════════════════════════════════
+   RAFFINEMENT VISUEL — profondeur, matière, or vivant
+   ═══════════════════════════════════════════════ */
+
+/* ── 10. Palette de dorés nuancée (variables) ── */
+:root {
+  --or-clair: #e0c060;
+  --or-vif: #b8922a;
+  --or-profond: #8a6a1a;
+  --or-patine: #5a4410;
+  --ombre-douce: 0 4px 18px rgba(0,0,0,0.55);
+  --ombre-carte: 0 2px 10px rgba(0,0,0,0.4);
+  --rayon: 3px;
+}
+
+/* ── 1. Dorures vivantes : reflet dégradé animé ── */
+@keyframes goldShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.gold-shine {
+  background: linear-gradient(100deg, var(--or-profond) 0%, var(--or-clair) 20%, var(--or-vif) 40%, var(--or-clair) 55%, var(--or-profond) 80%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: goldShimmer 6s linear infinite;
+}
+/* Version pour grands titres, plus lente */
+.gold-shine-slow {
+  background: linear-gradient(100deg, var(--or-profond) 0%, var(--or-clair) 25%, #fff4d0 45%, var(--or-clair) 60%, var(--or-profond) 85%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: goldShimmer 8s linear infinite;
+}
+
+/* ── 2. Ombres portées cohérentes ── */
+.vignette-wrap [style*="bgCard"],
+.hcard {
+  box-shadow: var(--ombre-carte);
+}
+
+/* ── 3. Coins ornementés (équerres dorées) ── */
+.ornate-corners { position: relative; }
+.ornate-corners::before,
+.ornate-corners::after {
+  content: "";
+  position: absolute;
+  width: 12px; height: 12px;
+  border-color: var(--or-vif);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.ornate-corners::before {
+  top: 4px; left: 4px;
+  border-top: 1px solid; border-left: 1px solid;
+}
+.ornate-corners::after {
+  bottom: 4px; right: 4px;
+  border-bottom: 1px solid; border-right: 1px solid;
+}
+
+/* ── 5. Lettrines (première lettre du lore) ── */
+.lettrine::first-letter {
+  font-family: 'Cinzel Decorative', 'Cinzel', serif;
+  font-size: 2.6em;
+  float: left;
+  line-height: 0.82;
+  padding: 3px 6px 0 0;
+  color: var(--or-vif);
+  text-shadow: 0 1px 4px rgba(184,146,42,0.3);
+}
+
+/* ── 7. Apparition en cascade ── */
+@keyframes cardRise {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.cascade > * {
+  animation: cardRise 0.4s ease both;
+}
+.cascade > *:nth-child(1) { animation-delay: 0.02s; }
+.cascade > *:nth-child(2) { animation-delay: 0.06s; }
+.cascade > *:nth-child(3) { animation-delay: 0.10s; }
+.cascade > *:nth-child(4) { animation-delay: 0.14s; }
+.cascade > *:nth-child(5) { animation-delay: 0.18s; }
+.cascade > *:nth-child(6) { animation-delay: 0.22s; }
+.cascade > *:nth-child(7) { animation-delay: 0.26s; }
+.cascade > *:nth-child(8) { animation-delay: 0.30s; }
+.cascade > *:nth-child(n+9) { animation-delay: 0.34s; }
+
+/* ── 8. Transition d'onglet (fondu directionnel) ── */
+@keyframes tabFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.tab-fade { animation: tabFade 0.25s ease both; }
+
+/* ── 9. Cohérence des rayons ── */
+.vignette-wrap button { border-radius: 2px; }
+
+/* ── 4. Voile de faction (teinte de fond dynamique) ── */
+.faction-veil::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(ellipse 120% 60% at 50% 0%, var(--veil, transparent) 0%, transparent 60%);
+  opacity: 0.12;
+  transition: background 0.6s ease;
+}
+
+/* ══════════════════════════════════════════════
+   RAFFINEMENT VISUEL — profondeur, matière, or
+   ══════════════════════════════════════════════ */
+
+/* ── 10. Palette de dorés nuancée ─────────────── */
+:root {
+  --or-clair: #e0c060;
+  --or-vif: #d4a838;
+  --or: #b8922a;
+  --or-profond: #8a6d1e;
+  --or-patine: #6a5420;
+  --or-ombre: #2a2010;
+  --ombre-douce: 0 4px 20px rgba(0,0,0,0.5);
+  --ombre-carte: 0 2px 12px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.6);
+  --ombre-modal: 0 12px 48px rgba(0,0,0,0.75), 0 2px 8px rgba(0,0,0,0.5);
+  --rayon: 3px;
+}
+
+/* ── 1. Dorures vivantes (reflet animé) ───────── */
+@keyframes goldShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.gold-shine {
+  background: linear-gradient(100deg,
+    var(--or-patine) 0%, var(--or) 25%, var(--or-clair) 45%,
+    #fff8e0 50%, var(--or-clair) 55%, var(--or) 75%, var(--or-patine) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: goldShimmer 6s linear infinite;
+}
+/* version discrète pour grands titres, reflet plus lent et plus rare */
+.gold-shine-slow {
+  background: linear-gradient(100deg,
+    var(--or) 0%, var(--or) 40%, var(--or-clair) 48%,
+    #fff8e0 50%, var(--or-clair) 52%, var(--or) 60%, var(--or) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: goldShimmer 9s linear infinite;
+}
+
+/* ── 2. Ombres portées cohérentes ─────────────── */
+.hcard {
+  box-shadow: var(--ombre-carte);
+}
+
+/* ── 3. Coins ornementés (équerres dorées) ────── */
+.ornate-corners { position: relative; }
+.ornate-corners::before,
+.ornate-corners::after {
+  content: "";
+  position: absolute;
+  width: 12px; height: 12px;
+  border-color: var(--or-profond);
+  pointer-events: none;
+  opacity: 0.6;
+}
+.ornate-corners::before {
+  top: 4px; left: 4px;
+  border-top: 1px solid; border-left: 1px solid;
+}
+.ornate-corners::after {
+  bottom: 4px; right: 4px;
+  border-bottom: 1px solid; border-right: 1px solid;
+}
+
+/* ── 5. Lettrines (manuscrit) ─────────────────── */
+.lettrine::first-letter {
+  font-family: 'Cinzel Decorative', 'Cinzel', serif;
+  font-size: 2.8em;
+  float: left;
+  line-height: 0.82;
+  padding: 4px 8px 0 0;
+  color: var(--or);
+  text-shadow: 0 2px 8px rgba(184,146,42,0.35);
+}
+
+/* ── 7. Apparition en cascade ─────────────────── */
+@keyframes cardRise {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.cascade > * {
+  animation: cardRise 0.4s ease both;
+}
+.cascade > *:nth-child(1) { animation-delay: 0.02s; }
+.cascade > *:nth-child(2) { animation-delay: 0.06s; }
+.cascade > *:nth-child(3) { animation-delay: 0.10s; }
+.cascade > *:nth-child(4) { animation-delay: 0.14s; }
+.cascade > *:nth-child(5) { animation-delay: 0.18s; }
+.cascade > *:nth-child(6) { animation-delay: 0.22s; }
+.cascade > *:nth-child(7) { animation-delay: 0.26s; }
+.cascade > *:nth-child(8) { animation-delay: 0.30s; }
+.cascade > *:nth-child(n+9) { animation-delay: 0.34s; }
+
+/* ── 8. Transition entre onglets ──────────────── */
+@keyframes tabFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.tab-fade { animation: tabFade 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* ── 4. Voile de faction (teinte de fond) ─────── */
+.faction-veil { position: relative; }
+.faction-veil::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 50% at 50% 0%, var(--veil, transparent), transparent 70%);
+  opacity: 0.06;
+  pointer-events: none;
+  z-index: 0;
+  transition: background 0.6s ease;
+}
+
+/* Bottom-sheet montant (choix caméra/galerie mission) */
+@keyframes sheetUp {
+  from { opacity: 0;  }
+  to   { opacity: 1; }
+}
