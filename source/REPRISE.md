@@ -196,6 +196,21 @@ Fond de l'Accueil (7 octobre)
   dès qu'une photo de cette armée entre dans la Parade ; nouvelle mission 7 jours après le début
   (pas la même armée si possible). Dans la Parade, il faut choisir l'armée (SM par défaut).
 
+### Calendrier de l'Avent (13 octobre 2026)
+- Carte sur l'Accueil en décembre uniquement (`components/Advent.jsx`, texte dans `data/advent.jsx`).
+- 24 portes : celle du jour et les précédentes s'ouvrent (rattrapage tout le mois) ; une porte
+  ouverte se relit, avec navigation nuit précédente / suivante.
+- Feuilleton « La Veille du Reliquaire » en 24 épisodes, l'armée principale (le plus de figurines)
+  en héros ; héros = surnom d'un personnage peint, sinon nom de l'unité, sinon « le chef de guerre ».
+  Noms figés à la première porte (`appState.advent = {year, army, hero, opened}`).
+- La porte 24 : fenêtre spéciale « Nuit de l'Ascension ». Les 24 ouvertes ajoutent l'année à
+  `appState.adventDone` → trophée « Veilleur de l'Avent » (avec sa cérémonie).
+- Testé dans l'aperçu avec une horloge réglée au 5 et au 26 décembre.
+
+### Compilation : piège du CSS (13 octobre 2026)
+- Vite 8 minifie le CSS avec Lightning CSS, qui supprimait `backdrop-filter: none` dans `.hc-bare`
+  (cartouches de nouveau floues). `cssMinify: false` dans `vite.config.js` : ne pas le retirer.
+
 ## Ce qui a été vérifié, et ce qui ne l'a pas été
 
 - Vérifié par Claude : l'app compile ; aucune variable manquante ; sauvegarde locale testée avec

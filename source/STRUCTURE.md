@@ -26,6 +26,7 @@
 | `components/TrophyCeremony.jsx` | Trophée débloqué : courte cérémonie (14 secondes) |
 | `components/LightCeremony.jsx` | Consécration courte (30 secondes) de toute autre figurine peinte |
 | `components/ServoAssistant.jsx` | Panneau du servo-crâne convoqué depuis l'Accueil (requêtes et inspection) |
+| `components/Advent.jsx` | Calendrier de l'Avent de l'Accueil (décembre) : portes et lecture des épisodes |
 | `components/ServoSkull.jsx` | Le servo-crâne qui traverse l'Accueil (remarques, scans) |
 | `components/imperial.jsx` | Date impériale (0 735 026.M42) et date classique au toucher |
 | `components/AmbientSound.jsx` | Musique d'ambiance (pistes : `AMBIENT_TRACKS`) |
@@ -38,6 +39,7 @@
 | `data/prices.json` | **Prix boutique** : c'est ce fichier qu'on modifie en cas de hausse de prix |
 | `data/prices.jsx` | Chargement des prix boutique |
 | `data/lore.jsx` | Citations, Tarot, phrases de célébration |
+| `data/advent.jsx` | Feuilleton de l'Avent « La Veille du Reliquaire » (24 épisodes) |
 | `data/tarot.jsx` | Tarot : jeux d'armée, lames renversées, lames personnelles, tirage en trois (illustrations dans public/tarot/) |
 | `data/events.jsx` | Visites rares et fêtes du calendrier impérial (textes et dates) |
 | `data/names.jsx` | Noms de baptême proposés (bouton ⚄), par faction |

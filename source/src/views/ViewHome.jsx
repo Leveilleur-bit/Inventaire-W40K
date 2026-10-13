@@ -19,6 +19,7 @@ import { TRIPLE_FESTIVALS, deckKeyFor, personalLine, tarotImage, tripleDraw, wee
 import { chaplainCounsel } from '../lib/counsel.jsx';
 import { servoNews } from '../lib/servo.jsx';
 import { ServoAssistant } from '../components/ServoAssistant.jsx';
+import { AdventCard } from '../components/Advent.jsx';
 import { IMG as SKULL_IMG } from '../components/ServoSkull.jsx';
 
 // Bougie du serment : la cire baisse avec le temps ; éteinte, un filet de fumée
@@ -37,7 +38,7 @@ function OathCandle({ pct = 1, asleep = false }) {
   );
 }
 
-export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onRelightOath, onReleaseOath, onBurnParchments, onCompleteMission, onUpdateNickname, onUpdatePhoto, onSetCrusade, onSetBlessing, onSwearOath, onResolveOath, openChronicle, inventory, appState, paintPct, totalModels, totalPainted, totalPts, onNav, homeBackground, onSetBackground, onOpenInInventory, confirm, onSetTarotWeek, lastExport, onExport, driveSynced, onSetBackupDismiss, onSetListName, listNames, onUpdatePurchased, onSetListGoal, listGoals, onSetPts, ptsMap, onServoNewsShown, onUpdatePaint, onMarkReviewed, onSetWeekMission }) {
+export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onRelightOath, onReleaseOath, onBurnParchments, onCompleteMission, onUpdateNickname, onUpdatePhoto, onSetCrusade, onSetBlessing, onSwearOath, onResolveOath, openChronicle, inventory, appState, paintPct, totalModels, totalPainted, totalPts, onNav, homeBackground, onSetBackground, onOpenInInventory, confirm, onSetTarotWeek, lastExport, onExport, driveSynced, onSetBackupDismiss, onSetListName, listNames, onUpdatePurchased, onSetListGoal, listGoals, onSetPts, ptsMap, onServoNewsShown, onUpdatePaint, onMarkReviewed, onSetWeekMission, onSetAdvent }) {
   // Portée top-level de ViewHome : nécessaire ici (pas seulement dans l'IIFE de la
   // citation plus bas) car le bandeau "Aucun ordre en cours" du Dé du Destin s'en sert
   // aussi, plus loin dans le rendu. Avant ce correctif, ce bandeau référençait un
@@ -747,6 +748,9 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
             </div>
           );
         })()}
+
+        {/* ── Calendrier de l'Avent (décembre) ── */}
+        {onSetAdvent && <AdventCard appState={appState} inventory={appState.inventory || []} listNames={listNames} onSetAdvent={onSetAdvent} />}
 
         {/* ── Mission de la semaine (Parade, 7 jours) ── */}
         {weekMission && weekAge != null && weekAge < 7 && (() => {

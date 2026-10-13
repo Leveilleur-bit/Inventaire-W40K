@@ -49,6 +49,7 @@ export function computeTrophies({ inventory = [], paintHistory = [], ptsMap = {}
     { icon:"✪", name:"Perfection", desc:"Collection entière à 100%", got: totalModels > 0 && totalPainted === totalModels, prog:`${totalPainted}/${totalModels} figurines` },
     { icon:"↻", name:"Assidu", desc:"7 jours de mission d'affilée", got: (appState.missionBest||0) >= 7, prog:`record : ${appState.missionBest||0}/7 jours` },
     { icon:"✛", name:"Dévotion", desc:"10 missions du jour accomplies", got: (appState.missionTotal||0) >= 10, prog:`${Math.min(appState.missionTotal||0,10)}/10 missions` },
+    { icon:"❄", name:"Veilleur de l'Avent", desc:"Ouvrir les 24 portes du calendrier de l'Avent", got: (appState.adventDone||[]).length > 0, prog:`${Object.keys(appState.advent?.opened||{}).length}/24 portes` },
     { icon:"†", name:"Litanie Sans Fin", desc:"50 missions du jour accomplies", got: (appState.missionTotal||0) >= 50, prog:`${Math.min(appState.missionTotal||0,50)}/50 missions` },
   ];
   return badges;
