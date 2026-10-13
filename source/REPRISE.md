@@ -217,6 +217,11 @@ Fond de l'Accueil (7 octobre)
 - `components/Seal.jsx` : armées impériales et Chevaliers → ce sceau ; Chaos, Tyranides, xénos →
   l'ancien disque de cire rouge. Utilisé par les deux cérémonies (110 px colosse, 92 px courte).
 - Cérémonie du colosse : la bulle du servo-crâne ne recouvre plus le texte du décret.
+- Deux autres sceaux fournis ensuite, détourés en cercle net : `sceau-chaos.png` (Chaos : CSM, CK, LD)
+  et `sceau-xenos.png` (cire verte, Tyranides et autres xénos). Plus aucun disque de secours visible,
+  sauf si une image ne se charge pas.
+- `components/RelicFrame.jsx` : cadre doré (baguette, filets, équerres aux coins, fleurons) autour de
+  la photo, dans les deux cérémonies.
 
 ## Ce qui a été vérifié, et ce qui ne l'a pas été
 

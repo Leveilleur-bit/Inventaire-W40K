@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { PuritySeal } from './Seal.jsx';
+import { RelicFrame } from './RelicFrame.jsx';
 import { GoldBurst } from './effects.jsx';
 import { IMG, SkullSVG, SIZE } from './ServoSkull.jsx';
 import { playSfx, playLong, vibrate } from '../lib/sfx.jsx';
@@ -171,7 +172,7 @@ export function ColossusCeremony({ data, onClose }) {
         </div>
 
         {/* La relique */}
-        <div style={{ position:"relative", width:"min(62vw, 250px, 30vh)", aspectRatio:"1", marginTop:"4px", flexShrink:0, border:`1px solid ${acc}88`, boxShadow: revealed ? `0 0 40px ${acc}55` : "none", background:"#050403",
+        <div style={{ position:"relative", width:"min(62vw, 250px, 30vh)", aspectRatio:"1", marginTop:"4px", flexShrink:0, boxShadow: revealed ? `0 0 40px ${acc}55` : "none", background:"#050403",
           opacity: frameIn ? 1 : 0, transition:"opacity 1.5s ease, box-shadow 3s",
           animation: sealed ? "stampShake 0.4s ease-out both" : "none" }}>
           {/* La photo est rognée par le cadre pendant son apparition (elle ne déborde plus) */}
@@ -182,6 +183,7 @@ export function ColossusCeremony({ data, onClose }) {
                 : <div style={{ color:acc, fontSize:"110px", textShadow:`0 0 30px ${acc}` }}>{data.icon || "✠"}</div>}
             </div>
           </div>
+          <RelicFrame />
           {/* Sceau de pureté */}
           {sealed && <PuritySeal faction={data.faction} size={110} acc={acc} />}
         </div>

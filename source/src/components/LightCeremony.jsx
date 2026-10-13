@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { PuritySeal } from './Seal.jsx';
+import { RelicFrame } from './RelicFrame.jsx';
 import { GoldBurst } from './effects.jsx';
 import { playSfx } from '../lib/sfx.jsx';
 
@@ -54,7 +55,7 @@ export function LightCeremony({ data, onClose }) {
         <div style={{ ...fade(0.6, 1.2), color:acc, fontFamily:"'Cinzel',serif", fontSize:"12px", letterSpacing:"5px" }}>RELIQUE CONSACRÉE</div>
 
         {/* La relique */}
-        <div style={{ position:"relative", width:"min(56vw, 220px)", aspectRatio:"1", marginTop:"20px", flexShrink:0, border:`1px solid ${acc}88`, background:"#050403",
+        <div style={{ position:"relative", width:"min(56vw, 220px)", aspectRatio:"1", marginTop:"20px", flexShrink:0, background:"#050403",
           opacity: revealed ? 1 : 0, boxShadow: sealed ? `0 0 34px ${acc}55` : "none", transition:"opacity 1.2s ease, box-shadow 1.5s", animation: sealed ? "stampShake 0.4s ease-out both" : "none" }}>
           <div style={{ position:"absolute", inset:0, overflow:"hidden" }}>
             <div style={{ position:"absolute", inset:0, opacity: revealed ? 1 : 0, transform: revealed ? "scale(1)" : "scale(1.08)", filter: revealed ? "brightness(1)" : "brightness(0)", transition:"opacity 3s ease, transform 4s ease, filter 3s ease", display:"flex", alignItems:"center", justifyContent:"center" }}>
@@ -63,6 +64,7 @@ export function LightCeremony({ data, onClose }) {
                 : <div style={{ color:acc, fontSize:"96px", textShadow:`0 0 30px ${acc}` }}>{data.icon || "✠"}</div>}
             </div>
           </div>
+          <RelicFrame />
           {/* Sceau de pureté */}
           {sealed && <PuritySeal faction={data.faction} size={92} acc={acc} />}
         </div>

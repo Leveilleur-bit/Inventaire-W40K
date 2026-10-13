@@ -27,6 +27,7 @@
 | `components/LightCeremony.jsx` | Consécration courte (30 secondes) de toute autre figurine peinte |
 | `components/ServoAssistant.jsx` | Panneau du servo-crâne convoqué depuis l'Accueil (requêtes et inspection) |
 | `components/Seal.jsx` | Sceau de pureté des cérémonies (image à l'aquila ou disque de cire selon l'armée) |
+| `components/RelicFrame.jsx` | Cadre doré de la photo dans les cérémonies |
 | `components/Advent.jsx` | Calendrier de l'Avent de l'Accueil (décembre) : portes et lecture des épisodes |
 | `components/ServoSkull.jsx` | Le servo-crâne qui traverse l'Accueil (remarques, scans) |
 | `components/imperial.jsx` | Date impériale (0 735 026.M42) et date classique au toucher |
