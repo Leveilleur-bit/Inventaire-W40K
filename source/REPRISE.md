@@ -223,6 +223,19 @@ Fond de l'Accueil (7 octobre)
 - `components/RelicFrame.jsx` : cadre doré (baguette, filets, équerres aux coins, fleurons) autour de
   la photo, dans les deux cérémonies.
 
+### Test de stabilité (13 octobre 2026)
+- Fait par Claude sur la version compilée, avec une collection proche de la vraie (87 entrées,
+  42 photos, 6 armées) : 500 changements d'onglet en rafale, 50 changements de statut rapides
+  (cérémonies en cascade), 40 ouvertures du servo-crâne, puis rechargement.
+- Résultat : aucune erreur de l'app, mémoire stable (revient à ~10 Mo), aucune perte de données
+  au rechargement (statuts et photos identiques), pas de gel (tâche la plus longue < 0,1 s).
+- Corrigé : un toucher sur le statut d'une figurine PEINTE la renvoyait « sur grappe » et effaçait
+  sa date de consécration sans prévenir → confirmation « Retirer la consécration ? » (aussi via
+  l'appui long).
+- Trouvé : les bruitages `sons/sfx-*.mp3` (cloche, sceau, célébration, musique du colosse, dé,
+  carte) n'ont JAMAIS été en ligne (absents du dépôt, déjà avant le 13 octobre). Ils sont sur mon PC
+  dans `public/sons/` : à envoyer à Claude en zip. En attendant, l'app ne les redemande plus en boucle.
+
 ## Ce qui a été vérifié, et ce qui ne l'a pas été
 
 - Vérifié par Claude : l'app compile ; aucune variable manquante ; sauvegarde locale testée avec

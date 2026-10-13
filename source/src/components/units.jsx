@@ -324,10 +324,16 @@ export function InventoryItem({ paintHistory, item, faction, ptsMap, onSetPts, h
   const defaultCount = MODEL_COUNT[item.unit?.name] || 1;
   const modelCount = item.modelCount || defaultCount;
   const totalFigs = modelCount * (item.qty||1);
+  // Quitter « Peint » efface la date de consécration : on demande confirmation, pour qu'un
+  // toucher de trop sur une figurine peinte ne la renvoie pas « sur grappe » sans prévenir.
+  const setStatus = (next) => {
+    if (item.paintStatus === "painted" && next !== "painted" && confirm) {
+      confirm(`Retirer la consécration de "${item.nickname || item.unit.name}" ? Sa date de consécration sera effacée.`, () => onUpdatePaint(item.id, next), "#c04040", "RETIRER", false);
+    } else onUpdatePaint(item.id, next);
+  };
   const cycleStatus = () => {
     const idx = PAINT_KEYS.indexOf(item.paintStatus||"unpainted");
-    const next = PAINT_KEYS[(idx+1) % PAINT_KEYS.length];
-    onUpdatePaint(item.id, next);
+    setStatus(PAINT_KEYS[(idx+1) % PAINT_KEYS.length]);
   };
   const borderColor = item.paintStatus==="painted" ? PAINT_STATUS.painted.color
     : item.paintStatus==="wip" ? PAINT_STATUS.wip.color
@@ -741,7 +747,7 @@ export function InventoryItem({ paintHistory, item, faction, ptsMap, onSetPts, h
           {item.nickname && <div style={{ color:accent, fontSize:"11.5px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", marginTop:"1px", opacity:0.85 }}>« {item.nickname} »</div>}
           {/* Taille de squad — inline avec le nom, compact */}
           <div style={{ display:"flex", gap:"6px", marginTop:"2px", alignItems:"center", flexWrap:"wrap" }}>
-            <PaintCycleBtn status={item.paintStatus||"unpainted"} onCycle={cycleStatus} onSet={(s) => onUpdatePaint(item.id, s)} />
+            <PaintCycleBtn status={item.paintStatus||"unpainted"} onCycle={cycleStatus} onSet={(s) => setStatus(s)} />
             <WahapediaBtn unitName={item.unit.name} faction={faction} accent={accent} />
           </div>
         </div>

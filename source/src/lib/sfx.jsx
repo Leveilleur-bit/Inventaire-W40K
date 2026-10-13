@@ -31,11 +31,16 @@ export function vibrate(name) {
   try { navigator.vibrate?.(PATTERNS[name]); } catch {}
 }
 const cache = {};
+const missing = new Set();   // sons introuvables (404) : plus de nouvelle tentative
 export function playSfx(name, volume = 0.6, vib = name) {
   vibrate(vib);
-  if (!enabled || !FILES[name]) return;
+  if (!enabled || !FILES[name] || missing.has(name)) return;
   try {
-    if (!cache[name]) { cache[name] = new Audio(import.meta.env.BASE_URL + FILES[name]); cache[name].preload = "auto"; }
+    if (!cache[name]) {
+      cache[name] = new Audio(import.meta.env.BASE_URL + FILES[name]); cache[name].preload = "auto";
+      // Fichier absent du site : on ne le redemande plus à chaque geste
+      cache[name].addEventListener("error", () => missing.add(name), { once: true });
+    }
     const a = cache[name].cloneNode();   // permet deux lectures rapprochées
     a.volume = volume;
     const p = a.play(); if (p) p.catch(() => {});
@@ -44,9 +49,10 @@ export function playSfx(name, volume = 0.6, vib = name) {
 
 // Joue un son et renvoie de quoi l'arrêter (pour la musique de la cérémonie des colosses)
 export function playLong(name, volume = 0.7) {
-  if (!enabled || !FILES[name]) return () => {};
+  if (!enabled || !FILES[name] || missing.has(name)) return () => {};
   try {
     const a = new Audio(import.meta.env.BASE_URL + FILES[name]); a.volume = volume;
+    a.addEventListener("error", () => missing.add(name), { once: true });
     const p = a.play(); if (p) p.catch(() => {});
     return () => { try { a.pause(); } catch {} };
   } catch { return () => {}; }
