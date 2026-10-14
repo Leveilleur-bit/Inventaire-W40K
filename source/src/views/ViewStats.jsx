@@ -9,7 +9,7 @@ import { useBackButton } from '../hooks/useBackButton.jsx';
 import { crusadeStartOf } from '../lib/utils.jsx';
 import { playSfx } from '../lib/sfx.jsx';
 import { colossusCount } from '../lib/colossus.jsx';
-import { computeTrophies } from '../lib/trophies.jsx';
+import { computeTrophies, enrolDaysLeft } from '../lib/trophies.jsx';
 
 export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, paintHistory, openChronicle, confirm, onSealJudgment }) {
   const [showRetro, setShowRetro] = useState(false);
@@ -490,6 +490,8 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
                 <div style={{ color:"#d8c8ac", fontSize:"12px", letterSpacing:"2px", marginTop:"2px" }}>PEINT</div>
                 {/* Shame-o-meter */}
                 {(() => {
+                  const enrol = enrolDaysLeft(appState);
+                  if (enrol > 0) return <div style={{ color:"#b8922a", fontSize:"11px", fontFamily:"'Cinzel',serif", marginTop:"4px", letterSpacing:"1px" }}>⧗ Enrôlement · J-{enrol}</div>;
                   const sc = paintPct>=80?"#3ea23e":paintPct>=60?"#c2a83e":paintPct>=40?"#d68a3e":"#d64545";
                   const st = paintPct>=95?"⚔ Croisé Exemplaire":paintPct>=80?"✠ Serviteur Loyal":paintPct>=60?"⚠ Sous Surveillance":paintPct>=40?"⸸ Honte Croissante":paintPct>=20?"● Hérétique":"☠ Renégat Confirmé";
                   return <div style={{ color:sc, fontSize:"11px", fontFamily:"'Cinzel',serif", marginTop:"4px", letterSpacing:"1px" }}>{st}</div>;
@@ -895,7 +897,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
           const judgments = appState.judgments || [];
           const sealed = judgments.find(j => j.year === year);
           // Scellable seulement en nov/déc, et une seule fois par an
-          const canSeal = month >= 10 && !sealed;
+          const canSeal = month >= 10 && !sealed && enrolDaysLeft(appState) === 0;   // pas de jugement pendant l'enrôlement
           const dPct = sealed ? sealed.pct : paintPct;
           const dPainted = sealed ? sealed.painted : totalPainted;
           const dTotal = sealed ? sealed.total : totalModels;

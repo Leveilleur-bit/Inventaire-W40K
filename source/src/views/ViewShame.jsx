@@ -6,6 +6,7 @@ import { getModelCount } from '../data/points.jsx';
 import { PAINT_STATUS, findUnit } from '../data/units.jsx';
 import { useBackButton } from '../hooks/useBackButton.jsx';
 import { localDay } from '../lib/utils.jsx';
+import { enrolDaysLeft } from '../lib/trophies.jsx';
 import { playSfx, vibrate } from '../lib/sfx.jsx';
 import { colossusCount } from '../lib/colossus.jsx';
 
@@ -163,13 +164,15 @@ export function ViewShame({ onSwearOathOn, inventory, appState, onSetFate, onUpd
           );
         })()}
         {(() => {
-          const shameTitle = paintPct >= 95 ? "⚔ Croisé Exemplaire — L'Empereur est fier"
+          const enrol = enrolDaysLeft(appState);
+          const shameTitle = enrol > 0 ? `⧗ Enrôlement en cours — le Chapelain jugera dans ${enrol} jour${enrol > 1 ? "s" : ""}`
+            : paintPct >= 95 ? "⚔ Croisé Exemplaire — L'Empereur est fier"
             : paintPct >= 80 ? "✠ Serviteur Loyal — Continue ainsi"
             : paintPct >= 60 ? "⚠ Sous Surveillance — Le Chapelain s'impatiente"
             : paintPct >= 40 ? "⸸ Honte Croissante — La pile menace"
             : paintPct >= 20 ? "● Hérétique du Pot de Peinture — Repentance immédiate"
             : "☠ Renégat Confirmé — Excommunication Majeure";
-          const shameColor = paintPct >= 80 ? "#3ea23e" : paintPct >= 60 ? "#c2a83e" : paintPct >= 40 ? "#d68a3e" : "#d64545";
+          const shameColor = enrol > 0 ? "#b8922a" : paintPct >= 80 ? "#3ea23e" : paintPct >= 60 ? "#c2a83e" : paintPct >= 40 ? "#d68a3e" : "#d64545";
           return (
             <div style={{ marginBottom:"10px" }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"4px" }}>

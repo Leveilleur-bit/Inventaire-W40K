@@ -245,6 +245,10 @@ Fond de l'Accueil (7 octobre)
 - Accueil : pendant ces 7 jours, la jauge de honte (Shame-o-meter) est remplacée par la carte
   « MISE EN PLACE DE LA COLLECTION » : J-x, 7 cases, figurines et armées enregistrées.
   `enrolDaysLeft()` dans `lib/trophies.jsx` sert aux deux.
+- Aussi pendant l'enrôlement : titre neutre « Enrôlement en cours » dans SHAME et STATS (au lieu de
+  Hérétique / Renégat…), pas de bouton « Sceller le jugement », messages du Chapelain d'accueil.
+- Vérifié par Claude (14 octobre) : nouvelle installation et installation ancienne, tous les onglets,
+  ajout, cycle de statut, cérémonie, confirmation de retrait, Impression, Mode Serviteur : aucune erreur.
 
 ### Mode Serviteur (14 octobre 2026)
 - Tant que la Parade a moins de 10 photos (`IDLE_PARADE_MIN` dans App.jsx), la veille fait défiler

@@ -193,7 +193,14 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
     const lp = appState.lastPaintAt;
     const daysIdle = lp ? Math.floor((Date.now() - new Date(lp).getTime()) / 86400000) : null;
     const pool = [];
-    if (totalModels > 0 && totalPainted === 0 && !(appState.paintHistory||[]).length) pool.push(
+    // Pendant l'enrôlement (7 premiers jours) : accueil, pas de jugement sur le taux de peinture
+    if (enrolDaysLeft(appState) > 0) pool.push(
+      { text: "Le registre s'ouvre. Inscris chaque relique : le Chapelain jugera plus tard.", author: "Scriptorium du Chapitre" },
+      { text: "Un Chapitre ne se recense pas en un jour. Prends le temps de tout consigner.", author: "Le Chapelain" },
+      { text: "Chaque figurine inscrite est une âme de plus au service de la Croisade.", author: "Sagesse du Chapitre" },
+      { text: "Le Munitorum compte, trie et classe. Pour une fois, c'est toi qui tiens le registre.", author: "Rapport du Munitorum" },
+      { text: "L'enrôlement d'abord. Le pinceau ensuite. Le jugement, bien plus tard.", author: "Le Chapelain, patient" });
+    else if (totalModels > 0 && totalPainted === 0 && !(appState.paintHistory||[]).length) pool.push(
       { text: "Toute croisade commence par une figurine grise et un pinceau propre. Tu as les deux.", author: "Le Chapelain" },
       { text: "Le registre est ouvert. Le Chapelain attend ta première consécration.", author: "Scriptorium du Chapitre" },
       { text: "Nul n'est né Maître de Chapitre. Commence par une seule figurine.", author: "Sagesse du Chapitre" },
