@@ -164,7 +164,7 @@ export function ModalAddUnit({ faction, inventory, onClose, onAdd, mode="list" }
   return (
     <Overlay>
       <Sheet accent={f.accent}>
-        <SheetHeader title={mode==="list"?"Ajouter à la liste":"Ajouter à l'inventaire"} onClose={onClose} accent={f.accent} />
+        <SheetHeader title={{ list:"Ajouter à la liste", wishlist:"Ajouter à la Wishlist", print:"Ajouter à l'impression" }[mode] || "Ajouter à l'inventaire"} onClose={onClose} accent={f.accent} />
         <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher…" style={{ marginBottom:"8px" }} />
         {faction==="SM" && (
           <div style={{ display:"flex", gap:"6px", overflowX:"auto", marginBottom:"10px", paddingBottom:"4px" }}>
@@ -791,11 +791,11 @@ export function AddPrintForm({ onAdd }) {
     <ModalAddUnit
       faction={faction}
       inventory={[]}
-      mode="inventory"
+      mode="print"
       onClose={() => setStep("idle")}
       onAdd={ent => {
         const unit = findUnit(faction, ent.unitId);
-        onAdd({ unitId: ent.unitId, faction, name: unit?.name || ent.unitId, status:"todo" });
+        onAdd({ unitId: ent.unitId, faction, name: unit?.name || ent.unitId, qty: ent.qty || 1, status:"todo" });
         setStep("idle");
       }}
     />

@@ -286,7 +286,7 @@ export function ViewWishlist({ onNav, paintPct, unpainted, shameLawOff, onSetSha
             : (printList||[]).map((item, idx) => (
               <div key={item.id} className="hc-bare orn" style={{ display:"flex", alignItems:"center", gap:"10px", padding:"10px 12px", background:"rgba(13,11,8,0.6)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:"1px solid #1c1a16", marginBottom:"6px" }}>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ color:"#e8dfc0", fontSize:"13px", fontFamily:"'Cinzel',serif", marginBottom:"2px" }}>{item.name}</div>
+                  <div style={{ color:"#e8dfc0", fontSize:"13px", fontFamily:"'Cinzel',serif", marginBottom:"2px" }}>{item.name}{item.qty > 1 && <span style={{ color:"#b8922a", fontSize:"12px" }}> ×{item.qty}</span>}</div>
                   {item.faction && <div style={{ fontSize:"11.5px" }}><FactionIcon faction={item.faction} size={13} /> <span style={{ color:"#c8b49a", fontSize:"12px" }}>{FACTIONS[item.faction]?.short}</span></div>}
                   <div style={{ display:"flex", gap:"6px", flexWrap:"wrap" }}>
                     {[{k:"todo",l:"À imprimer",c:"#6a5a4a"},{k:"printing",l:"En cours",c:"#8a7a2a"},{k:"done",l:"Imprimé",c:"#2a7a2a"}].map(s => (
