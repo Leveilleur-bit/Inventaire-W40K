@@ -240,6 +240,7 @@ Fond de l'Accueil (7 octobre)
   compressé), carte (page flip), sceau (sound of a seal), cloche (single church bell), célébration
   (fanfare trompette, fondu final), colosse (« Total War » épique, 55 s, fondus). Début de silence
   coupé et volumes égalisés par Claude.
+  Validés par moi sur téléphone le 14 octobre.
 
 ### Trophées : période d'enrôlement (14 octobre 2026)
 - Validé par moi : 7 jours après la première ouverture (`firstOpenAt`), les trophées d'état
