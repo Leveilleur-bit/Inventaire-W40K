@@ -261,6 +261,10 @@ Fond de l'Accueil (7 octobre)
 - Tant que la Parade a moins de 10 photos (`IDLE_PARADE_MIN` dans App.jsx), la veille fait défiler
   les 15 fonds d'écran de l'Accueil (sans légende) ; ensuite, reliques peintes avec photo + Parade.
 
+### Loi de l'Achat Interdit (14 octobre 2026)
+- Validé par moi : elle juge TOUTE la collection (avant : seulement les achats datés depuis le Début
+  de Croisade). Seuil inchangé (80 %). En sommeil pendant les 7 jours d'enrôlement.
+
 ## Ce qui a été vérifié, et ce qui ne l'a pas été
 
 - Vérifié par Claude : l'app compile ; aucune variable manquante ; sauvegarde locale testée avec

@@ -727,15 +727,13 @@ export function App() {
     return total ? Math.round(painted/total*100) : 100;
   })();
   // ── Périmètre de la Loi de l'Achat Interdit ──
-  // La Loi ne juge que ce qui a été acquis DEPUIS le Début de Croisade : une pile
-  // héritée d'avant ne doit pas bloquer les achats à vie. Les figurines sans date
-  // d'achat sont considérées comme antérieures (héritage) et donc exclues.
-  // Si rien n'a été acquis depuis, le ratio vaut 100 % → aucun blocage.
+  // La Loi juge TOUTE la collection (choix du 14 octobre 2026), pas seulement les achats
+  // depuis le Début de Croisade. Pendant l'enrôlement (7 premiers jours), elle dort : on doit
+  // pouvoir saisir toute sa pile sans être bloqué.
   const lawStats = (() => {
-    const start = crusadeStartOf(appState, appState.paintHistory||[]);
-    const norm = (d) => d && (d.length === 7 ? d + "-01" : d);
-    const items = (appState.inventory||[]).filter(i => { const d = norm(i.purchasedAt); return d && d >= start; });
+    if (enrolDaysLeft(appState) > 0) return { pct: 100, unpainted: 0 };
     const figs = (i) => { const u=findUnit(i.faction, i.unitId); return getModelCount(u?.name, i.qty||1, i.modelCount); };
+    const items = appState.inventory || [];
     const total = items.reduce((s,i)=>s+figs(i),0);
     const painted = items.filter(i=>i.paintStatus==="painted").reduce((s,i)=>s+figs(i),0);
     return { pct: total ? Math.round(painted/total*100) : 100, unpainted: Math.max(0, total - painted) };

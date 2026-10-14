@@ -102,7 +102,7 @@ export function ViewWishlist({ onNav, paintPct, unpainted, shameLawOff, onSetSha
         {lawBlocks && (
           <div className="hc-bare" style={{ background:"#12060688", borderLeft:"2px solid #c04040", padding:"7px 12px", margin:"8px 12px 0" }}>
             <div style={{ color:"#c04040", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>⚖ LOI DE L'ACHAT INTERDIT · ACTIVE</div>
-            <div style={{ color:"#8a6a5a", fontSize:"11.5px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", marginTop:"2px" }}>Ratio depuis le Début de Croisade : {paintPct}% — le seuil inquisitorial est de {SHAME_LAW_THRESHOLD}%.</div>
+            <div style={{ color:"#8a6a5a", fontSize:"11.5px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", marginTop:"2px" }}>Collection peinte : {paintPct}% — le seuil inquisitorial est de {SHAME_LAW_THRESHOLD}%.</div>
           </div>
         )}
         {shameLawOff && (
@@ -196,7 +196,7 @@ export function ViewWishlist({ onNav, paintPct, unpainted, shameLawOff, onSetSha
               </div>
               <div style={{ background:"#0a0606", border:"1px solid #2a1a16", padding:"8px 10px", marginBottom:"14px" }}>
                 <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"5px" }}>
-                  <span style={{ color:"#8a6a5a", fontSize:"11px", letterSpacing:"1px", fontFamily:"'Cinzel',serif" }}>DEPUIS LA CROISADE</span>
+                  <span style={{ color:"#8a6a5a", fontSize:"11px", letterSpacing:"1px", fontFamily:"'Cinzel',serif" }}>TOUTE LA COLLECTION</span>
                   <span style={{ color:"#c04040", fontSize:"12px", fontFamily:"'Cinzel',serif", fontWeight:"700" }}>{paintPct}% / {SHAME_LAW_THRESHOLD}%</span>
                 </div>
                 <div style={{ height:"4px", background:"#000", position:"relative" }}>
