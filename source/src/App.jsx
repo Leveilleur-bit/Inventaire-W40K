@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { AmbientSound } from './components/AmbientSound.jsx';
 import { NavGlyph } from './components/heraldry.jsx';
-import { FOND_VEIL, NotifyToast, homeFond, useConfirm } from './components/ui.jsx';
+import { FOND_VEIL, HOME_BG_POOL, NotifyToast, homeFond, useConfirm } from './components/ui.jsx';
+const IDLE_PARADE_MIN = 10;   // Mode Serviteur : photos de Parade nécessaires avant de quitter les fonds d'écran
 import { FACTIONS, factionTitle } from './data/factions.jsx';
 import { WEEKLY_CITATIONS, celebrationLoreFor } from './data/lore.jsx';
 import { POINTS_DB, getModelCount } from './data/points.jsx';
@@ -775,14 +776,20 @@ export function App() {
         <div onClick={() => setIdle(false)}
           style={{ position:"fixed", inset:0, zIndex:900, background:"#010101", cursor:"pointer", animation:"viewFade 0.8s ease both", overflow:"hidden" }}>
           {(() => {
-            // Diaporama lent : reliques peintes avec photo + Parade, une image toutes les 12 s
-            const slides = [
+            // Diaporama lent, une image toutes les 12 s. Tant que la Parade compte moins de
+            // IDLE_PARADE_MIN photos, ce sont les fonds d'écran de l'Accueil qui défilent ;
+            // ensuite, les reliques peintes avec photo et la Parade.
+            const paradePhotos = (appState.parade||[]).filter(p => p.photo).length;
+            const slides = paradePhotos < IDLE_PARADE_MIN
+              ? HOME_BG_POOL.map(f => ({ photo: `${import.meta.env.BASE_URL}fonds/${f}`, title:"", sub:"" }))
+              : [
               ...(appState.inventory||[]).filter(i => i.paintStatus==="painted" && i.photo).map(i => {
                 const u = findUnit(i.faction, i.unitId);
                 return { photo:i.photo, title: i.nickname || u?.name || "", sub: (i.nickname ? (u?.name ? u.name+" · " : "") : "") + (appState.listNames?.[i.faction] || FACTIONS[i.faction]?.label || ""), accent: FACTIONS[i.faction]?.accent };
               }),
               ...(appState.parade||[]).filter(p => p.photo).map(p => ({ photo:p.photo, title: p.title || appState.listNames?.[p.faction] || FACTIONS[p.faction]?.label || "Army on Parade", sub: "Parade" + (p.date ? " · " + p.date : ""), accent: FACTIONS[p.faction]?.accent || "#b8922a" })),
-            ];
+
+              ];
             // Ordre tiré au hasard à chaque mise en veille ; toutes les photos passent avant qu'une
             // revienne, et la veille ne recommence jamais par la dernière photo vue.
             // Au début de chaque veille : on note le compteur et la dernière photo vue la fois précédente

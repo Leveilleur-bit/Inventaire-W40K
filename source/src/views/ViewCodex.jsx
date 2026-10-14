@@ -302,7 +302,7 @@ export function ViewCodex({ onSetTarotDeck, lastExport, onExport, onImport, inve
               ["✦ Titres honorifiques", "Certaines figurines gagnent seules un titre (Le Premier, Vétéran, Le Revenant, Le Colosse, Élu du Destin…). Un ✦ les signale dans les Reliques ; le détail est dans leur fiche."],
               ["◎ Visites et fêtes", "Environ un jour sur trente, un visiteur inattendu passe à l'Accueil. Certaines dates (Nuit du Warp, Ascension, anniversaire de ta Croisade…) changent l'ambiance quelques jours."],
               ["❦ Livre de la Croisade", "Les Chroniques racontent chaque mois de ta Croisade comme un chapitre. Le détail des événements se déplie sous chaque chapitre."],
-              ["☾ Mode Serviteur", "Après 2 minutes sans toucher l'écran, tes figurines peintes et ta Parade défilent. Touche l'écran pour reprendre."],
+              ["☾ Mode Serviteur", "Après 2 minutes sans toucher l'écran, les fonds d'écran défilent ; dès 10 photos dans la Parade, ce sont tes figurines peintes et ta Parade. Touche l'écran pour reprendre."],
               ["★ Fond d'Accueil (Parade)", "Sur une photo Parade, tape l'étoile pour la définir comme fond de l'Accueil. Sans photo choisie, un fond différent tourne chaque jour."],
               ["⎙ Registre PDF", "« Imprimer/PDF » ouvre la boîte de dialogue d'impression (choisis « Enregistrer en PDF »). « Envoyer par mail » ouvre ta messagerie : le PDF doit être joint à la main."],
               ["⟳ Google Drive", "Copie automatique de toute la collection, photos comprises, à chaque modification. Déconnexion possible à tout moment, sans rien effacer."],
