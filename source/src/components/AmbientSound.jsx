@@ -12,15 +12,18 @@ const AMBIENT_TRACKS = {
   tambours:   ["sons/tambours-gothic-storm.mp3", "sons/tambours-empires-fall.mp3", "sons/tambours-war-yudin.mp3", "sons/tambours-war-mountain.mp3"],
   complainte: ["sons/complainte-dark-sadness.mp3"],
 };
+// « Toutes les musiques » (choix du 14 octobre 2026) : les 9 pistes mélangées, qui s'enchaînent
+// sans jamais changer avec l'onglet. Remplace l'ancien mode « Automatique » (une ambiance par
+// onglet, qui coupait la musique à chaque changement d'onglet).
+AMBIENT_TRACKS.playlist = [...new Set(Object.values(AMBIENT_TRACKS).flat())];
 
-const AMBIENT_LABELS = { chant:"Chant liturgique", lames:"Cliquetis de lames", tambours:"Tambours de guerre", complainte:"Complainte" };
+const AMBIENT_LABELS = { playlist:"Toutes les musiques", chant:"Chant liturgique", lames:"Cliquetis de lames", tambours:"Tambours de guerre", complainte:"Complainte" };
 
-// Mode « Automatique » : ambiance selon l'onglet affiché (null = silence).
-const AMBIENT_BY_VIEW = { home:"chant", lists:"tambours", inventory:"lames", wishlist:"lames", shame:"complainte", parade:"chant", stats:"chant", codex:"chant" };
+// L'ancien réglage « auto » (enregistré chez certains) est lu comme « playlist ».
 
 // Par défaut : silence. Le choix de l'utilisateur est mémorisé dans appState.ambient (synchro Drive).
 // mute : « couper tout le son » (musique et sons d'interface) sans perdre les réglages.
-const AMBIENT_DEFAULTS = { on:false, mode:"chant", vol:0.5, bg:false, sfx:true, haptics:true, mute:false };
+const AMBIENT_DEFAULTS = { on:false, mode:"playlist", vol:0.5, bg:false, sfx:true, haptics:true, mute:false };
 
 const AMBIENT_FADE_MS = 1500;
 
@@ -31,7 +34,8 @@ export function AmbientSound({ prefs: rawPrefs, onChange, activeView, hidden }) 
   const [open, setOpen] = useState(false);
   const [volUi, setVolUi] = useState(prefs.vol);
 
-  const effectiveAmb = prefs.mode === "auto" ? (AMBIENT_BY_VIEW[activeView] ?? null) : prefs.mode;
+  const mode = prefs.mode === "auto" ? "playlist" : prefs.mode;
+  const effectiveAmb = AMBIENT_TRACKS[mode] ? mode : "playlist";
   const playing = prefs.on && !!effectiveAmb && !prefs.mute;
 
   const prefsRef = useRef(prefs);         prefsRef.current = prefs;
@@ -143,7 +147,7 @@ export function AmbientSound({ prefs: rawPrefs, onChange, activeView, hidden }) 
     return () => { window.removeEventListener("pointerdown", kick); window.removeEventListener("keydown", kick); };
   }, []);
 
-  // Suit les préférences et, en mode Automatique, l'onglet affiché.
+  // Suit les préférences (la musique ne dépend plus de l'onglet affiché).
   useEffect(() => {
     if (!unlockedRef.current) return;
     const cur = curRef.current;
@@ -203,7 +207,7 @@ export function AmbientSound({ prefs: rawPrefs, onChange, activeView, hidden }) 
 
   const chooseMode = (m) => {
     unlock(); // le tap sur le menu est un geste valide
-    if (prefs.on && prefs.mode === m && !prefs.mute) onChange({ on:false });
+    if (prefs.on && mode === m && !prefs.mute) onChange({ on:false });
     else onChange({ mode:m, on:true, mute:false });   // choisir une ambiance remet le son
   };
 
@@ -219,7 +223,7 @@ export function AmbientSound({ prefs: rawPrefs, onChange, activeView, hidden }) 
   if (hidden) return null;
 
   const gold = "#b8922a", dim = "#8a7a58", line = "#2a2215";
-  const MODES = [["auto","✦","Automatique"],["chant","♪","Chant liturgique"],["lames","⚔","Cliquetis de lames"],["tambours","◉","Tambours de guerre"],["complainte","☾","Complainte"]];
+  const MODES = [["playlist","✦","Toutes les musiques"],["chant","♪","Chant liturgique"],["lames","⚔","Cliquetis de lames"],["tambours","◉","Tambours de guerre"],["complainte","☾","Complainte"]];
   return (
     <div style={{ position:"absolute", bottom:"14px", right:"5px", zIndex:120,   /* dans la barre du bas, à droite des onglets : ne recouvre plus le contenu */ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"6px" }}>
       {open && (
@@ -230,16 +234,12 @@ export function AmbientSound({ prefs: rawPrefs, onChange, activeView, hidden }) 
             {prefs.mute ? "▶\uFE0E REMETTRE LE SON" : "■\uFE0E COUPER TOUT LE SON"}
           </button>
           {MODES.map(([m, glyph, lbl]) => {
-            const active = prefs.on && prefs.mode === m && !prefs.mute;
+            const active = prefs.on && mode === m && !prefs.mute;
             return (
               <button key={m} onClick={() => chooseMode(m)}
                 style={{ background: active?`${gold}22`:"none", border:`1px solid ${active?gold:line}`, color: active?gold:dim, padding:"6px 12px", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"1px", cursor:"pointer", whiteSpace:"nowrap", textAlign:"left" }}>
                 <span style={{ display:"inline-block", width:"16px" }}>{active ? "❚❚\uFE0E" : glyph + "\uFE0E"}</span> {lbl}
-                {m === "auto" && active && (
-                  <div style={{ fontFamily:"'Crimson Pro',serif", fontStyle:"italic", fontSize:"11px", letterSpacing:0, color:"#a8946a", marginTop:"2px", paddingLeft:"20px" }}>
-                    ici : {effectiveAmb ? AMBIENT_LABELS[effectiveAmb].toLowerCase() : "silence"}
-                  </div>
-                )}
+
               </button>
             );
           })}

@@ -274,6 +274,12 @@ Fond de l'Accueil (7 octobre)
   listel à queues d'aronde avec revers. Mêmes réglages qu'avant (formes, partitions, métal, emblèmes,
   ornements de serments). Les petits blasons (< 40 px) restent simples.
 
+### Musique d'ambiance (14 octobre 2026)
+- Validé par moi : le mode « Automatique » (une ambiance par onglet, coupée à chaque changement
+  d'onglet) est remplacé par « Toutes les musiques » : les 9 pistes mélangées, enchaînées en fondu,
+  sans lien avec l'onglet. C'est le mode par défaut ; l'ancien réglage « auto » est lu comme lui.
+  Les ambiances seules (chant, lames, tambours, complainte) restent au choix dans le menu du son.
+
 ## Ce qui a été vérifié, et ce qui ne l'a pas été
 
 - Vérifié par Claude : l'app compile ; aucune variable manquante ; sauvegarde locale testée avec
