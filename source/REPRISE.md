@@ -235,6 +235,10 @@ Fond de l'Accueil (7 octobre)
 - Trouvé : les bruitages `sons/sfx-*.mp3` (cloche, sceau, célébration, musique du colosse, dé,
   carte) n'ont JAMAIS été en ligne (absents du dépôt, déjà avant le 13 octobre). Ils sont sur mon PC
   dans `public/sons/` : à envoyer à Claude en zip. En attendant, l'app ne les redemande plus en boucle.
+- 14 octobre : six bruitages fournis par moi (Pixabay) et mis en ligne dans `sons/` : dé (dice roll,
+  compressé), carte (page flip), sceau (sound of a seal), cloche (single church bell), célébration
+  (fanfare trompette, fondu final), colosse (« Total War » épique, 55 s, fondus). Début de silence
+  coupé et volumes égalisés par Claude.
 
 ### Trophées : période d'enrôlement (14 octobre 2026)
 - Validé par moi : 7 jours après la première ouverture (`firstOpenAt`), les trophées d'état
