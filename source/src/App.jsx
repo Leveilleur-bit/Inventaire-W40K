@@ -17,7 +17,7 @@ import { GoldBurst } from './components/effects.jsx';
 import { ColossusCeremony } from './components/ColossusCeremony.jsx';
 import { LightCeremony } from './components/LightCeremony.jsx';
 import { TrophyCeremony } from './components/TrophyCeremony.jsx';
-import { computeTrophies } from './lib/trophies.jsx';
+import { computeTrophies, enrolDaysLeft } from './lib/trophies.jsx';
 import { OathCeremony } from './components/OathCeremony.jsx';
 import { OATH_TIERS, candleDaysFor, figsOfItem, nameOfItem, oathFormula } from './lib/oaths.jsx';
 import { isColossus } from './lib/colossus.jsx';
@@ -439,6 +439,14 @@ export function App() {
   };
 
   const updatePaint     = (id,status) => {
+    // Période d'enrôlement (7 premiers jours) : on saisit sa collection, rien ne compte encore.
+    // Le statut change, mais sans cérémonie, sans historique de peinture (donc ni trophée,
+    // ni record, ni Chronique), sans promotion et sans effet sur le serment.
+    if (enrolDaysLeft(appState) > 0) {
+      updateApp(s => ({ ...s, inventory: s.inventory.map(i => i.id === id ? { ...i, paintStatus: status, paintedAt: null } : i),
+        paintHistory: (s.paintHistory || []).filter(h => h.id !== id) }));
+      return;
+    }
     if (status==="painted") {
       // Célébration (la vibration part avec le son, voir playSfx plus bas)
       const item = appState.inventory.find(i=>i.id===id);
@@ -582,6 +590,8 @@ export function App() {
   // Mission du jour accomplie : série, compteur, mémo de la dernière mission
   const completeMission = (day, info) => updateApp(s => {
     if (s.lastMissionDay === day) return { ...s, lastBlessing:day, missionLast: info };
+    // Enrôlement : la mission est faite, mais ne compte ni pour la série ni pour les trophées
+    if (enrolDaysLeft(s) > 0) return { ...s, lastBlessing: day, lastMissionDay: day, missionLast: info };
     const yest = localDay(new Date(new Date(day+"T12:00:00").getTime() - 86400000));
     const streak = s.lastMissionDay === yest ? (s.missionStreak||0) + 1 : 1;
     return {

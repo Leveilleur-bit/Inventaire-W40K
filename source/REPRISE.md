@@ -251,6 +251,9 @@ Fond de l'Accueil (7 octobre)
   `enrolDaysLeft()` dans `lib/trophies.jsx` sert aux deux.
 - Aussi pendant l'enrôlement : titre neutre « Enrôlement en cours » dans SHAME et STATS (au lieu de
   Hérétique / Renégat…), pas de bouton « Sceller le jugement », messages du Chapelain d'accueil.
+- Validé par moi : pendant les 7 jours, RIEN ne compte. Passer une figurine à « Peint » change le
+  statut sans cérémonie, sans historique (ni trophée, ni record, ni Chronique, ni promotion, ni
+  serment). Les missions du jour se font mais ne comptent ni pour la série ni pour les trophées.
 - Vérifié par Claude (14 octobre) : nouvelle installation et installation ancienne, tous les onglets,
   ajout, cycle de statut, cérémonie, confirmation de retrait, Impression, Mode Serviteur : aucune erreur.
 

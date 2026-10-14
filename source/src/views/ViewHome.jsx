@@ -720,7 +720,8 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
                       if (newStatus) onUpdatePaint && onUpdatePaint(pick.id, newStatus);
                       onCompleteMission && onCompleteMission(today, { type:"review", name:pickUnit.name });
                       setReviewAdvance(false);
-                      if (newStatus !== "painted") setMissionDone({ type:"review", name:pickUnit.name });   // « Peint » : la cérémonie prend le relais
+                      // « Peint » : la cérémonie prend le relais (sauf pendant l'enrôlement, où il n'y en a pas)
+                      if (newStatus !== "painted" || enrolDaysLeft(appState) > 0) setMissionDone({ type:"review", name:pickUnit.name });
                     };
                     const btn = { padding:"7px 10px", background:"#0a08055a", border:"1px solid #2a2215", color:"#d8c8ac", fontFamily:"'Cinzel',serif", fontSize:"10.5px", letterSpacing:"1px", cursor:"pointer", touchAction:"manipulation" };
                     return (
