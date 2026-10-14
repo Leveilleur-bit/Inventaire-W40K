@@ -24,7 +24,7 @@ export const MODEL_COUNT = {
   "Bladeguard Veteran Squad":3,"Sternguard Veteran Squad":5,"Vanguard Veteran Squad":5,
   "Terminator Squad":5,"Terminator Assault Squad":5,
   "Aggressor Squad":3,"Eradicator Squad":3,"Hellblaster Squad":5,
-  "Eliminator Squad":3,"Infiltrator Squad":5,"Incursor Squad":5,
+  "Eliminator Squad":3,"Infiltrator Squad":5,"Incursor Squad":5,"Phobos Strike Team":10,
   "Reiver Squad":5,"Suppressor Squad":3,"Inceptor Squad":3,
   "Outrider Squad":3,"Assault Squad":5,"Deathwatch Veterans":5,"Deathwing Knights":5,"Wolf Guard Terminators":5,
   "Wolf Guard":5,"Victrix Honour Guard":3, "Death Company Marines with Jump Packs":5, "Deathwing Terminator Squad":5, "Wulfen with Storm Shields":5, "Wolf Guard Headtakers":3, "Space Wolves Scouts":6, "Fenrisian Wolves":5, "Wulfen":5,"Swiftclaws":5,"Thunderwolf Cavalry":3,

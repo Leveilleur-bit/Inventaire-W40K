@@ -182,8 +182,9 @@ Fond de l'Accueil (7 octobre)
 - `accueil-12.jpg` à `accueil-15.jpg` (nouveaux) : deux combats dans une cathédrale, deux sur un
   champ de bataille, reçus en 572 × 1024 et agrandis à 858 × 1536. À remplacer si je renvoie des
   versions plus grandes (en zip, la conversation réduit les images envoyées directement).
-- Proposé, pas décidé : voile plus sombre en haut de l'Accueil (mes fonds ont des ciels clairs) ;
-  alléger les dix fonds (3,1 Mo au total).
+- Proposé, pas décidé : voile plus sombre en haut de l'Accueil (mes fonds ont des ciels clairs).
+- Abandonné (14 octobre) : alléger les fonds. Déjà bien compressés : −2 % en JPEG, −18 % en WebP
+  avec une petite perte de netteté ; chaque fond n'est chargé qu'une fois puis gardé en cache.
 
 ### Nouvelles missions (10 octobre 2026)
 - **Revue de la pile** (mission du jour, 8e type, `review`) : « Ton X est-il toujours sur grappe /
@@ -333,7 +334,7 @@ relique à partager, série de peinture, « l'or qui dort » dans SHAME, rappel 
    Marines (avec Black Templars, Ultramarines, Blood Angels, Dark Angels, Space Wolves),
    Chevaliers Impériaux et Tyranides. Le MFM doit être mis à jour
    chaque trimestre (octobre 2026, janvier 2027).
-2. Taille de « Phobos Strike Team » : à me demander.
+2. (Fait le 14 octobre) Taille de « Phobos Strike Team » : 10 figurines.
 3. Unités sans prix (pas important) : Wardens of Ultramar, Nephilim Jetfighter,
    Ravenwing Command Squad, Iron Priest, Hyperadapted Raveners, Tyrannocyte, Mutilators,
    Captain on Bike, Captain with Jump Pack, Tyranid Prime with Lash Whip, Harridan,
