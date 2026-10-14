@@ -242,6 +242,9 @@ Fond de l'Accueil (7 octobre)
 - Minimums : Purge Totale = une armée d'au moins 20 figurines à 100 % ; Perfection = au moins
   50 figurines, toutes peintes. Constantes en tête de `lib/trophies.jsx`.
 - Un trophée déjà annoncé (`trophiesSeen`) reste gagné, même si la collection change.
+- Accueil : pendant ces 7 jours, la jauge de honte (Shame-o-meter) est remplacée par la carte
+  « MISE EN PLACE DE LA COLLECTION » : J-x, 7 cases, figurines et armées enregistrées.
+  `enrolDaysLeft()` dans `lib/trophies.jsx` sert aux deux.
 
 ### Mode Serviteur (14 octobre 2026)
 - Tant que la Parade a moins de 10 photos (`IDLE_PARADE_MIN` dans App.jsx), la veille fait défiler

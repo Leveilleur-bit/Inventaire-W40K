@@ -18,6 +18,7 @@ import { randomName } from '../data/names.jsx';
 import { TRIPLE_FESTIVALS, deckKeyFor, personalLine, tarotImage, tripleDraw, weeklyCard } from '../data/tarot.jsx';
 import { chaplainCounsel } from '../lib/counsel.jsx';
 import { servoNews } from '../lib/servo.jsx';
+import { ENROL_DAYS, enrolDaysLeft } from '../lib/trophies.jsx';
 import { ServoAssistant } from '../components/ServoAssistant.jsx';
 import { AdventCard } from '../components/Advent.jsx';
 import { IMG as SKULL_IMG } from '../components/ServoSkull.jsx';
@@ -1107,8 +1108,34 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
           );
         })()}
 
+        {/* ── Mise en place de la collection (7 premiers jours) : remplace le Shame-o-meter ── */}
+        {enrolDaysLeft(appState) > 0 && (() => {
+          const left = enrolDaysLeft(appState), done = ENROL_DAYS - left;
+          const nArmies = Object.keys(FACTIONS).filter(k => (appState.inventory||[]).some(i => i.faction === k)).length;
+          return (
+            <div className="hc-bare orn" onClick={() => onNav && onNav("inventory")} style={{ background:"linear-gradient(180deg,#0d0b0888 0%,#08060488 100%)", border:"1px solid #1c1a1699", borderTop:"2px solid #b8922a", padding:"14px 16px", marginBottom:"8px", cursor:onNav?"pointer":"default", touchAction:"manipulation" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:"8px" }}>
+                <div style={{ color:"#b8922a", fontSize:"11.5px", fontFamily:"'Cinzel',serif", letterSpacing:"2px" }}>MISE EN PLACE DE LA COLLECTION</div>
+                <div className="stat-hero" style={{ color:"#e0c060", fontSize:"22px", lineHeight:1 }}>J-{left}</div>
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:`repeat(${ENROL_DAYS}, 1fr)`, gap:"4px", marginBottom:"9px" }}>
+                {Array.from({ length: ENROL_DAYS }, (_, k) => (
+                  <div key={k} style={{ height:"6px", borderRadius:"2px", background: k < done ? "#b8922a" : k === done ? "#b8922a66" : "#0a0806", border:"1px solid #2a2215" }} />
+                ))}
+              </div>
+              <div style={{ color:"#e0d4b4", fontSize:"13.5px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", lineHeight:1.45 }}>
+                Entre tes figurines à ton rythme. Le jugement du Chapelain et les grands trophées attendront la fin de l'enrôlement.
+              </div>
+              <div style={{ display:"flex", justifyContent:"space-between", marginTop:"8px" }}>
+                <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif" }}>{totalModels} figurine{totalModels > 1 ? "s" : ""} enregistrée{totalModels > 1 ? "s" : ""}</div>
+                <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif" }}>{nArmies} armée{nArmies > 1 ? "s" : ""}</div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* ── Shame-o-meter ── */}
-        <div className="hc-bare orn" onClick={() => onNav && onNav("shame")} style={{ background:"linear-gradient(180deg,#0d0b0888 0%,#08060488 100%)", border:"1px solid #1c1a1699", borderTop:`2px solid ${shameColor}`, padding:"14px 16px", marginBottom:"8px", cursor:onNav?"pointer":"default", touchAction:"manipulation" }}>
+        {enrolDaysLeft(appState) === 0 && <div className="hc-bare orn" onClick={() => onNav && onNav("shame")} style={{ background:"linear-gradient(180deg,#0d0b0888 0%,#08060488 100%)", border:"1px solid #1c1a1699", borderTop:`2px solid ${shameColor}`, padding:"14px 16px", marginBottom:"8px", cursor:onNav?"pointer":"default", touchAction:"manipulation" }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"6px" }}>
             <div style={{ color:shameColor, fontSize:"11.5px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>{shameTitle}</div>
             <div style={{ color:shameColor, fontSize:"20px", fontFamily:"'Cinzel',serif", fontWeight:"900" }}>{paintPct}%</div>
@@ -1123,7 +1150,7 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
           {(() => { const c = colossusCount(inventory, ptsMap); return c.total > 0 && (
             <div style={{ color:"#9a8a6a", fontSize:"12px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", marginTop:"6px" }}>dont {c.total} colosse{c.total>1?"s":""} · {c.painted} consacré{c.painted>1?"s":""}</div>
           ); })()}
-        </div>
+        </div>}
 
         {/* ── Serment de Croisade : une figurine, une bougie, jamais d'échec ── */}
         {(() => {

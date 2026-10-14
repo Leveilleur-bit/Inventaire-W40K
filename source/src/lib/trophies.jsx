@@ -13,6 +13,14 @@ const ENROL_DAYS = 7;        // période d'enrôlement (saisie de la collection)
 const PURGE_MIN = 20;        // Purge Totale : taille minimale de l'armée
 const PERFECTION_MIN = 50;   // Perfection : taille minimale de la collection
 
+// Jours restants de la période d'enrôlement (0 = terminée). Date illisible : rien n'est bloqué.
+export function enrolDaysLeft(appState = {}) {
+  if (!appState.firstOpenAt) return 0;
+  const daysIn = Math.floor((Date.now() - new Date(String(appState.firstOpenAt).slice(0, 10) + "T00:00:00").getTime()) / 86400000);
+  return Number.isFinite(daysIn) ? Math.max(0, ENROL_DAYS - daysIn) : 0;
+}
+export { ENROL_DAYS };
+
 export function computeTrophies({ inventory = [], paintHistory = [], ptsMap = {}, appState = {} }) {
   const totalModels  = inventory.reduce((s,i) => { const u=findUnit(i.faction, i.unitId); return s+getModelCount(u?.name, i.qty||1, i.modelCount); }, 0);
   const totalPainted = inventory.filter(i=>i.paintStatus==="painted").reduce((s,i)=>{ const u=findUnit(i.faction, i.unitId); return s+getModelCount(u?.name,i.qty||1,i.modelCount); },0);
@@ -23,9 +31,7 @@ export function computeTrophies({ inventory = [], paintHistory = [], ptsMap = {}
   // Les ENROL_DAYS premiers jours après la première ouverture, on saisit sa collection :
   // les trophées d'ÉTAT restent verrouillés (sinon quelques figurines déjà peintes entrées
   // d'abord donnent « Perfection » ou « Purge Totale » dès la première minute).
-  const daysIn = appState.firstOpenAt ? Math.floor((Date.now() - new Date(String(appState.firstOpenAt).slice(0, 10) + "T00:00:00").getTime()) / 86400000) : ENROL_DAYS;
-  // (date illisible : on ne bloque rien)
-  const enrolLeft = Number.isFinite(daysIn) ? Math.max(0, ENROL_DAYS - daysIn) : 0;
+  const enrolLeft = enrolDaysLeft(appState);
   const enrolProg = enrolLeft > 0 ? `disponible dans ${enrolLeft} jour${enrolLeft > 1 ? "s" : ""}` : null;
   const stateOk = (cond) => enrolLeft === 0 && cond;
   // ── Début de Croisade ────────────────────────────────────────────
