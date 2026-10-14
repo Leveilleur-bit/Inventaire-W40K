@@ -9,11 +9,25 @@ import { POINTS_DB, getModelCount } from '../data/points.jsx';
 import { findUnit } from '../data/units.jsx';
 import { crusadeStartOf } from './utils.jsx';
 
+const ENROL_DAYS = 7;        // période d'enrôlement (saisie de la collection)
+const PURGE_MIN = 20;        // Purge Totale : taille minimale de l'armée
+const PERFECTION_MIN = 50;   // Perfection : taille minimale de la collection
+
 export function computeTrophies({ inventory = [], paintHistory = [], ptsMap = {}, appState = {} }) {
   const totalModels  = inventory.reduce((s,i) => { const u=findUnit(i.faction, i.unitId); return s+getModelCount(u?.name, i.qty||1, i.modelCount); }, 0);
   const totalPainted = inventory.filter(i=>i.paintStatus==="painted").reduce((s,i)=>{ const u=findUnit(i.faction, i.unitId); return s+getModelCount(u?.name,i.qty||1,i.modelCount); },0);
   const factionsUsed = Object.keys(FACTIONS).filter(k => inventory.some(i => i.faction === k));
-  const factionFull = factionsUsed.some(k => { const its = inventory.filter(i=>i.faction===k); const m = its.reduce((s,i)=>{const u=findUnit(k, i.unitId);return s+getModelCount(u?.name,i.qty||1,i.modelCount);},0); const p = its.filter(i=>i.paintStatus==="painted").reduce((s,i)=>{const u=findUnit(k, i.unitId);return s+getModelCount(u?.name,i.qty||1,i.modelCount);},0); return m>0 && m===p; });
+  // Purge Totale : une armée d'au moins PURGE_MIN figurines, entièrement peinte
+  const factionFull = factionsUsed.some(k => { const its = inventory.filter(i=>i.faction===k); const m = its.reduce((s,i)=>{const u=findUnit(k, i.unitId);return s+getModelCount(u?.name,i.qty||1,i.modelCount);},0); const p = its.filter(i=>i.paintStatus==="painted").reduce((s,i)=>{const u=findUnit(k, i.unitId);return s+getModelCount(u?.name,i.qty||1,i.modelCount);},0); return m>=PURGE_MIN && m===p; });
+  // ── Période d'enrôlement ─────────────────────────────────────────
+  // Les ENROL_DAYS premiers jours après la première ouverture, on saisit sa collection :
+  // les trophées d'ÉTAT restent verrouillés (sinon quelques figurines déjà peintes entrées
+  // d'abord donnent « Perfection » ou « Purge Totale » dès la première minute).
+  const daysIn = appState.firstOpenAt ? Math.floor((Date.now() - new Date(String(appState.firstOpenAt).slice(0, 10) + "T00:00:00").getTime()) / 86400000) : ENROL_DAYS;
+  // (date illisible : on ne bloque rien)
+  const enrolLeft = Number.isFinite(daysIn) ? Math.max(0, ENROL_DAYS - daysIn) : 0;
+  const enrolProg = enrolLeft > 0 ? `disponible dans ${enrolLeft} jour${enrolLeft > 1 ? "s" : ""}` : null;
+  const stateOk = (cond) => enrolLeft === 0 && cond;
   // ── Début de Croisade ────────────────────────────────────────────
   // Les trophées d'EFFORT (peindre X figurines / X points / un Titan)
   // ne comptent que ce qui a été consacré depuis cette date, pour ne pas
@@ -36,21 +50,24 @@ export function computeTrophies({ inventory = [], paintHistory = [], ptsMap = {}
   const oathKept = (appState.oathRecord?.kept)||0;
   const badges = [
     { icon:"✠", name:"Première Consécration", desc:"Peindre ta première figurine", got: paintedSince >= 1, prog:`${Math.min(paintedSince,1)}/1` },
-    { icon:"⚜", name:"Fondateur", desc:"Rassembler 5 armées", got: factionsUsed.length >= 5, prog:`${Math.min(factionsUsed.length,5)}/5 armées` },
+    { icon:"⚜", name:"Fondateur", desc:"Rassembler 5 armées", got: stateOk(factionsUsed.length >= 5), prog: enrolProg || `${Math.min(factionsUsed.length,5)}/5 armées` },
     { icon:"svg:paintbrush", name:"Artisan", desc:"50 figurines peintes", got: paintedSince >= 50, prog:`${Math.min(paintedSince,50)}/50` },
     { icon:"♛", name:"Maître Peintre", desc:"150 figurines peintes", got: paintedSince >= 150, prog:`${Math.min(paintedSince,150)}/150` },
     { icon:"†", name:"Titanicus", desc:"Peindre un Titan ou super-lourd (400+ pts)", got: hasTitanSince },
-    { icon:"◉", name:"Purge Totale", desc:"Une faction peinte à 100%", got: factionFull },
+    { icon:"◉", name:"Purge Totale", desc:`Une armée d'au moins ${PURGE_MIN} figurines peinte à 100%`, got: stateOk(factionFull), prog: enrolProg },
     { icon:"❖", name:"Marathon", desc:"10 figurines en un seul mois", got: bestMonth >= 10, prog:`record : ${bestMonth}/10 en un mois` },
     { icon:"✷", name:"Forge Ardente", desc:"25 figurines en un seul mois", got: bestMonth >= 25, prog:`record : ${bestMonth}/25 en un mois` },
     { icon:"⚔", name:"Croisé", desc:"5 000 points peints", got: paintedPtsSince >= 5000, prog:`${paintedPtsSince.toLocaleString('fr')}/5 000 pts` },
-    { icon:"⌂", name:"Archiviste", desc:"10 armées différentes", got: factionsUsed.length >= 10, prog:`${Math.min(factionsUsed.length,10)}/10 armées` },
+    { icon:"⌂", name:"Archiviste", desc:"10 armées différentes", got: stateOk(factionsUsed.length >= 10), prog: enrolProg || `${Math.min(factionsUsed.length,10)}/10 armées` },
     { icon:"☩", name:"Serment Tenu", desc:"Honorer un serment de croisade", got: oathKept >= 1 },
-    { icon:"✪", name:"Perfection", desc:"Collection entière à 100%", got: totalModels > 0 && totalPainted === totalModels, prog:`${totalPainted}/${totalModels} figurines` },
+    { icon:"✪", name:"Perfection", desc:`Collection entière à 100% (au moins ${PERFECTION_MIN} figurines)`, got: stateOk(totalModels >= PERFECTION_MIN && totalPainted === totalModels), prog: enrolProg || `${totalPainted}/${Math.max(totalModels, PERFECTION_MIN)} figurines` },
     { icon:"↻", name:"Assidu", desc:"7 jours de mission d'affilée", got: (appState.missionBest||0) >= 7, prog:`record : ${appState.missionBest||0}/7 jours` },
     { icon:"✛", name:"Dévotion", desc:"10 missions du jour accomplies", got: (appState.missionTotal||0) >= 10, prog:`${Math.min(appState.missionTotal||0,10)}/10 missions` },
     { icon:"❄", name:"Veilleur de l'Avent", desc:"Ouvrir les 24 portes du calendrier de l'Avent", got: (appState.adventDone||[]).length > 0, prog:`${Object.keys(appState.advent?.opened||{}).length}/24 portes` },
     { icon:"†", name:"Litanie Sans Fin", desc:"50 missions du jour accomplies", got: (appState.missionTotal||0) >= 50, prog:`${Math.min(appState.missionTotal||0,50)}/50 missions` },
   ];
-  return badges;
+  // Un trophée gagné reste gagné : déjà annoncé (« trophiesSeen »), il ne se reperd plus si la
+  // collection change (nouvelle boîte non peinte, armée vendue…).
+  const seen = new Set(Array.isArray(appState.trophiesSeen) ? appState.trophiesSeen : []);
+  return badges.map(b => (!b.got && seen.has(b.name)) ? { ...b, got: true } : b);
 }

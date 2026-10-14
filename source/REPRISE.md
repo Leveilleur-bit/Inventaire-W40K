@@ -236,6 +236,13 @@ Fond de l'Accueil (7 octobre)
   carte) n'ont JAMAIS été en ligne (absents du dépôt, déjà avant le 13 octobre). Ils sont sur mon PC
   dans `public/sons/` : à envoyer à Claude en zip. En attendant, l'app ne les redemande plus en boucle.
 
+### Trophées : période d'enrôlement (14 octobre 2026)
+- Validé par moi : 7 jours après la première ouverture (`firstOpenAt`), les trophées d'état
+  (Fondateur, Purge Totale, Archiviste, Perfection) restent verrouillés (« disponible dans X jours »).
+- Minimums : Purge Totale = une armée d'au moins 20 figurines à 100 % ; Perfection = au moins
+  50 figurines, toutes peintes. Constantes en tête de `lib/trophies.jsx`.
+- Un trophée déjà annoncé (`trophiesSeen`) reste gagné, même si la collection change.
+
 ## Ce qui a été vérifié, et ce qui ne l'a pas été
 
 - Vérifié par Claude : l'app compile ; aucune variable manquante ; sauvegarde locale testée avec
