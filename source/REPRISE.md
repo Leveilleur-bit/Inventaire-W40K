@@ -267,6 +267,13 @@ Fond de l'Accueil (7 octobre)
 - Validé par moi : elle juge TOUTE la collection (avant : seulement les achats datés depuis le Début
   de Croisade). Seuil inchangé (80 %). En sommeil pendant les 7 jours d'enrôlement.
 
+### Blason de Croisade redessiné (14 octobre 2026)
+- `CrusadeBlazon` (components/heraldry.jsx) : champ émaillé à motif damassé, ombre intérieure,
+  bordure d'or biseautée (lumière SVG) avec 16 rivets, emblème frappé en relief, vraies feuilles
+  de laurier, étoile à facettes, couronne sertie (perles, rubis), chaîne en maillons alternés,
+  listel à queues d'aronde avec revers. Mêmes réglages qu'avant (formes, partitions, métal, emblèmes,
+  ornements de serments). Les petits blasons (< 40 px) restent simples.
+
 ## Ce qui a été vérifié, et ce qui ne l'a pas été
 
 - Vérifié par Claude : l'app compile ; aucune variable manquante ; sauvegarde locale testée avec

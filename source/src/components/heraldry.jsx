@@ -60,102 +60,239 @@ export const BLAZON_SHAPES = {
 
 // ── Symboles 40K dessinés en SVG (viewBox 0 0 100 100, centrés) ──
 
+// ── Blason de Croisade (redessiné le 14 octobre 2026) ──
+// Écu émaillé à motif damassé, bordure d'or biseautée et rivetée, emblème frappé en relief.
+// Ornements gagnés par les serments tenus : 1 étoile · 3 lauriers · 6 chaîne · 10 couronne · 20 auréole.
+// Les petits blasons (< 40 px : listes, sélecteurs) restent simples et nets.
+const METALS = {
+  or:     { band: ["#fff6cf", "#f3d77a", "#c9982f", "#8a5f17", "#f0cd6a", "#5c400e"], light: "#fff6d8", mid: "#e2b955", dark: "#5c400e", text: "#f3d77a" },
+  argent: { band: ["#ffffff", "#e6e9ee", "#a9afb8", "#6c727c", "#dfe3e8", "#4a4e56"], light: "#ffffff", mid: "#c9ced6", dark: "#4a4e56", text: "#eef1f4" },
+};
+const metalStops = (m) => [0, 0.18, 0.42, 0.58, 0.78, 1].map((o, k) => <stop key={k} offset={o} stopColor={m.band[k]} />);
+
+// Feuille de laurier (pointe vers le haut, base en 0,0), avec sa nervure
+const LEAF = "M0 0 C 3.2 -3.4 3.4 -9.4 0 -13.5 C -3.4 -9.4 -3.2 -3.4 0 0 Z";
+
 export function CrusadeBlazon({ shape="heater", symbol="croix", division="plain", c1="#b8922a", c2="#1a1a2a", metal="or", motto, size=44, oaths = 0 }) {
   const uid = React.useMemo(() => "bz" + Math.random().toString(36).slice(2, 8), []);
   const path = BLAZON_SHAPES[shape] || BLAZON_SHAPES.heater;
   const W = size, H = size * 1.16;
-  const rich = size >= 40;   // les petits blasons (listes, cartes de dos) restent simples et nets
-  // Métal : dégradé à reflets pour le contour, l'emblème et le listel
-  const M = metal === "argent"
-    ? ["#ffffff", "#d8dce2", "#9aa0a8", "#e8ecf0", "#6a6e76"]
-    : ["#fff2b8", "#f0d070", "#b88a2a", "#e8c860", "#6a4e12"];
-  // L'emblème est dessiné DANS l'écu, peint du même métal que le contour (relief et reflets)
+  const rich = size >= 40;
+  const m = METALS[metal] || METALS.or;
   const e = EMBLEMES[symbol] || EMBLEMES.croix;
   const emblemSvg = e.svg.replace(/currentColor/g, `url(#${uid}-em)`);
-  // Ornements gagnés par les serments tenus (1 étoile · 3 lauriers · 6 chaînes · 10 couronne · 20 auréole)
   const orn = rich ? oaths : 0;
-  const gold = metal === "argent" ? "#e8ecf0" : "#e8c860";
-  const leaves = (side) => Array.from({ length: 7 }, (_, k) => {
-    const t = k / 6, y = 104 - t * 78, x = side * (54 + Math.sin(t * Math.PI) * 9);
-    return <ellipse key={k} cx={50 + x} cy={y} rx="3.4" ry="7" fill={gold} opacity="0.92" transform={`rotate(${side * (35 - t * 20)} ${50 + x} ${y})`} />;
+
+  // Rivets : posés à intervalles réguliers sur la bordure (mesurée une fois affichée)
+  const pathRef = React.useRef(null);
+  const [rivets, setRivets] = React.useState([]);
+  React.useLayoutEffect(() => {
+    const p = pathRef.current;
+    if (!rich || !p || !p.getTotalLength) { setRivets([]); return; }
+    const L = p.getTotalLength(), n = 16, pts = [];
+    for (let k = 0; k < n; k++) { const q = p.getPointAtLength(L * (k + 0.5) / n); pts.push([q.x, q.y]); }
+    setRivets(pts);
+  }, [shape, rich]);
+
+  // Lauriers : deux branches qui montent le long de l'écu, nouées en bas
+  const branch = (side) => {
+    const P0 = [50 - side * 10, 118], P1 = [50 - side * 76, 100], P2 = [50 - side * 57, 10];
+    const at = (t) => [(1-t)*(1-t)*P0[0] + 2*(1-t)*t*P1[0] + t*t*P2[0], (1-t)*(1-t)*P0[1] + 2*(1-t)*t*P1[1] + t*t*P2[1]];
+    const tan = (t) => [2*(1-t)*(P1[0]-P0[0]) + 2*t*(P2[0]-P1[0]), 2*(1-t)*(P1[1]-P0[1]) + 2*t*(P2[1]-P1[1])];
+    const items = [];
+    const N = 9;
+    for (let k = 0; k < N; k++) {
+      const t = 0.1 + k * 0.85 / (N - 1);
+      const [x, y] = at(t), [dx, dy] = tan(t);
+      const base = Math.atan2(dy, dx) * 180 / Math.PI + 90;   // la feuille pointe vers le bout de la branche
+      const sc = 1.4 - t * 0.6;
+      [-1, 1].forEach(s => items.push(
+        <g key={`${k}${s}`} transform={`translate(${x} ${y}) rotate(${base + s * 38}) scale(${sc})`}>
+          <path d={LEAF} fill={`url(#${uid}-leaf)`} stroke={m.dark} strokeWidth="0.45" />
+          <path d="M0 -1 L0 -12" stroke={m.dark} strokeWidth="0.35" opacity="0.7" />
+        </g>));
+      if (k % 3 === 1) items.push(<circle key={`b${k}`} cx={x + side * 2.2} cy={y + 1.5} r={1.15 * sc} fill={`url(#${uid}-pearl)`} />);
+    }
+    const [tx, ty] = at(0.97), [ddx, ddy] = tan(0.97);
+    const tip = Math.atan2(ddy, ddx) * 180 / Math.PI + 90;
+    return <g>
+      <path d={`M${P0[0]} ${P0[1]} Q${P1[0]} ${P1[1]} ${P2[0]} ${P2[1]}`} fill="none" stroke={m.dark} strokeWidth="2" strokeLinecap="round" />
+      <path d={`M${P0[0]} ${P0[1]} Q${P1[0]} ${P1[1]} ${P2[0]} ${P2[1]}`} fill="none" stroke={m.mid} strokeWidth="1" strokeLinecap="round" />
+      {items}
+      <g transform={`translate(${tx} ${ty}) rotate(${tip}) scale(0.6)`}><path d={LEAF} fill={`url(#${uid}-leaf)`} stroke={m.dark} strokeWidth="0.45" /></g>
+    </g>;
+  };
+
+  // Étoile à huit branches, taillée en facettes
+  const star = (cx, cy, R, r) => Array.from({ length: 8 }, (_, k) => {
+    const a = k * Math.PI / 4 - Math.PI / 2, len = k % 2 ? r : R;
+    const tipP = [cx + Math.cos(a) * len, cy + Math.sin(a) * len];
+    const l = [cx + Math.cos(a - Math.PI / 8) * 4.6, cy + Math.sin(a - Math.PI / 8) * 4.6];
+    const rr = [cx + Math.cos(a + Math.PI / 8) * 4.6, cy + Math.sin(a + Math.PI / 8) * 4.6];
+    return <g key={k}>
+      <path d={`M${cx} ${cy} L${l[0]} ${l[1]} L${tipP[0]} ${tipP[1]} Z`} fill={m.light} />
+      <path d={`M${cx} ${cy} L${rr[0]} ${rr[1]} L${tipP[0]} ${tipP[1]} Z`} fill={m.band[2]} />
+      <path d={`M${l[0]} ${l[1]} L${tipP[0]} ${tipP[1]} L${rr[0]} ${rr[1]}`} fill="none" stroke={m.dark} strokeWidth="0.4" strokeLinejoin="round" />
+    </g>;
   });
+
   return (
     <div style={{ width:W, position:"relative", flexShrink:0, filter:"drop-shadow(0 4px 8px rgba(0,0,0,0.65))" }}>
       {/* Auréole (20 serments) : derrière l'écu */}
       {orn >= 20 && <div style={{ position:"absolute", left:"50%", top:"45%", width:W*1.75, height:W*1.75, marginLeft:-W*0.875, marginTop:-W*0.875, borderRadius:"50%", pointerEvents:"none",
-        background:`radial-gradient(circle, ${gold}55 0%, ${gold}22 38%, transparent 66%)`, border:`1px solid ${gold}55`, boxShadow:`0 0 24px ${gold}33` }} />}
-      {/* Lauriers (3) et étoile ou couronne (1 / 10), dessinés autour de l'écu */}
+        background:`radial-gradient(circle, ${m.mid}55 0%, ${m.mid}22 38%, transparent 66%)`, border:`1px solid ${m.mid}55`, boxShadow:`0 0 24px ${m.mid}33` }} />}
+
+      {/* Lauriers (3), étoile (1) ou couronne (10) : autour et au-dessus de l'écu */}
       {orn >= 1 && <svg viewBox="-20 -26 140 150" width={W * 1.4} height={W * 1.4 * 150 / 140} style={{ position:"absolute", left:-W * 0.2, top:-W * 0.26, overflow:"visible", pointerEvents:"none" }}>
-        {orn >= 3 && <g><path d="M38 110 Q-8 80 2 26" fill="none" stroke={gold} strokeWidth="1.6"/>{leaves(-1)}<path d="M62 110 Q108 80 98 26" fill="none" stroke={gold} strokeWidth="1.6"/>{leaves(1)}</g>}
+        <defs>
+          <linearGradient id={`${uid}-leaf`} x1="0" y1="0" x2="1" y2="1">{metalStops(m)}</linearGradient>
+          <linearGradient id={`${uid}-crown`} x1="0" y1="0" x2="0" y2="1">{metalStops(m)}</linearGradient>
+          <radialGradient id={`${uid}-pearl`} cx="0.35" cy="0.35" r="0.7"><stop offset="0" stopColor="#fff"/><stop offset="0.5" stopColor={m.mid}/><stop offset="1" stopColor={m.dark}/></radialGradient>
+          <radialGradient id={`${uid}-ruby`} cx="0.35" cy="0.35" r="0.7"><stop offset="0" stopColor="#ffb0b0"/><stop offset="0.5" stopColor="#c0202a"/><stop offset="1" stopColor="#4a0408"/></radialGradient>
+        </defs>
+        {orn >= 3 && <g>{branch(-1)}{branch(1)}</g>}
         {orn >= 10
-          ? <g transform="translate(50 -8)"><path d="M-17 6 L-19 -10 L-9 -2 L0 -16 L9 -2 L19 -10 L17 6 Z" fill={gold} stroke="#5a4010" strokeWidth="0.8"/><rect x="-17" y="5" width="34" height="5" rx="1" fill={gold} stroke="#5a4010" strokeWidth="0.8"/><circle cx="0" cy="-16" r="2.4" fill="#c83030"/><circle cx="-19" cy="-10" r="1.8" fill={gold}/><circle cx="19" cy="-10" r="1.8" fill={gold}/></g>
-          : <path transform="translate(50 -9)" d="M0 -9 L2.6 -2.6 L9 0 L2.6 2.6 L0 9 L-2.6 2.6 L-9 0 L-2.6 -2.6 Z" fill={gold} />}
+          ? <g transform="translate(50 -9)">
+              {/* Couronne : bandeau serti, cinq fleurons perlés */}
+              <path d="M-19 7 L-21 -9 L-12 -2 L-6 -14 L0 -4 L6 -14 L12 -2 L21 -9 L19 7 Z" fill={`url(#${uid}-crown)`} stroke={m.dark} strokeWidth="0.8" strokeLinejoin="round"/>
+              <path d="M-12 -2 L-6 -14 L0 -4 Z M0 -4 L6 -14 L12 -2 Z" fill={m.light} opacity="0.35"/>
+              {[[-21,-9],[-6,-14],[6,-14],[21,-9],[0,-4]].map(([x,y],k) => <circle key={k} cx={x} cy={y - (k===4 ? 0 : 1.6)} r={k===4 ? 1.3 : 1.9} fill={`url(#${uid}-pearl)`} stroke={m.dark} strokeWidth="0.3"/>)}
+              <rect x="-19.5" y="3.5" width="39" height="6.5" rx="1.2" fill={`url(#${uid}-crown)`} stroke={m.dark} strokeWidth="0.8"/>
+              <rect x="-18.5" y="4.3" width="37" height="1.2" rx="0.6" fill={m.light} opacity="0.55"/>
+              {[-12,0,12].map(x => <circle key={x} cx={x} cy="6.8" r="1.7" fill={`url(#${uid}-ruby)`} stroke={m.dark} strokeWidth="0.3"/>)}
+              {[-6,6].map(x => <circle key={x} cx={x} cy="6.8" r="1" fill={`url(#${uid}-pearl)`}/>)}
+            </g>
+          : <g>{star(50, -10, 12.5, 7.5)}<circle cx="50" cy="-10" r="2" fill={`url(#${uid}-pearl)`}/></g>}
       </svg>}
+
       <svg viewBox="0 0 100 116" width={W} height={H} style={{ display:"block", overflow:"visible", position:"relative" }}>
         <defs>
           <clipPath id={`${uid}-clip`}><path d={path}/></clipPath>
-          <linearGradient id={`${uid}-metal`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor={M[0]}/><stop offset="30%" stopColor={M[1]}/><stop offset="55%" stopColor={M[2]}/><stop offset="75%" stopColor={M[3]}/><stop offset="100%" stopColor={M[4]}/>
+          <linearGradient id={`${uid}-metal`} x1="0" y1="0" x2="1" y2="1">{metalStops(m)}</linearGradient>
+          <linearGradient id={`${uid}-em`} x1="0" y1="0" x2="0.4" y2="1">
+            <stop offset="0%" stopColor={m.band[0]}/><stop offset="35%" stopColor={m.band[1]}/><stop offset="70%" stopColor={m.band[2]}/><stop offset="100%" stopColor={m.band[3]}/>
           </linearGradient>
-          <linearGradient id={`${uid}-em`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={M[0]}/><stop offset="40%" stopColor={M[1]}/><stop offset="100%" stopColor={M[2]}/>
-          </linearGradient>
-          <radialGradient id={`${uid}-sheen`} cx="0.35" cy="0.15" r="0.95">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.28)"/><stop offset="45%" stopColor="rgba(255,255,255,0.04)"/><stop offset="100%" stopColor="rgba(0,0,0,0.35)"/>
+          <radialGradient id={`${uid}-sheen`} cx="0.32" cy="0.12" r="1">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.30)"/><stop offset="40%" stopColor="rgba(255,255,255,0.05)"/><stop offset="100%" stopColor="rgba(0,0,0,0.42)"/>
           </radialGradient>
-          {/* Grain léger du champ, comme un émail peint */}
+          <radialGradient id={`${uid}-rivet`} cx="0.35" cy="0.3" r="0.75">
+            <stop offset="0" stopColor={m.light}/><stop offset="0.45" stopColor={m.mid}/><stop offset="1" stopColor={m.dark}/>
+          </radialGradient>
+          {/* Damas : losanges fins et petits points, comme une étoffe brodée sous l'émail */}
+          <pattern id={`${uid}-damask`} width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <path d="M0 0 H9 M0 0 V9" stroke="rgba(255,255,255,0.10)" strokeWidth="0.35"/>
+            <path d="M0.4 0.4 H9.4 M0.4 0.4 V9.4" stroke="rgba(0,0,0,0.22)" strokeWidth="0.35"/>
+            <circle cx="4.5" cy="4.5" r="0.9" fill="rgba(255,255,255,0.10)"/>
+            <circle cx="4.5" cy="4.5" r="0.4" fill="rgba(0,0,0,0.25)"/>
+          </pattern>
           <filter id={`${uid}-grain`} x="0" y="0" width="100%" height="100%">
             <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="7" result="n"/>
-            <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.16 0"/>
+            <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.14 0"/>
             <feComposite in2="SourceGraphic" operator="in"/>
           </filter>
-          {/* Emblème en relief : ombre portée dessous, lumière dessus */}
-          <filter id={`${uid}-emboss`} x="-10%" y="-10%" width="120%" height="120%">
-            <feDropShadow dx="0" dy="1.1" stdDeviation="0.7" floodColor="#000" floodOpacity="0.75"/>
+          <filter id={`${uid}-inner`} x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.4"/></filter>
+          {/* Métal biseauté : lumière rasante venue du haut à gauche */}
+          <filter id={`${uid}-bevel`} x="-15%" y="-15%" width="130%" height="130%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="0.9" result="b"/>
+            <feSpecularLighting in="b" surfaceScale="2.6" specularConstant="1.05" specularExponent="20" lightingColor={m.light} result="s">
+              <feDistantLight azimuth="235" elevation="38"/>
+            </feSpecularLighting>
+            <feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/>
+            <feComposite in="SourceGraphic" in2="s2" operator="arithmetic" k1="0" k2="1" k3="0.8" k4="0"/>
+          </filter>
+          {/* Emblème frappé : relief + ombre portée */}
+          <filter id={`${uid}-emboss`} x="-15%" y="-15%" width="130%" height="130%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="0.7" result="b"/>
+            <feSpecularLighting in="b" surfaceScale="3" specularConstant="1" specularExponent="18" lightingColor={m.light} result="s">
+              <feDistantLight azimuth="235" elevation="42"/>
+            </feSpecularLighting>
+            <feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/>
+            <feComposite in="SourceGraphic" in2="s2" operator="arithmetic" k1="0" k2="1" k3="0.75" k4="0" result="lit"/>
+            <feGaussianBlur in="SourceAlpha" stdDeviation="1" result="sh"/>
+            <feOffset in="sh" dx="0.4" dy="1.4" result="sho"/>
+            <feFlood floodColor="#000" floodOpacity="0.8"/>
+            <feComposite in2="sho" operator="in" result="shadow"/>
+            <feMerge><feMergeNode in="shadow"/><feMergeNode in="lit"/></feMerge>
           </filter>
         </defs>
-        {/* Champ (fond) avec division héraldique */}
+
+        {/* Champ émaillé, divisions héraldiques */}
         <g clipPath={`url(#${uid}-clip)`}>
           {division === "plain" && <rect x="0" y="0" width="100" height="116" fill={c1}/>}
           {division === "parti" && <><rect x="0" y="0" width="50" height="116" fill={c1}/><rect x="50" y="0" width="50" height="116" fill={c2}/></>}
           {division === "coupe" && <><rect x="0" y="0" width="100" height="58" fill={c1}/><rect x="0" y="58" width="100" height="58" fill={c2}/></>}
           {division === "ecartele" && <><rect x="0" y="0" width="50" height="58" fill={c1}/><rect x="50" y="0" width="50" height="58" fill={c2}/><rect x="0" y="58" width="50" height="58" fill={c2}/><rect x="50" y="58" width="50" height="58" fill={c1}/></>}
+          {rich && <rect x="0" y="0" width="100" height="116" fill={`url(#${uid}-damask)`}/>}
           {rich && <rect x="0" y="0" width="100" height="116" fill="#fff" filter={`url(#${uid}-grain)`}/>}
-          {/* Filets entre les partitions */}
-          {division !== "plain" && rich && <g stroke={`url(#${uid}-metal)`} strokeWidth="1.1" opacity="0.8">
+          {division !== "plain" && rich && <g stroke={`url(#${uid}-metal)`} strokeWidth="1.3" filter={`url(#${uid}-bevel)`}>
             {(division === "parti" || division === "ecartele") && <line x1="50" y1="0" x2="50" y2="116"/>}
             {(division === "coupe" || division === "ecartele") && <line x1="0" y1="58" x2="100" y2="58"/>}
           </g>}
           <rect x="0" y="0" width="100" height="116" fill={`url(#${uid}-sheen)`}/>
-          {/* Emblème */}
+          {/* Ombre intérieure le long de la bordure : l'émail paraît enchâssé */}
+          {rich && <path d={path} fill="none" stroke="rgba(0,0,0,0.75)" strokeWidth="9" filter={`url(#${uid}-inner)`}/>}
           <g filter={rich ? `url(#${uid}-emboss)` : undefined}>
             <svg x="24" y="22" width="52" height="52" viewBox="0 0 512 512" dangerouslySetInnerHTML={{ __html: emblemSvg }} />
           </g>
         </g>
-        {/* Bordure : contour métal épais, liseré sombre intérieur, filet clair extérieur */}
-        <path d={path} fill="none" stroke="rgba(0,0,0,0.85)" strokeWidth="6.5"/>
-        <path d={path} fill="none" stroke={`url(#${uid}-metal)`} strokeWidth="4.2"/>
-        {rich && <path d={path} fill="none" stroke="rgba(0,0,0,0.55)" strokeWidth="0.9" transform="translate(50 58) scale(0.915) translate(-50 -58)"/>}
-        {rich && <path d={path} fill="none" stroke="rgba(255,248,220,0.55)" strokeWidth="0.5" transform="translate(50 58) scale(1.035) translate(-50 -58)"/>}
+
+        {/* Bordure d'or : ombre, bande biseautée, filets, rivets */}
+        <path d={path} fill="none" stroke="rgba(0,0,0,0.9)" strokeWidth={rich ? 8.5 : 6.5}/>
+        <g filter={rich ? `url(#${uid}-bevel)` : undefined}>
+          <path ref={pathRef} d={path} fill="none" stroke={`url(#${uid}-metal)`} strokeWidth={rich ? 6 : 4.2} strokeLinejoin="round"/>
+        </g>
+        {rich && <path d={path} fill="none" stroke="rgba(0,0,0,0.6)" strokeWidth="0.8" transform="translate(50 58) scale(0.9) translate(-50 -58)"/>}
+        {rich && <path d={path} fill="none" stroke={m.light} strokeOpacity="0.5" strokeWidth="0.45" transform="translate(50 58) scale(0.912) translate(-50 -58)"/>}
+        {rich && <path d={path} fill="none" stroke={m.light} strokeOpacity="0.55" strokeWidth="0.5" transform="translate(50 58) scale(1.045) translate(-50 -58)"/>}
+        {rivets.map(([x, y], k) => <g key={k}>
+          <circle cx={x + 0.25} cy={y + 0.45} r="1.25" fill="rgba(0,0,0,0.55)"/>
+          <circle cx={x} cy={y} r="1.15" fill={`url(#${uid}-rivet)`}/>
+        </g>)}
       </svg>
+
+      {/* Chaîne (6) : maillons en volume, alternés face et profil */}
       {orn >= 6 && <svg viewBox="0 0 120 26" width={W * 1.2} height={W * 1.2 * 26 / 120} style={{ position:"absolute", left:-W * 0.1, top:H * (motto ? 0.98 : 0.86), overflow:"visible", pointerEvents:"none" }}>
-        {Array.from({ length: 11 }, (_, k) => { const t = k / 10, x = 8 + t * 104, y = 4 + Math.sin(t * Math.PI) * 16; return <ellipse key={k} cx={x} cy={y} rx="4.6" ry="2.6" fill="none" stroke={gold} strokeWidth="1.5" transform={`rotate(${(t - 0.5) * 50} ${x} ${y})`} />; })}
+        <defs><linearGradient id={`${uid}-chain`} x1="0" y1="0" x2="0" y2="1">{metalStops(m)}</linearGradient></defs>
+        {Array.from({ length: 15 }, (_, k) => {
+          const t = k / 14, x = 6 + t * 108, y = 4 + Math.sin(t * Math.PI) * 15;
+          const ang = Math.atan2(Math.cos(t * Math.PI) * 15 * Math.PI, 108) * 180 / Math.PI;
+          return k % 2 === 0
+            ? <g key={k} transform={`translate(${x} ${y}) rotate(${ang})`}>
+                <ellipse cx="0" cy="0" rx="4.4" ry="2.7" fill="none" stroke={m.dark} strokeWidth="2.4"/>
+                <ellipse cx="0" cy="0" rx="4.4" ry="2.7" fill="none" stroke={`url(#${uid}-chain)`} strokeWidth="1.5"/>
+                <path d="M-3 -1.6 Q0 -2.6 3 -1.6" fill="none" stroke={m.light} strokeWidth="0.5" opacity="0.8"/>
+              </g>
+            : <g key={k} transform={`translate(${x} ${y}) rotate(${ang})`}>
+                <rect x="-4.6" y="-1.1" width="9.2" height="2.2" rx="1.1" fill={`url(#${uid}-chain)`} stroke={m.dark} strokeWidth="0.6"/>
+                <rect x="-3.6" y="-0.75" width="7.2" height="0.5" rx="0.25" fill={m.light} opacity="0.7"/>
+              </g>;
+        })}
       </svg>}
-      {/* Listel : ruban à bouts repliés ; la devise se resserre pour tenir en entier */}
+
+      {/* Listel : ruban plié, revers ombrés, liseré d'or ; la devise se resserre pour tenir */}
       {motto && (
         <svg viewBox="0 0 160 30" width={size * 1.5} height={size * 1.5 * 30 / 160}
           style={{ position:"absolute", left:"50%", bottom:`${-size * 0.1}px`, transform:"translateX(-50%)", overflow:"visible" }}>
           <defs>
             <linearGradient id={`${uid}-rib`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#3a2e1a"/><stop offset="50%" stopColor="#1e170c"/><stop offset="100%" stopColor="#120d06"/>
+              <stop offset="0%" stopColor="#4a3a20"/><stop offset="45%" stopColor="#22190d"/><stop offset="100%" stopColor="#120d06"/>
             </linearGradient>
+            <linearGradient id={`${uid}-tail`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2a2010"/><stop offset="100%" stopColor="#0a0703"/>
+            </linearGradient>
+            <linearGradient id={`${uid}-ribm`} x1="0" y1="0" x2="1" y2="0">{metalStops(m)}</linearGradient>
           </defs>
-          {/* bouts repliés, derrière */}
-          <path d="M18 9 L2 9 L9 16.5 L2 24 L22 24 Z" fill="#0e0a05" stroke={`url(#${uid}-metal)`} strokeWidth="0.8"/>
-          <path d="M142 9 L158 9 L151 16.5 L158 24 L138 24 Z" fill="#0e0a05" stroke={`url(#${uid}-metal)`} strokeWidth="0.8"/>
-          {/* bande principale, légèrement cintrée */}
-          <path d="M16 5 Q80 11 144 5 L144 21 Q80 27 16 21 Z" fill={`url(#${uid}-rib)`} stroke={`url(#${uid}-metal)`} strokeWidth="1"/>
-          <text x="80" y="16.6" textAnchor="middle" fill={M[1]} fontFamily="'Cinzel',serif" fontSize="9.5" letterSpacing="0.6"
+          {/* bouts à queue d'aronde, derrière */}
+          <path d="M20 9.5 L1 9.5 L8 17 L1 24.5 L22 24.5 Z" fill={`url(#${uid}-tail)`} stroke={`url(#${uid}-ribm)`} strokeWidth="0.8" strokeLinejoin="round"/>
+          <path d="M140 9.5 L159 9.5 L152 17 L159 24.5 L138 24.5 Z" fill={`url(#${uid}-tail)`} stroke={`url(#${uid}-ribm)`} strokeWidth="0.8" strokeLinejoin="round"/>
+          {/* revers : le ruban passe derrière */}
+          <path d="M16 21 L22 24.5 L22 19 Z" fill="#000" opacity="0.85"/>
+          <path d="M144 21 L138 24.5 L138 19 Z" fill="#000" opacity="0.85"/>
+          {/* bande principale, cintrée */}
+          <path d="M16 5 Q80 11 144 5 L144 21 Q80 27 16 21 Z" fill={`url(#${uid}-rib)`} stroke={`url(#${uid}-ribm)`} strokeWidth="1.1"/>
+          <path d="M18 7 Q80 12.6 142 7" fill="none" stroke={m.light} strokeOpacity="0.25" strokeWidth="0.6"/>
+          <text x="80" y="16.8" textAnchor="middle" fill={m.text} fontFamily="'Cinzel',serif" fontSize="9.5" letterSpacing="0.6"
+            stroke="#000" strokeOpacity="0.35" strokeWidth="0.3" paintOrder="stroke"
             {...(motto.length > 16 ? { textLength: 118, lengthAdjust: "spacingAndGlyphs" } : {})}
             style={{ textTransform:"uppercase" }}>{motto}</text>
         </svg>
