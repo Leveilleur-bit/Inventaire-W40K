@@ -27,6 +27,7 @@
 | `components/LightCeremony.jsx` | Consécration courte (30 secondes) de toute autre figurine peinte |
 | `components/ServoAssistant.jsx` | Panneau du servo-crâne convoqué depuis l'Accueil (requêtes et inspection) |
 | `components/Seal.jsx` | Sceau de pureté des cérémonies (image à l'aquila ou disque de cire selon l'armée) |
+| `lib/archivist.jsx` | Entrée du jour de l'Archiviste : souvenir de la collection ou lore |
 | `components/RelicFrame.jsx` | Cadre doré de la photo dans les cérémonies |
 | `components/Advent.jsx` | Calendrier de l'Avent de l'Accueil (décembre) : portes et lecture des épisodes |
 | `components/ServoSkull.jsx` | Le servo-crâne qui traverse l'Accueil (remarques, scans) |
@@ -41,6 +42,7 @@
 | `data/prices.json` | **Prix boutique** : c'est ce fichier qu'on modifie en cas de hausse de prix |
 | `data/prices.jsx` | Chargement des prix boutique |
 | `data/lore.jsx` | Citations, Tarot, phrases de célébration |
+| `data/archives.jsx` | Fragments de lore de l'Archiviste (général et par armée) |
 | `data/advent.jsx` | Feuilleton de l'Avent « La Veille du Reliquaire » (24 épisodes) |
 | `data/tarot.jsx` | Tarot : jeux d'armée, lames renversées, lames personnelles, tirage en trois (illustrations dans public/tarot/) |
 | `data/events.jsx` | Visites rares et fêtes du calendrier impérial (textes et dates) |

@@ -17,6 +17,7 @@ import { colossusCount, isColossus } from '../lib/colossus.jsx';
 import { randomName } from '../data/names.jsx';
 import { TRIPLE_FESTIVALS, deckKeyFor, personalLine, tarotImage, tripleDraw, weeklyCard } from '../data/tarot.jsx';
 import { servoNews } from '../lib/servo.jsx';
+import { archivistEntry } from '../lib/archivist.jsx';
 import { ENROL_DAYS, enrolDaysLeft } from '../lib/trophies.jsx';
 import { ServoAssistant } from '../components/ServoAssistant.jsx';
 import { AdventCard } from '../components/Advent.jsx';
@@ -470,70 +471,168 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
       <div>
         <div style={{ padding:"16px" }}>
 
-        {/* ── Fête du calendrier ── */}
-        {festival && !hiddenCards["fete-" + festival.id] && (
-          <div className="hc-bare orn" style={{ position:"relative", background:"linear-gradient(135deg,#120e0acc 0%,#0a0806cc 100%)", border:`1px solid ${festival.color}66`, borderTop:`2px solid ${festival.color}`, padding:"12px 14px", marginBottom:"12px", boxShadow:`0 0 24px ${festival.color}22` }}>
-            <button onClick={() => hideCard("fete-" + festival.id)} aria-label="Masquer" style={{ position:"absolute", top:"6px", right:"8px", background:"none", border:"none", color:"#8a7a5a", fontSize:"16px", cursor:"pointer" }}>×</button>
-            <div style={{ color:festival.color, fontSize:"11px", letterSpacing:"3px", fontFamily:"'Cinzel',serif", paddingRight:"18px" }}>{festival.icon} {festival.title.toUpperCase()}</div>
-            <div style={{ color:"#e0d4b4", fontSize:"14px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", lineHeight:1.5, marginTop:"6px" }}>{festival.text}</div>
-            {TRIPLE_FESTIVALS.has(festival.id) && (
-              <button onClick={() => setTripleOpen(true)}
-                style={{ marginTop:"10px", padding:"8px 14px", background:`${festival.color}1a`, border:`1px solid ${festival.color}`, color:festival.color, fontFamily:"'Cinzel',serif", fontSize:"11px", letterSpacing:"2px", cursor:"pointer" }}>
-                ✦ TIRAGE DES TROIS LAMES
-              </button>
-            )}
-          </div>
-        )}
-        {/* ── Visite rare ── */}
-        {visit && !hiddenCards["visite"] && (
-          <div className="hc-bare orn" style={{ position:"relative", background:"linear-gradient(135deg,#0c0a08e6 0%,#060504e6 100%)", border:`1px solid ${RARITY[visit.rarity].color}55`, borderLeft:`3px solid ${RARITY[visit.rarity].color}`, padding:"12px 14px", marginBottom:"12px", animation:"viewFade 0.8s ease both" }}>
-            <button onClick={() => hideCard("visite")} aria-label="Masquer" style={{ position:"absolute", top:"6px", right:"8px", background:"none", border:"none", color:"#8a7a5a", fontSize:"16px", cursor:"pointer" }}>×</button>
-            <div style={{ color:RARITY[visit.rarity].color, fontSize:"10.5px", letterSpacing:"3px", fontFamily:"'Cinzel',serif" }}>{RARITY[visit.rarity].label}</div>
-            <div style={{ display:"flex", gap:"12px", alignItems:"flex-start", marginTop:"6px" }}>
-              <div style={{ color:RARITY[visit.rarity].color, fontSize:"26px", lineHeight:1, width:"30px", textAlign:"center", flexShrink:0 }}>{visit.icon}</div>
-              <div style={{ flex:1, paddingRight:"12px" }}>
-                <div style={{ color:"#efe4c4", fontSize:"14px", fontFamily:"'Cinzel',serif" }}>{visit.title}</div>
-                <div style={{ color:"#d0c4a4", fontSize:"13.5px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", lineHeight:1.5, marginTop:"4px" }}>{visit.text}</div>
+        {/* ── Ordre du Dé du Destin (rappel) — cliquable : vers la fiche de la
+             figurine si un ordre est en cours, sinon invite à aller le tirer. ── */}
+        {appState.fateChoice ? (() => {
+          const fc = appState.fateChoice;
+          const item = (appState.inventory||[]).find(i => i.id === fc.id);
+          const done = item && item.paintStatus === "painted";
+          if (!item) return null;
+          // On affiche les données LIVE de la figurine (nom, surnom, photo), pas le
+          // instantané figé au moment où le Dé a été accepté — sinon un rebaptême
+          // ultérieur (mission du jour) laisse cette carte afficher un ancien surnom
+          // périmé, en désaccord avec le reste de l'app pour la même figurine.
+          const liveUnitName = findUnit(item.faction, item.unitId)?.name || fc.unitName;
+          const liveNickname = item.nickname ?? fc.nickname;
+          const livePhoto = item.photo || fc.photo;
+          return (
+            <div className="hc-bare orn" onClick={() => onOpenInInventory && onOpenInInventory(item.faction, item.id)}
+              style={{ background:"linear-gradient(135deg,#14100acc,#0a0806cc)", border:"1px solid #8a7a2a55", borderLeft:"3px solid #b8922a", padding:"11px 13px", marginBottom:"12px", display:"flex", alignItems:"center", gap:"11px", cursor:onOpenInInventory?"pointer":"default", touchAction:"manipulation" }}>
+              {livePhoto
+                ? <img src={livePhoto} alt="" style={{ width:"42px", height:"42px", objectFit:"cover", border:"1px solid #b8922a55", flexShrink:0 }} />
+                : <span style={{ fontSize:"24px", flexShrink:0 }}>⚄</span>}
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ color:"#8a7a58", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Cinzel',serif" }}>ORDRE DU DÉ DU DESTIN</div>
+                <div style={{ color:"#e0c060", fontSize:"14px", fontFamily:"'Cinzel',serif", fontWeight:"700", lineHeight:1.2 }}>{liveUnitName}{liveNickname?<span style={{ color:"#d8c8ac", fontStyle:"italic", fontWeight:"400", fontSize:"12.5px" }}> · « {liveNickname} »</span>:null}</div>
+                <div style={{ color: done?"#5a8a3a":"#8a5a2a", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"0.5px", marginTop:"2px" }}>{done ? "✓ Consacrée — l'Empereur est satisfait" : "⧗ Toujours sur l'établi"}</div>
+              </div>
+              {onOpenInInventory && <span style={{ color:"#8a7a58", fontSize:"15px", flexShrink:0 }}>›</span>}
+            </div>
+          );
+        })() : (unpainted > 0 && (() => {
+          const todayKey = localDay();
+          const rolledToday = appState.lastFateRollDay === todayKey;
+          return (
+            <div className="hc-bare orn" onClick={() => onNav && onNav("shame")}
+              style={{ background:"linear-gradient(135deg,#14100acc,#0a0806cc)", border:"1px solid #8a7a2a55", borderLeft:"3px solid #b8922a", padding:"11px 13px", marginBottom:"12px", display:"flex", alignItems:"center", gap:"11px", cursor:onNav?"pointer":"default", touchAction:"manipulation" }}>
+              <span style={{ fontSize:"24px", flexShrink:0, opacity: rolledToday?0.5:1 }}>⚄</span>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ color:"#8a7a58", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Cinzel',serif" }}>{rolledToday ? "ORDRE REFUSÉ" : "AUCUN ORDRE EN COURS"}</div>
+                <div style={{ color:"#c8b9a0", fontSize:"12.5px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic" }}>{rolledToday ? "Tu as décliné le Dé du Destin aujourd'hui. Reviens demain." : "Tape pour tenter ta chance auprès du Chapelain"}</div>
+              </div>
+              {onNav && <span style={{ color:"#8a7a58", fontSize:"15px", flexShrink:0 }}>›</span>}
+            </div>
+          );
+        })())}
+
+        {/* ── Mise en place de la collection (7 premiers jours) : remplace le Shame-o-meter ── */}
+        {enrolDaysLeft(appState) > 0 && (() => {
+          const left = enrolDaysLeft(appState), done = ENROL_DAYS - left;
+          const nArmies = Object.keys(FACTIONS).filter(k => (appState.inventory||[]).some(i => i.faction === k)).length;
+          return (
+            <div className="hc-bare orn" onClick={() => onNav && onNav("inventory")} style={{ background:"linear-gradient(180deg,#0d0b0888 0%,#08060488 100%)", border:"1px solid #1c1a1699", borderTop:"2px solid #b8922a", padding:"14px 16px", marginBottom:"8px", cursor:onNav?"pointer":"default", touchAction:"manipulation" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:"8px" }}>
+                <div style={{ color:"#b8922a", fontSize:"11.5px", fontFamily:"'Cinzel',serif", letterSpacing:"2px" }}>MISE EN PLACE DE LA COLLECTION</div>
+                <div className="stat-hero" style={{ color:"#e0c060", fontSize:"22px", lineHeight:1 }}>J-{left}</div>
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:`repeat(${ENROL_DAYS}, 1fr)`, gap:"4px", marginBottom:"9px" }}>
+                {Array.from({ length: ENROL_DAYS }, (_, k) => (
+                  <div key={k} style={{ height:"6px", borderRadius:"2px", background: k < done ? "#b8922a" : k === done ? "#b8922a66" : "#0a0806", border:"1px solid #2a2215" }} />
+                ))}
+              </div>
+              <div style={{ color:"#e0d4b4", fontSize:"13.5px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", lineHeight:1.45 }}>
+                Entre tes figurines à ton rythme. Le jugement du Chapelain et les grands trophées attendront la fin de l'enrôlement.
+              </div>
+              <div style={{ display:"flex", justifyContent:"space-between", marginTop:"8px" }}>
+                <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif" }}>{totalModels} figurine{totalModels > 1 ? "s" : ""} enregistrée{totalModels > 1 ? "s" : ""}</div>
+                <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif" }}>{nArmies} armée{nArmies > 1 ? "s" : ""}</div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
-        {/* ── Actions rapides : convoquer le servo-crâne ; fonder la croisade s'il n'y en a pas ── */}
-        <div style={{ display:"flex", justifyContent:"flex-end", alignItems:"center", gap:"6px", marginBottom:"8px" }}>
-          <button onClick={() => { setServoOpen(true); playSfx("carte", 0.35, null); }} aria-label="Convoquer le servo-crâne"
-            style={{ display:"flex", alignItems:"center", gap:"6px", height:"36px", padding:"0 10px 0 4px", background:"#0a080688", border:"1px solid #2a2418", color:"#c8b9a0", fontFamily:"'Cinzel',serif", fontSize:"10.5px", letterSpacing:"2px", cursor:"pointer", touchAction:"manipulation" }}>
-            <img src={SKULL_IMG(false)} alt="" width="28" height="28" style={{ display:"block", filter:"drop-shadow(0 2px 4px #000)" }} onError={e => { e.currentTarget.style.display = "none"; }} />
-            SERVO-CRÂNE
-          </button>
-          {!crusade && (
-            <button onClick={openCrusadeEditor} title="Fonder ma croisade"
-              style={{ width:"36px", height:"36px", background:"#0a080688", border:"1px solid #1c1a16", color:"#c8b9a0", fontSize:"15px", cursor:"pointer", touchAction:"manipulation", display:"flex", alignItems:"center", justifyContent:"center" }}>⚜</button>
-          )}
+        {/* ── Shame-o-meter ── */}
+        {enrolDaysLeft(appState) === 0 && <div className="hc-bare orn" onClick={() => onNav && onNav("shame")} style={{ background:"linear-gradient(180deg,#0d0b0888 0%,#08060488 100%)", border:"1px solid #1c1a1699", borderTop:`2px solid ${shameColor}`, padding:"14px 16px", marginBottom:"8px", cursor:onNav?"pointer":"default", touchAction:"manipulation" }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"6px" }}>
+            <div style={{ color:shameColor, fontSize:"11.5px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>{shameTitle}</div>
+            <div style={{ color:shameColor, fontSize:"20px", fontFamily:"'Cinzel',serif", fontWeight:"900" }}>{paintPct}%</div>
+          </div>
+          <div style={{ height:"6px", background:"#0a0806", borderRadius:"3px", marginBottom:"8px" }}>
+            <div style={{ width:`${paintPct}%`, height:"100%", background:shameColor, borderRadius:"3px", transition:"width 0.8s ease" }} />
+          </div>
+          <div style={{ display:"flex", justifyContent:"space-between" }}>
+            <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif" }}>{totalPainted} figurines peintes</div>
+            <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif" }}>{totalModels} au total</div>
+          </div>
+          {(() => { const c = colossusCount(inventory, ptsMap); return c.total > 0 && (
+            <div style={{ color:"#9a8a6a", fontSize:"12px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", marginTop:"6px" }}>dont {c.total} colosse{c.total>1?"s":""} · {c.painted} consacré{c.painted>1?"s":""}</div>
+          ); })()}
+        </div>}
+
+        {/* ── Chiffres clés cliquables ── */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"6px", marginBottom:"12px" }}>
+          {[
+            { val: `${totalPts.toLocaleString('fr')}`, label:"PTS TOTAL",  color:"#b8922a", nav:"stats" },
+            { val: `${Object.keys(FACTIONS).filter(k=>(appState.inventory||[]).some(i=>i.faction===k)).length}`, label:"ARMÉES", color:"#c0b090", nav:"inventory" },
+            { val: `${Math.max(0, totalModels - totalPainted)}`, label:"À PEINDRE", color:"#8a5a3a", nav:"shame" },
+          ].map(({ val, label, color, nav }) => (
+            <button key={label} onClick={() => onNav(nav)} className="press-btn"
+              style={{ flex:1, background:"#08060466", border:"1px solid #1c1a1699", padding:"12px 8px", textAlign:"center", cursor:"pointer", touchAction:"manipulation", borderBottom:`2px solid ${color}44` }}>
+              <div className="stat-hero" style={{ color, fontSize:"22px", lineHeight:1 }}>{val}</div>
+              <div style={{ color:"#8a7a58", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Cinzel',serif", marginTop:"4px" }}>{label}</div>
+            </button>
+          ))}
         </div>
 
-        {/* ── Urgence de sauvegarde : pas d'export depuis 2 mois ── */}
+
+
+        {/* ── Serment de Croisade : une figurine, une bougie, jamais d'échec ── */}
         {(() => {
-          const today = localDay();
-          if (appState.lastBackupDismiss === today) return null;
-          const daysSinceExport = lastExport ? Math.floor((Date.now() - lastExport) / 86400000) : null;
-          // Jamais exporté : on laisse une semaine au nouveau venu avant de l'alarmer
-          const ageDays = appState.firstOpenAt ? Math.floor((Date.now() - new Date(appState.firstOpenAt).getTime()) / 86400000) : 0;
-          // Google Drive actif = sauvegarde automatique hors du téléphone : inutile de relancer
-          if (driveSynced) return null;
-          const stale = daysSinceExport === null ? ageDays >= 7 : daysSinceExport >= 30;
-          if (!stale) return null;
-          return (
-            <div className="hc-bare orn" style={{ background:"linear-gradient(135deg,#1a0e08cc 0%,#0a0806cc 60%,#100c08cc 100%)", border:"1px solid #c0704044", borderTop:"2px solid #c07040", padding:"12px 14px", marginBottom:"12px", position:"relative" }}>
-              <button onClick={() => onSetBackupDismiss && onSetBackupDismiss(today)} style={{ position:"absolute", top:"6px", right:"8px", background:"none", border:"none", color:"#9a8a6a", fontSize:"15px", cursor:"pointer", lineHeight:1 }}>✕</button>
-              <div style={{ color:"#c07040", fontSize:"11px", letterSpacing:"2px", fontFamily:"'Cinzel',serif", marginBottom:"6px", paddingRight:"16px" }}>⚠ AUCUNE COPIE HORS DU TÉLÉPHONE</div>
-              <div style={{ color:"#d8c8ac", fontSize:"12.5px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", lineHeight:1.5, marginBottom:"10px" }}>
-                {daysSinceExport === null ? "Ta collection n'existe que sur ce téléphone." : `Dernière sauvegarde il y a ${daysSinceExport} jours, et Google Drive n'est pas connecté.`} Connecte Google Drive dans le CODEX, ou télécharge une sauvegarde complète.
-              </div>
-              <button onClick={() => onExport && onExport()}
-                style={{ padding:"8px 16px", background:"#c0704022", border:"1px solid #c07040", color:"#e0a878", fontFamily:"'Cinzel',serif", fontSize:"10px", letterSpacing:"2px", cursor:"pointer" }}>
-                ⬇ TÉLÉCHARGER UNE SAUVEGARDE
+          const oath = appState.oath;
+          const rec  = appState.oathRecord || {};
+          if (!oath) {
+            return (
+              <button onClick={() => { setOathPick(null); setOathOpen(true); }}
+                className="hc-bare" style={{ width:"100%", background:"#08060466", border:"1px solid #1c1a1699", borderLeft:"2px solid #b8922a", padding:"10px 12px", marginBottom:"8px", cursor:"pointer", touchAction:"manipulation", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <span style={{ color:"#d4b060", fontSize:"11.5px", fontFamily:"'Cinzel',serif", letterSpacing:"2px" }}>☩ PRÊTER SERMENT</span>
+                {rec.kept ? <span style={{ color:"#9a8a6a", fontSize:"11px", fontFamily:"'Cinzel',serif" }}>{rec.kept} serment{rec.kept>1?"s":""} tenu{rec.kept>1?"s":""}</span> : <span style={{ color:"#9a8a6a", fontSize:"11px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic" }}>trois parchemins t'attendent</span>}
               </button>
+            );
+          }
+          const cs = candleState(oath);
+          const target = oath.unitId ? (appState.inventory||[]).find(i => i.id === oath.unitId) : null;
+          const text = oath.label || (target ? oathFormula(target) : `Je jure de consacrer ${oath.target} figurine${oath.target>1?"s":""}.`);
+          // Ancien serment chiffré : progression depuis la date du serment
+          const legacy = !oath.unitId;
+          const prog = legacy ? (appState.paintHistory||[]).reduce((acc,h) => {
+            const when = h.day || (h.date ? h.date+"-01" : null);
+            if (!when || when < oath.sworn) return acc;
+            const it = (appState.inventory||[]).find(i => i.id === h.id); if (!it) return acc;
+            return acc + getModelCount(findUnit(it.faction, it.unitId)?.name, it.qty||1, it.modelCount);
+          }, 0) : 0;
+          const col = cs.asleep ? "#8a7a5a" : "#d4b060";
+          return (
+            <div className="hc-bare orn" style={{ background:"linear-gradient(180deg,#0d0b0888 0%,#08060488 100%)", border:"1px solid #1c1a1699", borderLeft:`2px solid ${col}`, padding:"12px 14px", marginBottom:"8px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:"8px" }}>
+                <div style={{ color:col, fontSize:"11.5px", fontFamily:"'Cinzel',serif", letterSpacing:"2px" }}>☩ SERMENT DE CROISADE</div>
+                <div style={{ color:"#9a8a6a", fontSize:"11px", fontFamily:"'Cinzel',serif" }}>{cs.asleep ? "EN SOMMEIL" : `bougie · ${cs.daysLeft} j`}</div>
+              </div>
+              <div style={{ display:"flex", gap:"12px", alignItems:"center" }}>
+                <OathCandle pct={cs.pct} asleep={cs.asleep} />
+                <div style={{ flex:1 }}>
+                  <div style={{ color:"#e0d4b4", fontSize:"14px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", lineHeight:1.45 }}>« {text} »</div>
+                  {legacy && <div style={{ color:"#9a8a6a", fontSize:"12px", fontFamily:"'Cinzel',serif", marginTop:"4px" }}>{Math.min(prog, oath.target)} / {oath.target} consacrées</div>}
+                  {/* Ancien serment chiffré déjà accompli : on le consigne d'un geste pour libérer la place */}
+                  {legacy && prog >= (oath.target || 1) && onKeepLegacyOath && (
+                    <button onClick={() => onKeepLegacyOath()} style={{ marginTop:"8px", padding:"7px 12px", background:"#5a8a3a22", border:"1px solid #6a9a4a", color:"#a8d088", fontFamily:"'Cinzel',serif", fontSize:"11px", letterSpacing:"1.5px", cursor:"pointer" }}>☩ SERMENT ACCOMPLI · LE CONSIGNER</button>
+                  )}
+                  {target && !cs.asleep && <div style={{ color:"#9a8a6a", fontSize:"12px", fontFamily:"'Crimson Pro',serif", marginTop:"4px" }}>{target.nickname && unitNameOf(target) ? <span style={{ color:"#b8a882" }}>{unitNameOf(target)} · </span> : null}Le serment sera tenu dès que cette relique passera à « Peinte ».</div>}
+                </div>
+              </div>
+              {cs.asleep ? (
+                <>
+                  <div style={{ color:"#b8a882", fontSize:"13px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", margin:"10px 0 8px" }}>La bougie s'est éteinte. Le serment dort, il n'est pas rompu.</div>
+                  <div style={{ display:"flex", gap:"8px" }}>
+                    <button onClick={() => onRelightOath && onRelightOath()} style={{ flex:1, padding:"8px", background:"#b8922a1f", border:"1px solid #b8922a", color:"#e8c860", fontFamily:"'Cinzel',serif", fontSize:"11px", letterSpacing:"1.5px", cursor:"pointer" }}>RALLUMER</button>
+                    <button onClick={() => onReleaseOath && onReleaseOath()} style={{ flex:1, padding:"8px", background:"none", border:"1px solid #4a3e28", color:"#b0a080", fontFamily:"'Cinzel',serif", fontSize:"11px", letterSpacing:"1.5px", cursor:"pointer" }}>SE DÉLIER</button>
+                  </div>
+                </>
+              ) : (
+                <div style={{ textAlign:"right", marginTop:"6px" }}>
+                  <button onClick={() => confirm ? confirm("Te délier de ce serment ? Aucune honte : la Croisade est longue.", () => onReleaseOath && onReleaseOath(), "#b8922a", "SE DÉLIER", false) : (onReleaseOath && onReleaseOath())}
+                    style={{ background:"none", border:"none", color:"#8a7a5a", fontFamily:"'Cinzel',serif", fontSize:"10px", letterSpacing:"1.5px", cursor:"pointer", padding:0 }}>SE DÉLIER</button>
+                </div>
+              )}
             </div>
           );
         })()}
@@ -799,6 +898,164 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
           );
         })()}
 
+        {/* ── Fête du calendrier ── */}
+        {festival && !hiddenCards["fete-" + festival.id] && (
+          <div className="hc-bare orn" style={{ position:"relative", background:"linear-gradient(135deg,#120e0acc 0%,#0a0806cc 100%)", border:`1px solid ${festival.color}66`, borderTop:`2px solid ${festival.color}`, padding:"12px 14px", marginBottom:"12px", boxShadow:`0 0 24px ${festival.color}22` }}>
+            <button onClick={() => hideCard("fete-" + festival.id)} aria-label="Masquer" style={{ position:"absolute", top:"6px", right:"8px", background:"none", border:"none", color:"#8a7a5a", fontSize:"16px", cursor:"pointer" }}>×</button>
+            <div style={{ color:festival.color, fontSize:"11px", letterSpacing:"3px", fontFamily:"'Cinzel',serif", paddingRight:"18px" }}>{festival.icon} {festival.title.toUpperCase()}</div>
+            <div style={{ color:"#e0d4b4", fontSize:"14px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", lineHeight:1.5, marginTop:"6px" }}>{festival.text}</div>
+            {TRIPLE_FESTIVALS.has(festival.id) && (
+              <button onClick={() => setTripleOpen(true)}
+                style={{ marginTop:"10px", padding:"8px 14px", background:`${festival.color}1a`, border:`1px solid ${festival.color}`, color:festival.color, fontFamily:"'Cinzel',serif", fontSize:"11px", letterSpacing:"2px", cursor:"pointer" }}>
+                ✦ TIRAGE DES TROIS LAMES
+              </button>
+            )}
+          </div>
+        )}
+        {/* ── Visite rare ── */}
+        {visit && !hiddenCards["visite"] && (
+          <div className="hc-bare orn" style={{ position:"relative", background:"linear-gradient(135deg,#0c0a08e6 0%,#060504e6 100%)", border:`1px solid ${RARITY[visit.rarity].color}55`, borderLeft:`3px solid ${RARITY[visit.rarity].color}`, padding:"12px 14px", marginBottom:"12px", animation:"viewFade 0.8s ease both" }}>
+            <button onClick={() => hideCard("visite")} aria-label="Masquer" style={{ position:"absolute", top:"6px", right:"8px", background:"none", border:"none", color:"#8a7a5a", fontSize:"16px", cursor:"pointer" }}>×</button>
+            <div style={{ color:RARITY[visit.rarity].color, fontSize:"10.5px", letterSpacing:"3px", fontFamily:"'Cinzel',serif" }}>{RARITY[visit.rarity].label}</div>
+            <div style={{ display:"flex", gap:"12px", alignItems:"flex-start", marginTop:"6px" }}>
+              <div style={{ color:RARITY[visit.rarity].color, fontSize:"26px", lineHeight:1, width:"30px", textAlign:"center", flexShrink:0 }}>{visit.icon}</div>
+              <div style={{ flex:1, paddingRight:"12px" }}>
+                <div style={{ color:"#efe4c4", fontSize:"14px", fontFamily:"'Cinzel',serif" }}>{visit.title}</div>
+                <div style={{ color:"#d0c4a4", fontSize:"13.5px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", lineHeight:1.5, marginTop:"4px" }}>{visit.text}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Message du Chapelain : citation du jour, ou rappel s'il n'y a pas eu de peinture depuis
+             14 jours (l'ancien « Rappel du Chapelain » séparé est fusionné ici le 15 octobre 2026) ── */}
+        <div className="hc-bare orn" onClick={() => onNav && onNav(chapReminder ? "shame" : "stats")} style={{ background:"#08060488", border:"1px solid #1c1a1699", borderLeft:`3px solid ${chapReminder ? chapReminder.col : "#b8922a"}`, padding:"14px 16px", marginBottom:"12px", cursor:onNav?"pointer":"default", touchAction:"manipulation" }}>
+          {(() => {
+            const now = Date.now();
+            const hist = appState.paintHistory || [];
+            const last14 = hist.filter(h => h.day && new Date(h.day).getTime() >= now - 14*86400000).length;
+            const lp = appState.lastPaintAt;
+            const daysIdle = lp ? Math.floor((now - new Date(lp).getTime())/86400000) : 999;
+            let w;
+            if (last14 >= 8)       w = { icon:"✹", text:"Les forges rougeoient", col:"#c07030" };
+            else if (last14 >= 4)  w = { icon:"⚔", text:"La ferveur monte", col:"#b8922a" };
+            else if (last14 >= 1)  w = { icon:"✦", text:"Les braises couvent", col:"#8a7a4a" };
+            else if (!hist.length && !lp) w = { icon:"✧", text:"Les premières lueurs", col:"#9a8a5a" };
+            else if (daysIdle > 30)w = { icon:"❄", text:"Le silence des forges", col:"#5a6a7a" };
+            else                   w = { icon:"☁", text:"Le calme avant la tempête", col:"#6a6a5a" };
+            return (
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:"8px" }}>
+                <span style={{ color:"#b8922a", fontSize:"11px", letterSpacing:"3px", fontFamily:"'Cinzel',serif" }}>MESSAGE DU CHAPELAIN</span>
+                <span style={{ color:w.col, fontSize:"12px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic" }}>{w.icon} {w.text}</span>
+              </div>
+            );
+          })()}
+          {chapReminder ? <>
+            <div style={{ color:chapReminder.col, fontSize:"14.5px", fontFamily:"'Crimson Pro',Georgia,serif", fontStyle:"italic", lineHeight:1.5, marginBottom:"6px" }}>{chapReminder.text}</div>
+            <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>— Le Chapelain · toucher pour voir la pile</div>
+          </> : <>
+            <div style={{ color:"#e8dfc0", fontSize:"14px", fontFamily:"'Crimson Pro',Georgia,serif", fontStyle:"italic", lineHeight:1.5, marginBottom:"6px" }}>« {citation.text} »</div>
+            <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>— {citation.author}</div>
+          </>}
+        </div>
+
+        {/* ── Tarot du Reliquaire : rappel de la lame de la semaine ── */}
+        {tarotUnlocked && (
+          <div className="hc-bare orn" onClick={() => { setTarotFlipped(true); setTarotOpen(true); playSfx("carte"); }}
+            style={{ background:"#08060488", border:"1px solid #1c1a1699", borderLeft:"3px solid #b8922a", padding:"11px 13px", marginBottom:"12px", display:"flex", alignItems:"center", gap:"11px", cursor:"pointer", touchAction:"manipulation" }}>
+            <span style={{ color:"#e0c060", fontSize:"20px", flexShrink:0, display:"flex" }}>
+              {thisWeekCard.icon.startsWith("svg:") ? <NavIcon id={thisWeekCard.icon.slice(4)} size={20} color="currentColor" /> : thisWeekCard.icon}
+            </span>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ color:"#8a7a58", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Cinzel',serif" }}>TAROT DE LA SEMAINE · {thisWeekCard.numeral}</div>
+              <div style={{ color:"#e0c060", fontSize:"12.5px", fontFamily:"'Cinzel',serif", fontWeight:"700" }}>{thisWeekCard.name}{thisWeekCard.reversed ? <span style={{ color:"#d08060", fontWeight:400, fontSize:"11px" }}> · renversée</span> : null}</div>
+            </div>
+            <span style={{ color:"#8a7a58", fontSize:"14px", flexShrink:0 }}>›</span>
+          </div>
+        )}
+
+        {/* ── L'Archiviste : un souvenir de la collection ou un fragment de lore (lib/archivist.jsx) ── */}
+        {(() => {
+          const a = archivistEntry({ appState, ptsMap: ptsMap || {}, today: localDay(), enrolling: enrolDaysLeft(appState) > 0 });
+          if (!a) return null;
+          return (
+            <div className="hc-bare orn" onClick={() => a.kind === "archive" && onNav && onNav("stats")}
+              style={{ background:"#08060488", border:"1px solid #1c1a1699", borderLeft:"3px solid #7a8aa8", padding:"13px 15px", marginBottom:"12px", cursor: a.kind === "archive" && onNav ? "pointer" : "default", touchAction:"manipulation" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:"7px", gap:"8px" }}>
+                <span style={{ color:"#9aa8c4", fontSize:"11px", letterSpacing:"3px", fontFamily:"'Cinzel',serif" }}>L'ARCHIVISTE</span>
+                <span style={{ color:"#7a8aa8", fontSize:"11.5px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", textAlign:"right" }}>{a.kind === "archive" ? "◆ " : "✦ "}{a.label}</span>
+              </div>
+              <div style={{ color:"#e0d8c4", fontSize:"14px", fontFamily:"'Crimson Pro',Georgia,serif", fontStyle:"italic", lineHeight:1.5 }}>{a.text}</div>
+            </div>
+          );
+        })()}
+
+        {/* ── Dernière activité ── */}
+        {(() => {
+          const history = appState.paintHistory || [];
+          if (!history.length) return null;
+          const last = history[history.length - 1];
+          const invItem = (appState.inventory||[]).find(i => i.id === last.id);
+          const unit = invItem ? UNIT_BY_ID.get(invItem.unitId) : null;
+          const faction = invItem ? FACTIONS[invItem.faction] : null;
+          return (
+            <div style={{ borderTop:"1px solid #0d0b08", paddingTop:"12px" }}>
+              <div style={{ color:"#7a6a48", fontSize:"11px", letterSpacing:"3px", fontFamily:"'Cinzel',serif", marginBottom:"8px" }}>DERNIÈRE ACTIVITÉ</div>
+              <button className="hc-bare" onClick={openChronicle} style={{ width:"100%", textAlign:"left", display:"flex", alignItems:"center", gap:"10px", background:"#080604", border:"1px solid #1c1a16", padding:"10px 12px", cursor:"pointer", touchAction:"manipulation" }}>
+                <span style={{ fontSize:"16px" }}>◈</span>
+                <div style={{ flex:1 }}>
+                  <div style={{ color:"#e8dfc0", fontSize:"12.5px", fontFamily:"'Cinzel',serif" }}>
+                    {unit?.name || "Figurine"} {faction && <span style={{ color:faction.accent }}><FactionIcon faction={invItem.faction} size={14} /></span>}
+                  </div>
+                  <div style={{ color:"#c8b49a", fontSize:"12px", fontFamily:"'Crimson Pro',serif", marginTop:"2px" }}>
+                    Peinte en {(() => { const [y, m] = String(last.date || "").split("-"); const mois = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"][parseInt(m, 10) - 1]; return mois ? `${mois} ${y}` : (last.date || "…"); })()}
+                  </div>
+                </div>
+                <span style={{ color:"#9a8a6a", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"1px", whiteSpace:"nowrap" }}><ScrollGlyph size={12} /> CHRONIQUES ›</span>
+              </button>
+            </div>
+          );
+        })()}
+
+        {/* ── Actions rapides : convoquer le servo-crâne ; fonder la croisade s'il n'y en a pas ── */}
+        <div style={{ display:"flex", justifyContent:"flex-end", alignItems:"center", gap:"6px", marginBottom:"8px" }}>
+          <button onClick={() => { setServoOpen(true); playSfx("carte", 0.35, null); }} aria-label="Convoquer le servo-crâne"
+            style={{ display:"flex", alignItems:"center", gap:"6px", height:"36px", padding:"0 10px 0 4px", background:"#0a080688", border:"1px solid #2a2418", color:"#c8b9a0", fontFamily:"'Cinzel',serif", fontSize:"10.5px", letterSpacing:"2px", cursor:"pointer", touchAction:"manipulation" }}>
+            <img src={SKULL_IMG(false)} alt="" width="28" height="28" style={{ display:"block", filter:"drop-shadow(0 2px 4px #000)" }} onError={e => { e.currentTarget.style.display = "none"; }} />
+            SERVO-CRÂNE
+          </button>
+          {!crusade && (
+            <button onClick={openCrusadeEditor} title="Fonder ma croisade"
+              style={{ width:"36px", height:"36px", background:"#0a080688", border:"1px solid #1c1a16", color:"#c8b9a0", fontSize:"15px", cursor:"pointer", touchAction:"manipulation", display:"flex", alignItems:"center", justifyContent:"center" }}>⚜</button>
+          )}
+        </div>
+
+        {/* ── Urgence de sauvegarde : pas d'export depuis 2 mois ── */}
+        {(() => {
+          const today = localDay();
+          if (appState.lastBackupDismiss === today) return null;
+          const daysSinceExport = lastExport ? Math.floor((Date.now() - lastExport) / 86400000) : null;
+          // Jamais exporté : on laisse une semaine au nouveau venu avant de l'alarmer
+          const ageDays = appState.firstOpenAt ? Math.floor((Date.now() - new Date(appState.firstOpenAt).getTime()) / 86400000) : 0;
+          // Google Drive actif = sauvegarde automatique hors du téléphone : inutile de relancer
+          if (driveSynced) return null;
+          const stale = daysSinceExport === null ? ageDays >= 7 : daysSinceExport >= 30;
+          if (!stale) return null;
+          return (
+            <div className="hc-bare orn" style={{ background:"linear-gradient(135deg,#1a0e08cc 0%,#0a0806cc 60%,#100c08cc 100%)", border:"1px solid #c0704044", borderTop:"2px solid #c07040", padding:"12px 14px", marginBottom:"12px", position:"relative" }}>
+              <button onClick={() => onSetBackupDismiss && onSetBackupDismiss(today)} style={{ position:"absolute", top:"6px", right:"8px", background:"none", border:"none", color:"#9a8a6a", fontSize:"15px", cursor:"pointer", lineHeight:1 }}>✕</button>
+              <div style={{ color:"#c07040", fontSize:"11px", letterSpacing:"2px", fontFamily:"'Cinzel',serif", marginBottom:"6px", paddingRight:"16px" }}>⚠ AUCUNE COPIE HORS DU TÉLÉPHONE</div>
+              <div style={{ color:"#d8c8ac", fontSize:"12.5px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", lineHeight:1.5, marginBottom:"10px" }}>
+                {daysSinceExport === null ? "Ta collection n'existe que sur ce téléphone." : `Dernière sauvegarde il y a ${daysSinceExport} jours, et Google Drive n'est pas connecté.`} Connecte Google Drive dans le CODEX, ou télécharge une sauvegarde complète.
+              </div>
+              <button onClick={() => onExport && onExport()}
+                style={{ padding:"8px 16px", background:"#c0704022", border:"1px solid #c07040", color:"#e0a878", fontFamily:"'Cinzel',serif", fontSize:"10px", letterSpacing:"2px", cursor:"pointer" }}>
+                ⬇ TÉLÉCHARGER UNE SAUVEGARDE
+              </button>
+            </div>
+          );
+        })()}
+
         {/* ── Célébration : mission accomplie ── */}
         {missionDone && (
           <div onClick={() => setMissionDone(null)} style={{ position:"fixed", inset:0, background:"#000000e6", zIndex:402, display:"flex", alignItems:"center", justifyContent:"center", padding:"24px", overflowY:"auto" }}>
@@ -968,202 +1225,6 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
           </div>
         )}
 
-        {/* ── Ordre du Dé du Destin (rappel) — cliquable : vers la fiche de la
-             figurine si un ordre est en cours, sinon invite à aller le tirer. ── */}
-        {appState.fateChoice ? (() => {
-          const fc = appState.fateChoice;
-          const item = (appState.inventory||[]).find(i => i.id === fc.id);
-          const done = item && item.paintStatus === "painted";
-          if (!item) return null;
-          // On affiche les données LIVE de la figurine (nom, surnom, photo), pas le
-          // instantané figé au moment où le Dé a été accepté — sinon un rebaptême
-          // ultérieur (mission du jour) laisse cette carte afficher un ancien surnom
-          // périmé, en désaccord avec le reste de l'app pour la même figurine.
-          const liveUnitName = findUnit(item.faction, item.unitId)?.name || fc.unitName;
-          const liveNickname = item.nickname ?? fc.nickname;
-          const livePhoto = item.photo || fc.photo;
-          return (
-            <div className="hc-bare orn" onClick={() => onOpenInInventory && onOpenInInventory(item.faction, item.id)}
-              style={{ background:"linear-gradient(135deg,#14100acc,#0a0806cc)", border:"1px solid #8a7a2a55", borderLeft:"3px solid #b8922a", padding:"11px 13px", marginBottom:"12px", display:"flex", alignItems:"center", gap:"11px", cursor:onOpenInInventory?"pointer":"default", touchAction:"manipulation" }}>
-              {livePhoto
-                ? <img src={livePhoto} alt="" style={{ width:"42px", height:"42px", objectFit:"cover", border:"1px solid #b8922a55", flexShrink:0 }} />
-                : <span style={{ fontSize:"24px", flexShrink:0 }}>⚄</span>}
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ color:"#8a7a58", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Cinzel',serif" }}>ORDRE DU DÉ DU DESTIN</div>
-                <div style={{ color:"#e0c060", fontSize:"14px", fontFamily:"'Cinzel',serif", fontWeight:"700", lineHeight:1.2 }}>{liveUnitName}{liveNickname?<span style={{ color:"#d8c8ac", fontStyle:"italic", fontWeight:"400", fontSize:"12.5px" }}> · « {liveNickname} »</span>:null}</div>
-                <div style={{ color: done?"#5a8a3a":"#8a5a2a", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"0.5px", marginTop:"2px" }}>{done ? "✓ Consacrée — l'Empereur est satisfait" : "⧗ Toujours sur l'établi"}</div>
-              </div>
-              {onOpenInInventory && <span style={{ color:"#8a7a58", fontSize:"15px", flexShrink:0 }}>›</span>}
-            </div>
-          );
-        })() : (unpainted > 0 && (() => {
-          const todayKey = localDay();
-          const rolledToday = appState.lastFateRollDay === todayKey;
-          return (
-            <div className="hc-bare orn" onClick={() => onNav && onNav("shame")}
-              style={{ background:"linear-gradient(135deg,#14100acc,#0a0806cc)", border:"1px solid #8a7a2a55", borderLeft:"3px solid #b8922a", padding:"11px 13px", marginBottom:"12px", display:"flex", alignItems:"center", gap:"11px", cursor:onNav?"pointer":"default", touchAction:"manipulation" }}>
-              <span style={{ fontSize:"24px", flexShrink:0, opacity: rolledToday?0.5:1 }}>⚄</span>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ color:"#8a7a58", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Cinzel',serif" }}>{rolledToday ? "ORDRE REFUSÉ" : "AUCUN ORDRE EN COURS"}</div>
-                <div style={{ color:"#c8b9a0", fontSize:"12.5px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic" }}>{rolledToday ? "Tu as décliné le Dé du Destin aujourd'hui. Reviens demain." : "Tape pour tenter ta chance auprès du Chapelain"}</div>
-              </div>
-              {onNav && <span style={{ color:"#8a7a58", fontSize:"15px", flexShrink:0 }}>›</span>}
-            </div>
-          );
-        })())}
-
-        {/* ── Message du Chapelain : citation du jour, ou rappel s'il n'y a pas eu de peinture depuis
-             14 jours (l'ancien « Rappel du Chapelain » séparé est fusionné ici le 15 octobre 2026) ── */}
-        <div className="hc-bare orn" onClick={() => onNav && onNav(chapReminder ? "shame" : "stats")} style={{ background:"#08060488", border:"1px solid #1c1a1699", borderLeft:`3px solid ${chapReminder ? chapReminder.col : "#b8922a"}`, padding:"14px 16px", marginBottom:"12px", cursor:onNav?"pointer":"default", touchAction:"manipulation" }}>
-          {(() => {
-            const now = Date.now();
-            const hist = appState.paintHistory || [];
-            const last14 = hist.filter(h => h.day && new Date(h.day).getTime() >= now - 14*86400000).length;
-            const lp = appState.lastPaintAt;
-            const daysIdle = lp ? Math.floor((now - new Date(lp).getTime())/86400000) : 999;
-            let w;
-            if (last14 >= 8)       w = { icon:"✹", text:"Les forges rougeoient", col:"#c07030" };
-            else if (last14 >= 4)  w = { icon:"⚔", text:"La ferveur monte", col:"#b8922a" };
-            else if (last14 >= 1)  w = { icon:"✦", text:"Les braises couvent", col:"#8a7a4a" };
-            else if (!hist.length && !lp) w = { icon:"✧", text:"Les premières lueurs", col:"#9a8a5a" };
-            else if (daysIdle > 30)w = { icon:"❄", text:"Le silence des forges", col:"#5a6a7a" };
-            else                   w = { icon:"☁", text:"Le calme avant la tempête", col:"#6a6a5a" };
-            return (
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:"8px" }}>
-                <span style={{ color:"#b8922a", fontSize:"11px", letterSpacing:"3px", fontFamily:"'Cinzel',serif" }}>MESSAGE DU CHAPELAIN</span>
-                <span style={{ color:w.col, fontSize:"12px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic" }}>{w.icon} {w.text}</span>
-              </div>
-            );
-          })()}
-          {chapReminder ? <>
-            <div style={{ color:chapReminder.col, fontSize:"14.5px", fontFamily:"'Crimson Pro',Georgia,serif", fontStyle:"italic", lineHeight:1.5, marginBottom:"6px" }}>{chapReminder.text}</div>
-            <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>— Le Chapelain · toucher pour voir la pile</div>
-          </> : <>
-            <div style={{ color:"#e8dfc0", fontSize:"14px", fontFamily:"'Crimson Pro',Georgia,serif", fontStyle:"italic", lineHeight:1.5, marginBottom:"6px" }}>« {citation.text} »</div>
-            <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>— {citation.author}</div>
-          </>}
-        </div>
-
-        {/* ── Tarot du Reliquaire : rappel de la lame de la semaine ── */}
-        {tarotUnlocked && (
-          <div className="hc-bare orn" onClick={() => { setTarotFlipped(true); setTarotOpen(true); playSfx("carte"); }}
-            style={{ background:"#08060488", border:"1px solid #1c1a1699", borderLeft:"3px solid #b8922a", padding:"11px 13px", marginBottom:"12px", display:"flex", alignItems:"center", gap:"11px", cursor:"pointer", touchAction:"manipulation" }}>
-            <span style={{ color:"#e0c060", fontSize:"20px", flexShrink:0, display:"flex" }}>
-              {thisWeekCard.icon.startsWith("svg:") ? <NavIcon id={thisWeekCard.icon.slice(4)} size={20} color="currentColor" /> : thisWeekCard.icon}
-            </span>
-            <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ color:"#8a7a58", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Cinzel',serif" }}>TAROT DE LA SEMAINE · {thisWeekCard.numeral}</div>
-              <div style={{ color:"#e0c060", fontSize:"12.5px", fontFamily:"'Cinzel',serif", fontWeight:"700" }}>{thisWeekCard.name}{thisWeekCard.reversed ? <span style={{ color:"#d08060", fontWeight:400, fontSize:"11px" }}> · renversée</span> : null}</div>
-            </div>
-            <span style={{ color:"#8a7a58", fontSize:"14px", flexShrink:0 }}>›</span>
-          </div>
-        )}
-
-        {/* ── Mise en place de la collection (7 premiers jours) : remplace le Shame-o-meter ── */}
-        {enrolDaysLeft(appState) > 0 && (() => {
-          const left = enrolDaysLeft(appState), done = ENROL_DAYS - left;
-          const nArmies = Object.keys(FACTIONS).filter(k => (appState.inventory||[]).some(i => i.faction === k)).length;
-          return (
-            <div className="hc-bare orn" onClick={() => onNav && onNav("inventory")} style={{ background:"linear-gradient(180deg,#0d0b0888 0%,#08060488 100%)", border:"1px solid #1c1a1699", borderTop:"2px solid #b8922a", padding:"14px 16px", marginBottom:"8px", cursor:onNav?"pointer":"default", touchAction:"manipulation" }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:"8px" }}>
-                <div style={{ color:"#b8922a", fontSize:"11.5px", fontFamily:"'Cinzel',serif", letterSpacing:"2px" }}>MISE EN PLACE DE LA COLLECTION</div>
-                <div className="stat-hero" style={{ color:"#e0c060", fontSize:"22px", lineHeight:1 }}>J-{left}</div>
-              </div>
-              <div style={{ display:"grid", gridTemplateColumns:`repeat(${ENROL_DAYS}, 1fr)`, gap:"4px", marginBottom:"9px" }}>
-                {Array.from({ length: ENROL_DAYS }, (_, k) => (
-                  <div key={k} style={{ height:"6px", borderRadius:"2px", background: k < done ? "#b8922a" : k === done ? "#b8922a66" : "#0a0806", border:"1px solid #2a2215" }} />
-                ))}
-              </div>
-              <div style={{ color:"#e0d4b4", fontSize:"13.5px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", lineHeight:1.45 }}>
-                Entre tes figurines à ton rythme. Le jugement du Chapelain et les grands trophées attendront la fin de l'enrôlement.
-              </div>
-              <div style={{ display:"flex", justifyContent:"space-between", marginTop:"8px" }}>
-                <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif" }}>{totalModels} figurine{totalModels > 1 ? "s" : ""} enregistrée{totalModels > 1 ? "s" : ""}</div>
-                <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif" }}>{nArmies} armée{nArmies > 1 ? "s" : ""}</div>
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* ── Shame-o-meter ── */}
-        {enrolDaysLeft(appState) === 0 && <div className="hc-bare orn" onClick={() => onNav && onNav("shame")} style={{ background:"linear-gradient(180deg,#0d0b0888 0%,#08060488 100%)", border:"1px solid #1c1a1699", borderTop:`2px solid ${shameColor}`, padding:"14px 16px", marginBottom:"8px", cursor:onNav?"pointer":"default", touchAction:"manipulation" }}>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"6px" }}>
-            <div style={{ color:shameColor, fontSize:"11.5px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>{shameTitle}</div>
-            <div style={{ color:shameColor, fontSize:"20px", fontFamily:"'Cinzel',serif", fontWeight:"900" }}>{paintPct}%</div>
-          </div>
-          <div style={{ height:"6px", background:"#0a0806", borderRadius:"3px", marginBottom:"8px" }}>
-            <div style={{ width:`${paintPct}%`, height:"100%", background:shameColor, borderRadius:"3px", transition:"width 0.8s ease" }} />
-          </div>
-          <div style={{ display:"flex", justifyContent:"space-between" }}>
-            <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif" }}>{totalPainted} figurines peintes</div>
-            <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif" }}>{totalModels} au total</div>
-          </div>
-          {(() => { const c = colossusCount(inventory, ptsMap); return c.total > 0 && (
-            <div style={{ color:"#9a8a6a", fontSize:"12px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", marginTop:"6px" }}>dont {c.total} colosse{c.total>1?"s":""} · {c.painted} consacré{c.painted>1?"s":""}</div>
-          ); })()}
-        </div>}
-
-        {/* ── Serment de Croisade : une figurine, une bougie, jamais d'échec ── */}
-        {(() => {
-          const oath = appState.oath;
-          const rec  = appState.oathRecord || {};
-          if (!oath) {
-            return (
-              <button onClick={() => { setOathPick(null); setOathOpen(true); }}
-                className="hc-bare" style={{ width:"100%", background:"#08060466", border:"1px solid #1c1a1699", borderLeft:"2px solid #b8922a", padding:"10px 12px", marginBottom:"8px", cursor:"pointer", touchAction:"manipulation", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                <span style={{ color:"#d4b060", fontSize:"11.5px", fontFamily:"'Cinzel',serif", letterSpacing:"2px" }}>☩ PRÊTER SERMENT</span>
-                {rec.kept ? <span style={{ color:"#9a8a6a", fontSize:"11px", fontFamily:"'Cinzel',serif" }}>{rec.kept} serment{rec.kept>1?"s":""} tenu{rec.kept>1?"s":""}</span> : <span style={{ color:"#9a8a6a", fontSize:"11px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic" }}>trois parchemins t'attendent</span>}
-              </button>
-            );
-          }
-          const cs = candleState(oath);
-          const target = oath.unitId ? (appState.inventory||[]).find(i => i.id === oath.unitId) : null;
-          const text = oath.label || (target ? oathFormula(target) : `Je jure de consacrer ${oath.target} figurine${oath.target>1?"s":""}.`);
-          // Ancien serment chiffré : progression depuis la date du serment
-          const legacy = !oath.unitId;
-          const prog = legacy ? (appState.paintHistory||[]).reduce((acc,h) => {
-            const when = h.day || (h.date ? h.date+"-01" : null);
-            if (!when || when < oath.sworn) return acc;
-            const it = (appState.inventory||[]).find(i => i.id === h.id); if (!it) return acc;
-            return acc + getModelCount(findUnit(it.faction, it.unitId)?.name, it.qty||1, it.modelCount);
-          }, 0) : 0;
-          const col = cs.asleep ? "#8a7a5a" : "#d4b060";
-          return (
-            <div className="hc-bare orn" style={{ background:"linear-gradient(180deg,#0d0b0888 0%,#08060488 100%)", border:"1px solid #1c1a1699", borderLeft:`2px solid ${col}`, padding:"12px 14px", marginBottom:"8px" }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:"8px" }}>
-                <div style={{ color:col, fontSize:"11.5px", fontFamily:"'Cinzel',serif", letterSpacing:"2px" }}>☩ SERMENT DE CROISADE</div>
-                <div style={{ color:"#9a8a6a", fontSize:"11px", fontFamily:"'Cinzel',serif" }}>{cs.asleep ? "EN SOMMEIL" : `bougie · ${cs.daysLeft} j`}</div>
-              </div>
-              <div style={{ display:"flex", gap:"12px", alignItems:"center" }}>
-                <OathCandle pct={cs.pct} asleep={cs.asleep} />
-                <div style={{ flex:1 }}>
-                  <div style={{ color:"#e0d4b4", fontSize:"14px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", lineHeight:1.45 }}>« {text} »</div>
-                  {legacy && <div style={{ color:"#9a8a6a", fontSize:"12px", fontFamily:"'Cinzel',serif", marginTop:"4px" }}>{Math.min(prog, oath.target)} / {oath.target} consacrées</div>}
-                  {/* Ancien serment chiffré déjà accompli : on le consigne d'un geste pour libérer la place */}
-                  {legacy && prog >= (oath.target || 1) && onKeepLegacyOath && (
-                    <button onClick={() => onKeepLegacyOath()} style={{ marginTop:"8px", padding:"7px 12px", background:"#5a8a3a22", border:"1px solid #6a9a4a", color:"#a8d088", fontFamily:"'Cinzel',serif", fontSize:"11px", letterSpacing:"1.5px", cursor:"pointer" }}>☩ SERMENT ACCOMPLI · LE CONSIGNER</button>
-                  )}
-                  {target && !cs.asleep && <div style={{ color:"#9a8a6a", fontSize:"12px", fontFamily:"'Crimson Pro',serif", marginTop:"4px" }}>{target.nickname && unitNameOf(target) ? <span style={{ color:"#b8a882" }}>{unitNameOf(target)} · </span> : null}Le serment sera tenu dès que cette relique passera à « Peinte ».</div>}
-                </div>
-              </div>
-              {cs.asleep ? (
-                <>
-                  <div style={{ color:"#b8a882", fontSize:"13px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", margin:"10px 0 8px" }}>La bougie s'est éteinte. Le serment dort, il n'est pas rompu.</div>
-                  <div style={{ display:"flex", gap:"8px" }}>
-                    <button onClick={() => onRelightOath && onRelightOath()} style={{ flex:1, padding:"8px", background:"#b8922a1f", border:"1px solid #b8922a", color:"#e8c860", fontFamily:"'Cinzel',serif", fontSize:"11px", letterSpacing:"1.5px", cursor:"pointer" }}>RALLUMER</button>
-                    <button onClick={() => onReleaseOath && onReleaseOath()} style={{ flex:1, padding:"8px", background:"none", border:"1px solid #4a3e28", color:"#b0a080", fontFamily:"'Cinzel',serif", fontSize:"11px", letterSpacing:"1.5px", cursor:"pointer" }}>SE DÉLIER</button>
-                  </div>
-                </>
-              ) : (
-                <div style={{ textAlign:"right", marginTop:"6px" }}>
-                  <button onClick={() => confirm ? confirm("Te délier de ce serment ? Aucune honte : la Croisade est longue.", () => onReleaseOath && onReleaseOath(), "#b8922a", "SE DÉLIER", false) : (onReleaseOath && onReleaseOath())}
-                    style={{ background:"none", border:"none", color:"#8a7a5a", fontFamily:"'Cinzel',serif", fontSize:"10px", letterSpacing:"1.5px", cursor:"pointer", padding:0 }}>SE DÉLIER</button>
-                </div>
-              )}
-            </div>
-          );
-        })()}
-
         {/* ── Modal Blason de Croisade ── */}
         {herOpen && (
           <div onClick={() => setHerOpen(false)} style={{ position:"fixed", inset:0, background:"#000000d4", zIndex:400, display:"flex", alignItems:"center", justifyContent:"center", padding:"20px" }}>
@@ -1301,50 +1362,6 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
                   </>
                 )}
               </div>
-            </div>
-          );
-        })()}
-
-        {/* ── Chiffres clés cliquables ── */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"6px", marginBottom:"12px" }}>
-          {[
-            { val: `${totalPts.toLocaleString('fr')}`, label:"PTS TOTAL",  color:"#b8922a", nav:"stats" },
-            { val: `${Object.keys(FACTIONS).filter(k=>(appState.inventory||[]).some(i=>i.faction===k)).length}`, label:"ARMÉES", color:"#c0b090", nav:"inventory" },
-            { val: `${Math.max(0, totalModels - totalPainted)}`, label:"À PEINDRE", color:"#8a5a3a", nav:"shame" },
-          ].map(({ val, label, color, nav }) => (
-            <button key={label} onClick={() => onNav(nav)} className="press-btn"
-              style={{ flex:1, background:"#08060466", border:"1px solid #1c1a1699", padding:"12px 8px", textAlign:"center", cursor:"pointer", touchAction:"manipulation", borderBottom:`2px solid ${color}44` }}>
-              <div className="stat-hero" style={{ color, fontSize:"22px", lineHeight:1 }}>{val}</div>
-              <div style={{ color:"#8a7a58", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Cinzel',serif", marginTop:"4px" }}>{label}</div>
-            </button>
-          ))}
-        </div>
-
-
-
-        {/* ── Dernière activité ── */}
-        {(() => {
-          const history = appState.paintHistory || [];
-          if (!history.length) return null;
-          const last = history[history.length - 1];
-          const invItem = (appState.inventory||[]).find(i => i.id === last.id);
-          const unit = invItem ? UNIT_BY_ID.get(invItem.unitId) : null;
-          const faction = invItem ? FACTIONS[invItem.faction] : null;
-          return (
-            <div style={{ borderTop:"1px solid #0d0b08", paddingTop:"12px" }}>
-              <div style={{ color:"#7a6a48", fontSize:"11px", letterSpacing:"3px", fontFamily:"'Cinzel',serif", marginBottom:"8px" }}>DERNIÈRE ACTIVITÉ</div>
-              <button className="hc-bare" onClick={openChronicle} style={{ width:"100%", textAlign:"left", display:"flex", alignItems:"center", gap:"10px", background:"#080604", border:"1px solid #1c1a16", padding:"10px 12px", cursor:"pointer", touchAction:"manipulation" }}>
-                <span style={{ fontSize:"16px" }}>◈</span>
-                <div style={{ flex:1 }}>
-                  <div style={{ color:"#e8dfc0", fontSize:"12.5px", fontFamily:"'Cinzel',serif" }}>
-                    {unit?.name || "Figurine"} {faction && <span style={{ color:faction.accent }}><FactionIcon faction={invItem.faction} size={14} /></span>}
-                  </div>
-                  <div style={{ color:"#c8b49a", fontSize:"12px", fontFamily:"'Crimson Pro',serif", marginTop:"2px" }}>
-                    Peinte en {(() => { const [y, m] = String(last.date || "").split("-"); const mois = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"][parseInt(m, 10) - 1]; return mois ? `${mois} ${y}` : (last.date || "…"); })()}
-                  </div>
-                </div>
-                <span style={{ color:"#9a8a6a", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"1px", whiteSpace:"nowrap" }}><ScrollGlyph size={12} /> CHRONIQUES ›</span>
-              </button>
             </div>
           );
         })()}

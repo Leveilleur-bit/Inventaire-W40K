@@ -291,6 +291,14 @@ Fond de l'Accueil (7 octobre)
   rappel à la place de la citation, bordure colorée selon la gravité, toucher → SHAME.
 - Ménage du code : ancien menu du son, fonction `buildOathSuggestions`, imports inutiles.
 - STATS (11 sections) : à rediscuter avec moi.
+- Nouveau rôle de l'Archiviste (validé) : carte « L'ARCHIVISTE » sur l'Accueil, un jour sur deux un
+  souvenir de la collection (anniversaire de consécration, record mensuel, doyen de la pile, croissance
+  d'une armée, poids en points, bilan de l'année…), l'autre jour un fragment de lore (de préférence sur
+  une armée possédée). `lib/archivist.jsx`, textes de lore dans `data/archives.jsx`. Lore seul pendant
+  l'enrôlement.
+- Ordre de l'Accueil (validé) : bannière · ordre du Dé du Destin · jauge · chiffres clés · serment ·
+  mission du jour · mission de la semaine et Avent · fête / visite · message du Chapelain · tarot ·
+  Archiviste · dernière activité · bouton servo-crâne · alerte de sauvegarde (en dernier).
 
 ## Ce qui a été vérifié, et ce qui ne l'a pas été
 
