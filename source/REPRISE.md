@@ -279,6 +279,10 @@ Fond de l'Accueil (7 octobre)
   d'onglet) est remplacé par « Toutes les musiques » : les 9 pistes mélangées, enchaînées en fondu,
   sans lien avec l'onglet. C'est le mode par défaut ; l'ancien réglage « auto » est lu comme lui.
   Les ambiances seules (chant, lames, tambours, complainte) restent au choix dans le menu du son.
+- 15 octobre (remplace ce qui précède) : plus de menu. Le bouton en bas à droite est un simple
+  interrupteur son activé / coupé. Musique = chants liturgiques seulement (2 pistes en alternance) ;
+  les autres pistes restent dans `sons/` et dans AMBIENT_TRACKS pour plus tard. Sons d'interface et
+  vibrations suivent l'interrupteur (actifs seulement quand le son est activé).
 
 ## Ce qui a été vérifié, et ce qui ne l'a pas été
 

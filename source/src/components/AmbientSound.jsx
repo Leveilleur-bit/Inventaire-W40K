@@ -34,9 +34,11 @@ export function AmbientSound({ prefs: rawPrefs, onChange, activeView, hidden }) 
   const [open, setOpen] = useState(false);
   const [volUi, setVolUi] = useState(prefs.vol);
 
-  const mode = prefs.mode === "auto" ? "playlist" : prefs.mode;
-  const effectiveAmb = AMBIENT_TRACKS[mode] ? mode : "playlist";
-  const playing = prefs.on && !!effectiveAmb && !prefs.mute;
+  // Choix du 15 octobre 2026 : un seul bouton (son activé / coupé) ; la musique est toujours le
+  // chant liturgique. Les autres pistes restent dans AMBIENT_TRACKS pour plus tard.
+  const mode = "chant";
+  const effectiveAmb = "chant";
+  const playing = prefs.on && !prefs.mute;
 
   const prefsRef = useRef(prefs);         prefsRef.current = prefs;
   const ambRef = useRef(effectiveAmb);    ambRef.current = effectiveAmb;
@@ -226,49 +228,8 @@ export function AmbientSound({ prefs: rawPrefs, onChange, activeView, hidden }) 
   const MODES = [["playlist","✦","Toutes les musiques"],["chant","♪","Chant liturgique"],["lames","⚔","Cliquetis de lames"],["tambours","◉","Tambours de guerre"],["complainte","☾","Complainte"]];
   return (
     <div style={{ position:"absolute", bottom:"14px", right:"5px", zIndex:120,   /* dans la barre du bas, à droite des onglets : ne recouvre plus le contenu */ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"6px" }}>
-      {open && (
-        <div style={{ background:"#0a0806f0", border:`1px solid ${line}`, padding:"6px", display:"flex", flexDirection:"column", gap:"4px", minWidth:"200px", marginBottom:"8px", boxShadow:"0 4px 18px #000c" }}>
-          {/* Couper tout le son d'un seul geste (musique + sons d'interface) ; les réglages sont gardés */}
-          <button onClick={() => { unlock(); onChange({ mute: !prefs.mute }); }}
-            style={{ background: prefs.mute ? "#c0404022" : "none", border:`1px solid ${prefs.mute ? "#c04040" : gold}`, color: prefs.mute ? "#e07060" : gold, padding:"9px 12px", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"2px", cursor:"pointer", whiteSpace:"nowrap", textAlign:"center", marginBottom:"2px" }}>
-            {prefs.mute ? "▶\uFE0E REMETTRE LE SON" : "■\uFE0E COUPER TOUT LE SON"}
-          </button>
-          {MODES.map(([m, glyph, lbl]) => {
-            const active = prefs.on && mode === m && !prefs.mute;
-            return (
-              <button key={m} onClick={() => chooseMode(m)}
-                style={{ background: active?`${gold}22`:"none", border:`1px solid ${active?gold:line}`, color: active?gold:dim, padding:"6px 12px", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"1px", cursor:"pointer", whiteSpace:"nowrap", textAlign:"left" }}>
-                <span style={{ display:"inline-block", width:"16px" }}>{active ? "❚❚\uFE0E" : glyph + "\uFE0E"}</span> {lbl}
-
-              </button>
-            );
-          })}
-          <div style={{ display:"flex", alignItems:"center", gap:"8px", padding:"6px 8px 2px" }}>
-            <span style={{ color:dim, fontSize:"10px", letterSpacing:"2px", fontFamily:"'Cinzel',serif" }}>VOLUME</span>
-            <input type="range" min="0" max="100" value={Math.round(volUi*100)} onChange={e => onVol(parseInt(e.target.value,10)/100)}
-              style={{ flex:1, accentColor:gold }} />
-          </div>
-          <button onClick={() => onChange({ bg: !prefs.bg })}
-            style={{ background:"none", border:"none", color: prefs.bg?gold:dim, padding:"4px 8px", fontSize:"11px", fontFamily:"'Cinzel',serif", letterSpacing:"1px", cursor:"pointer", textAlign:"left" }}>
-            <span style={{ display:"inline-block", width:"10px", height:"10px", border:`1px solid ${prefs.bg?gold:dim}`, background: prefs.bg?gold:"none", marginRight:"8px", verticalAlign:"-1px" }} />
-            Continuer en arrière-plan
-          </button>
-          <button onClick={() => onChange({ sfx: !prefs.sfx })}
-            style={{ background:"none", border:"none", color: prefs.sfx?gold:dim, padding:"4px 8px", fontSize:"11px", fontFamily:"'Cinzel',serif", letterSpacing:"1px", cursor:"pointer", textAlign:"left" }}>
-            <span style={{ display:"inline-block", width:"10px", height:"10px", border:`1px solid ${prefs.sfx?gold:dim}`, background: prefs.sfx?gold:"none", marginRight:"8px", verticalAlign:"-1px" }} />
-            Sons d'interface
-          </button>
-          {typeof navigator !== "undefined" && "vibrate" in navigator && (
-            <button onClick={() => onChange({ haptics: !prefs.haptics })}
-              style={{ background:"none", border:"none", color: prefs.haptics?gold:dim, padding:"4px 8px", fontSize:"11px", fontFamily:"'Cinzel',serif", letterSpacing:"1px", cursor:"pointer", textAlign:"left" }}>
-              <span style={{ display:"inline-block", width:"10px", height:"10px", border:`1px solid ${prefs.haptics?gold:dim}`, background: prefs.haptics?gold:"none", marginRight:"8px", verticalAlign:"-1px" }} />
-              Vibrations
-            </button>
-          )}
-        </div>
-      )}
-      <button onClick={() => setOpen(o => !o)} aria-label="Ambiance sonore"
-        style={{ width:"32px", height:"32px", borderRadius:"50%", opacity: open ? 1 : 0.5, transition:"opacity 0.2s, transform 0.12s ease, filter 0.12s ease", background: playing?`${gold}22`:"#0a0806e0", border:`1px solid ${playing?gold:(prefs.mute?"#7a3030":line)}`, color: playing?gold:(prefs.mute?"#b05a4a":"#6a5a4a"), cursor:"pointer", boxShadow:"0 2px 10px #000a", display:"flex", alignItems:"center", justifyContent:"center" }}>
+      <button onClick={() => { unlock(); onChange({ on: !playing, mute: false }); }} aria-label={playing ? "Couper le son" : "Activer le son"}
+        style={{ width:"32px", height:"32px", borderRadius:"50%", opacity: playing ? 0.95 : 0.55, transition:"opacity 0.2s, transform 0.12s ease, filter 0.12s ease", background: playing?`${gold}22`:"#0a0806e0", border:`1px solid ${playing?gold:(prefs.mute?"#7a3030":line)}`, color: playing?gold:(prefs.mute?"#b05a4a":"#6a5a4a"), cursor:"pointer", boxShadow:"0 2px 10px #000a", display:"flex", alignItems:"center", justifyContent:"center" }}>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
           <path d="M4 9h4l5-4v14l-5-4H4z" />
           {playing

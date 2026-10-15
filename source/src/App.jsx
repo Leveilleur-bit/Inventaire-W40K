@@ -113,8 +113,10 @@ export function App() {
   const [saveAnim, setSaveAnim] = useState(false);   // flash animation
 
   // Réglage « Sons d'interface » (menu du bouton son), actif par défaut
-  useEffect(() => { setSfxEnabled(appState.ambient?.sfx !== false && !appState.ambient?.mute); }, [appState.ambient?.sfx, appState.ambient?.mute]);
-  useEffect(() => { setHapticsEnabled(appState.ambient?.haptics !== false); }, [appState.ambient?.haptics]);
+  // Un seul interrupteur (bouton du son, en bas à droite) : sons d'interface et vibrations
+  // suivent la musique — actifs quand le son est activé, coupés sinon.
+  const soundOn = !!appState.ambient?.on && !appState.ambient?.mute;
+  useEffect(() => { setSfxEnabled(soundOn); setHapticsEnabled(soundOn); }, [soundOn]);
 
   // ── Mode Serviteur : veille après 2 min d'inactivité ──
   useEffect(() => {
