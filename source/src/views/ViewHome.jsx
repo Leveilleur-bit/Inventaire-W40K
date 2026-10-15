@@ -471,6 +471,22 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
       <div>
         <div style={{ padding:"16px" }}>
 
+        {/* ── Servo-crâne perché sur le coin du premier cartouche : toujours visible en haut de l'Accueil.
+             À côté, ⚜ pour fonder la croisade s'il n'y en a pas encore. ── */}
+        <div style={{ position:"relative", height:0, zIndex:6 }}>
+          <div style={{ position:"absolute", right:"4px", top:"-16px", display:"flex", alignItems:"flex-end", gap:"6px" }}>
+            {!crusade && (
+              <button onClick={openCrusadeEditor} title="Fonder ma croisade"
+                style={{ width:"34px", height:"34px", marginBottom:"4px", background:"#0a0806e6", border:"1px solid #b8922a88", color:"#e0c060", fontSize:"15px", cursor:"pointer", touchAction:"manipulation", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 2px 8px #000" }}>⚜</button>
+            )}
+            <button onClick={() => { setServoOpen(true); playSfx("carte", 0.35, null); }} aria-label="Convoquer le servo-crâne"
+              style={{ position:"relative", width:"52px", height:"52px", padding:0, borderRadius:"50%", background:"radial-gradient(circle at 50% 45%, #2a1a12ee 0%, #0a0806f0 70%)", border:"1px solid #b8922a99",
+                boxShadow:"0 0 0 3px #0a080699, 0 3px 12px #000, 0 0 14px #c0302a44", cursor:"pointer", touchAction:"manipulation", display:"flex", alignItems:"center", justifyContent:"center", animation:"skullBob 2.6s ease-in-out infinite" }}>
+              <img src={SKULL_IMG(false)} alt="" width="40" height="40" style={{ display:"block", filter:"drop-shadow(0 2px 4px #000)" }} onError={e => { e.currentTarget.style.display = "none"; }} />
+              <span style={{ position:"absolute", bottom:"-7px", left:"50%", transform:"translateX(-50%)", background:"#0a0806", border:"1px solid #b8922a66", color:"#e0c060", fontFamily:"'Cinzel',serif", fontSize:"8px", letterSpacing:"1.5px", padding:"1px 5px", whiteSpace:"nowrap" }}>SERVO</span>
+            </button>
+          </div>
+        </div>
         {/* ── Ordre du Dé du Destin (rappel) — cliquable : vers la fiche de la
              figurine si un ordre est en cours, sinon invite à aller le tirer. ── */}
         {appState.fateChoice ? (() => {
@@ -1016,19 +1032,6 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
             </div>
           );
         })()}
-
-        {/* ── Actions rapides : convoquer le servo-crâne ; fonder la croisade s'il n'y en a pas ── */}
-        <div style={{ display:"flex", justifyContent:"flex-end", alignItems:"center", gap:"6px", marginBottom:"8px" }}>
-          <button onClick={() => { setServoOpen(true); playSfx("carte", 0.35, null); }} aria-label="Convoquer le servo-crâne"
-            style={{ display:"flex", alignItems:"center", gap:"6px", height:"36px", padding:"0 10px 0 4px", background:"#0a080688", border:"1px solid #2a2418", color:"#c8b9a0", fontFamily:"'Cinzel',serif", fontSize:"10.5px", letterSpacing:"2px", cursor:"pointer", touchAction:"manipulation" }}>
-            <img src={SKULL_IMG(false)} alt="" width="28" height="28" style={{ display:"block", filter:"drop-shadow(0 2px 4px #000)" }} onError={e => { e.currentTarget.style.display = "none"; }} />
-            SERVO-CRÂNE
-          </button>
-          {!crusade && (
-            <button onClick={openCrusadeEditor} title="Fonder ma croisade"
-              style={{ width:"36px", height:"36px", background:"#0a080688", border:"1px solid #1c1a16", color:"#c8b9a0", fontSize:"15px", cursor:"pointer", touchAction:"manipulation", display:"flex", alignItems:"center", justifyContent:"center" }}>⚜</button>
-          )}
-        </div>
 
         {/* ── Urgence de sauvegarde : pas d'export depuis 2 mois ── */}
         {(() => {
