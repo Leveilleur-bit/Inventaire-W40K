@@ -11,7 +11,7 @@ import { UNITS_DB, findUnit, migrateUnitIds } from './data/units.jsx';
 import { useDriveSync } from './hooks/useDriveSync.jsx';
 import { buildBackup, readBackup } from './lib/backup.jsx';
 import { loadApp, saveApp } from './lib/storage.jsx';
-import { compressPhoto, crusadeStartOf, localDay, notify, uid } from './lib/utils.jsx';
+import { compressPhoto, localDay, notify, uid } from './lib/utils.jsx';
 import { playSfx, setHapticsEnabled, setSfxEnabled } from './lib/sfx.jsx';
 import { GoldBurst } from './components/effects.jsx';
 import { ColossusCeremony } from './components/ColossusCeremony.jsx';
@@ -779,7 +779,7 @@ export function App() {
       {chronicleOpen && <React.Suspense fallback={null}><ViewChronicle inventory={appState.inventory} paintHistory={appState.paintHistory||[]} ptsMap={ptsMap} promotions={appState.promotions||[]} oathsKept={appState.oathsKept||[]} listNames={appState.listNames||{}} onClose={() => setChronicleOpen(false)} /></React.Suspense>}
 
       <NotifyToast />
-      <AmbientSound prefs={appState.ambient} onChange={setAmbientPrefs} activeView={activeView} hidden={idle} />
+      <AmbientSound prefs={appState.ambient} onChange={setAmbientPrefs} hidden={idle} />
 
       {/* ── Mode Serviteur (veille) ── */}
       {idle && (

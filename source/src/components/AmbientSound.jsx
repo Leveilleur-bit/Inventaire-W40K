@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 // ── Ambiance sonore ─────────────────────────────────────────────────────
 // Pistes par ambiance : déposer les fichiers dans public/sons/ puis ajouter leur
@@ -29,14 +29,11 @@ const AMBIENT_FADE_MS = 1500;
 
 // Volume et fondus passent par Web Audio (GainNode) : sur iPhone, audio.volume
 // est en lecture seule, un fondu fait avec lui ne marcherait pas.
-export function AmbientSound({ prefs: rawPrefs, onChange, activeView, hidden }) {
+export function AmbientSound({ prefs: rawPrefs, onChange, hidden }) {
   const prefs = { ...AMBIENT_DEFAULTS, ...(rawPrefs||{}) };
-  const [open, setOpen] = useState(false);
-  const [volUi, setVolUi] = useState(prefs.vol);
 
   // Choix du 15 octobre 2026 : un seul bouton (son activé / coupé) ; la musique est toujours le
   // chant liturgique. Les autres pistes restent dans AMBIENT_TRACKS pour plus tard.
-  const mode = "chant";
   const effectiveAmb = "chant";
   const playing = prefs.on && !prefs.mute;
 
@@ -48,7 +45,6 @@ export function AmbientSound({ prefs: rawPrefs, onChange, activeView, hidden }) 
   const decksRef = useRef(null);          // deux lecteurs persistants (fondu enchaîné A ↔ B)
   const curRef = useRef(null);            // lecteur actif
   const unlockedRef = useRef(false);      // true après le premier geste de la session
-  const volTimer = useRef(null);
 
   const ramp = (gainNode, v) => {
     const ctx = ctxRef.current; if (!ctx) return;
@@ -159,7 +155,6 @@ export function AmbientSound({ prefs: rawPrefs, onChange, activeView, hidden }) 
 
   // Volume venant d'ailleurs (autre appareil via Drive, chargement initial).
   useEffect(() => {
-    setVolUi(prefs.vol);
     const m = masterRef.current, ctx = ctxRef.current;
     if (m && ctx) m.gain.setTargetAtTime(prefs.vol, ctx.currentTime, 0.05);
   }, [prefs.vol]);
@@ -202,30 +197,14 @@ export function AmbientSound({ prefs: rawPrefs, onChange, activeView, hidden }) 
   }, []);
 
   useEffect(() => () => {
-    clearTimeout(volTimer.current);
     (decksRef.current || []).forEach(d => { try { d.el.pause(); } catch {} });
     if (ctxRef.current) { try { ctxRef.current.close(); } catch {} }
   }, []);
 
-  const chooseMode = (m) => {
-    unlock(); // le tap sur le menu est un geste valide
-    if (prefs.on && mode === m && !prefs.mute) onChange({ on:false });
-    else onChange({ mode:m, on:true, mute:false });   // choisir une ambiance remet le son
-  };
-
-  const onVol = (v) => {
-    setVolUi(v);
-    const m = masterRef.current, ctx = ctxRef.current;
-    if (m && ctx) m.gain.setTargetAtTime(v, ctx.currentTime, 0.03);
-    clearTimeout(volTimer.current);
-    volTimer.current = setTimeout(() => onChangeRef.current({ vol:v }), 400); // pas une sauvegarde à chaque cran
-  };
-
   // Le composant reste monté pendant le Mode Serviteur : la musique continue, seul le bouton disparaît.
   if (hidden) return null;
 
-  const gold = "#b8922a", dim = "#8a7a58", line = "#2a2215";
-  const MODES = [["playlist","✦","Toutes les musiques"],["chant","♪","Chant liturgique"],["lames","⚔","Cliquetis de lames"],["tambours","◉","Tambours de guerre"],["complainte","☾","Complainte"]];
+  const gold = "#b8922a", line = "#2a2215";
   return (
     <div style={{ position:"absolute", bottom:"14px", right:"5px", zIndex:120,   /* dans la barre du bas, à droite des onglets : ne recouvre plus le contenu */ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"6px" }}>
       <button onClick={() => { unlock(); onChange({ on: !playing, mute: false }); }} aria-label={playing ? "Couper le son" : "Activer le son"}

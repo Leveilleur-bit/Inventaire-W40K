@@ -1,6 +1,4 @@
 import { FACTIONS } from '../data/factions.jsx';
-import { POINTS_DB, getModelCount } from '../data/points.jsx';
-import { findUnit } from '../data/units.jsx';
 
 // ══════════════════════════════════════════════════════════
 // CONFIG
@@ -90,72 +88,6 @@ export function crusadeStartOf(appState, paintHistory) {
   return days.length ? days[0] : localDay();
 }
 
-// ── Générateur de vœux thématiques (Serment de Croisade) ──
-// Chaque entrée ne s'affiche que si l'inventaire réel contient une figurine
-// non peinte correspondante — la liste qui sort dépend donc de ta pile.
-export function buildOathSuggestions(inventory) {
-  const unpainted = inventory.filter(i => i.paintStatus !== "painted");
-  const unitOf   = (i) => findUnit(i.faction, i.unitId);
-  const nameOf   = (i) => unitOf(i)?.name || "cette figurine";
-  const figsOf   = (i) => getModelCount(unitOf(i)?.name, i.qty||1, i.modelCount);
-  const ptsOf    = (i) => (POINTS_DB[unitOf(i)?.name]||0) * (i.qty||1);
-  const byRole   = (roles) => unpainted.find(i => { const u=unitOf(i); return u && roles.includes(u.role); });
-  const list = [];
-  const addUnit = (item, kind, days) => { if (item) list.push({ label:`Peindre ${nameOf(item)}`, kind, days, target: figsOf(item), itemId: item.id }); };
-
-  addUnit(byRole(["Titanique","Seigneur de guerre"]), "Titan", 90);
-  addUnit(byRole(["Armiger","Chevalier Acastus","Chevalier Cerastus","Chevalier Dominus","Chevalier Questoris"]), "Chevalier", 30);
-  addUnit(byRole(["QG"]), "Personnage", 21);
-  addUnit(byRole(["Élite"]), "Élite", 30);
-  addUnit(byRole(["Soutien lourd"]), "Soutien lourd", 30);
-  addUnit(byRole(["Troupes"]), "Troupes", 14);
-  addUnit(byRole(["Rapide","Attaque rapide"]), "Attaque rapide", 14);
-  addUnit(byRole(["Transport"]), "Transport", 14);
-
-  // La plus ancienne figurine en attente (celle qui traîne depuis le plus longtemps)
-  if (unpainted.length) {
-    const oldest = [...unpainted].sort((a,b) => (a.purchasedAt||"9999") < (b.purchasedAt||"9999") ? -1 : 1)[0];
-    list.push({ label:`Enfin peindre ${nameOf(oldest)}`, kind:"Dette ancienne", days:30, target: figsOf(oldest), itemId: oldest.id });
-  }
-
-  // La figurine non peinte la plus chère en points (le monstre à abattre)
-  if (unpainted.length) {
-    const priciest = [...unpainted].sort((a,b) => ptsOf(b)-ptsOf(a))[0];
-    if (ptsOf(priciest) > 0) list.push({ label:`Abattre ${nameOf(priciest)}`, kind:"Le monstre", days:45, target: figsOf(priciest), itemId: priciest.id });
-  }
-
-  // Par faction : nettoyer une petite armée entière, ou attaquer le plus gros chantier
-  const factionsUnpainted = {};
-  unpainted.forEach(i => { factionsUnpainted[i.faction] = (factionsUnpainted[i.faction]||0) + figsOf(i); });
-  const entries = Object.entries(factionsUnpainted);
-  const small = entries.filter(([,n]) => n>0 && n<=5).sort((a,b)=>a[1]-b[1])[0];
-  if (small) list.push({ label:`Nettoyer entièrement ${FACTIONS[small[0]]?.label||small[0]}`, kind:"Faction", days:21, target: small[1] });
-  const near = entries.filter(([,n]) => n>5 && n<=10).sort((a,b)=>a[1]-b[1])[0];
-  if (near) list.push({ label:`Finir la faction ${FACTIONS[near[0]]?.label||near[0]}`, kind:"Faction proche", days:Math.max(21, near[1]*4), target: near[1] });
-  const biggest = entries.sort((a,b)=>b[1]-a[1])[0];
-  if (biggest && biggest[1] > 10) list.push({ label:`Entamer le gros morceau : ${FACTIONS[biggest[0]]?.label||biggest[0]}`, kind:"Gros chantier", days:45, target: Math.min(10, biggest[1]) });
-
-  // Objectif de points peints (accumule des figurines non peintes jusqu'à ~500 pts)
-  if (unpainted.length) {
-    let acc = 0, count = 0;
-    for (const i of [...unpainted].sort((a,b)=>ptsOf(b)-ptsOf(a))) { if (acc>=500) break; acc += ptsOf(i); count += figsOf(i); }
-    if (count > 0) list.push({ label:`Peindre l'équivalent de 500 points`, kind:"Objectif points", days:60, target: count });
-  }
-
-  // Un quart de la pile totale
-  const totalUnpainted = unpainted.reduce((s,i)=>s+figsOf(i),0);
-  if (totalUnpainted >= 4) {
-    const quarter = Math.ceil(totalUnpainted/4);
-    list.push({ label:`Entamer sérieusement la pile (¼)`, kind:"Grand ménage", days:Math.min(120, Math.max(30, quarter*3)), target: quarter });
-  }
-
-  // La pile entière — le grand serment
-  if (totalUnpainted > 0 && totalUnpainted <= 60) {
-    list.push({ label:`Purger la pile en entier`, kind:"Purge Totale", days:180, target: totalUnpainted });
-  }
-
-  return list;
-}
 
 export function orderedFactionEntries() {
   let order = [];

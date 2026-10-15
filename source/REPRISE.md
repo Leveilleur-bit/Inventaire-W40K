@@ -284,6 +284,14 @@ Fond de l'Accueil (7 octobre)
   les autres pistes restent dans `sons/` et dans AMBIENT_TRACKS pour plus tard. Sons d'interface et
   vibrations suivent l'interrupteur (actifs seulement quand le son est activé).
 
+### Simplifications (15 octobre 2026)
+- Carte « Conseil de l'Archiviste » retirée de l'Accueil (le conseil reste dans le servo-crâne,
+  « Que dois-je peindre ? »). L'Archiviste doit recevoir un autre rôle : à décider avec moi.
+- « Rappel du Chapelain » (inactivité ≥ 14 jours) fusionné dans la carte « Message du Chapelain » :
+  rappel à la place de la citation, bordure colorée selon la gravité, toucher → SHAME.
+- Ménage du code : ancien menu du son, fonction `buildOathSuggestions`, imports inutiles.
+- STATS (11 sections) : à rediscuter avec moi.
+
 ## Ce qui a été vérifié, et ce qui ne l'a pas été
 
 - Vérifié par Claude : l'app compile ; aucune variable manquante ; sauvegarde locale testée avec

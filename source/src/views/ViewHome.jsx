@@ -16,7 +16,6 @@ import { ServoSkull } from '../components/ServoSkull.jsx';
 import { colossusCount, isColossus } from '../lib/colossus.jsx';
 import { randomName } from '../data/names.jsx';
 import { TRIPLE_FESTIVALS, deckKeyFor, personalLine, tarotImage, tripleDraw, weeklyCard } from '../data/tarot.jsx';
-import { chaplainCounsel } from '../lib/counsel.jsx';
 import { servoNews } from '../lib/servo.jsx';
 import { ENROL_DAYS, enrolDaysLeft } from '../lib/trophies.jsx';
 import { ServoAssistant } from '../components/ServoAssistant.jsx';
@@ -188,6 +187,23 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
     }
   }, [weekMission?.start, weekMission?.done, weekAge, weekPool.join(","), (appState.parade || []).length]);
 
+  // Message du Chapelain : rappel quand rien n'a été peint depuis 14 jours (hors enrôlement)
+  const chapReminder = (() => { const lp = appState.lastPaintAt; const days = lp ? Math.floor((Date.now() - new Date(lp).getTime()) / 86400000) : 0;
+          if (days < 14 || enrolDaysLeft(appState) > 0) return null;
+          const tiers = days >= 60 ? [
+              `${days} jours sans coup de pinceau. Le Chapelain a cessé de prier pour toi.`,
+              `${days} jours. Tes pinceaux ont été déclarés disparus au combat.`,
+              `${days} jours de silence. Même la pile de honte s'inquiète.` ]
+            : days >= 30 ? [
+              `${days} jours d'inactivité. L'Empereur détourne le regard.`,
+              `${days} jours sans peindre. Les pots sèchent, la foi aussi.`,
+              `${days} jours. Le Chapelain a demandé de tes nouvelles. Sèchement.` ]
+            : [
+              `Frère, ${days} jours sans peindre. L'Empereur observe.`,
+              `${days} jours sans peindre, frère. L'établi prend la poussière.`,
+              `${days} jours. Une couche, une seule, et l'honneur est sauf.` ];
+          return { text: tiers[days % tiers.length], col: days >= 60 ? "#c04040" : days >= 30 ? "#c06040" : "#b8922a" };
+  })();
   const contextual = (() => {
     const unpainted = Math.max(0, totalModels - totalPainted);
     const lp = appState.lastPaintAt;
@@ -996,8 +1012,9 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
           );
         })())}
 
-        {/* ── Citation du jour ── */}
-        <div className="hc-bare orn" onClick={() => onNav && onNav("stats")} style={{ background:"#08060488", border:"1px solid #1c1a1699", borderLeft:"3px solid #b8922a", padding:"14px 16px", marginBottom:"12px", cursor:onNav?"pointer":"default", touchAction:"manipulation" }}>
+        {/* ── Message du Chapelain : citation du jour, ou rappel s'il n'y a pas eu de peinture depuis
+             14 jours (l'ancien « Rappel du Chapelain » séparé est fusionné ici le 15 octobre 2026) ── */}
+        <div className="hc-bare orn" onClick={() => onNav && onNav(chapReminder ? "shame" : "stats")} style={{ background:"#08060488", border:"1px solid #1c1a1699", borderLeft:`3px solid ${chapReminder ? chapReminder.col : "#b8922a"}`, padding:"14px 16px", marginBottom:"12px", cursor:onNav?"pointer":"default", touchAction:"manipulation" }}>
           {(() => {
             const now = Date.now();
             const hist = appState.paintHistory || [];
@@ -1018,60 +1035,14 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
               </div>
             );
           })()}
-          <div style={{ color:"#e8dfc0", fontSize:"14px", fontFamily:"'Crimson Pro',Georgia,serif", fontStyle:"italic", lineHeight:1.5, marginBottom:"6px" }}>« {citation.text} »</div>
-          <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>— {citation.author}</div>
+          {chapReminder ? <>
+            <div style={{ color:chapReminder.col, fontSize:"14.5px", fontFamily:"'Crimson Pro',Georgia,serif", fontStyle:"italic", lineHeight:1.5, marginBottom:"6px" }}>{chapReminder.text}</div>
+            <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>— Le Chapelain · toucher pour voir la pile</div>
+          </> : <>
+            <div style={{ color:"#e8dfc0", fontSize:"14px", fontFamily:"'Crimson Pro',Georgia,serif", fontStyle:"italic", lineHeight:1.5, marginBottom:"6px" }}>« {citation.text} »</div>
+            <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>— {citation.author}</div>
+          </>}
         </div>
-
-        {/* ── Conseil de l'Archiviste : la relique à peindre ensuite, et pourquoi (lib/counsel.jsx) ── */}
-        {(() => {
-          const c = chaplainCounsel({ inventory, ptsMap, oath: appState.oath, fateChoice: appState.fateChoice, listNames: listNames || {} });
-          if (!c) return null;
-          const acc = FACTIONS[c.faction]?.accent || "#b8922a";
-          // Nom en clair, souligné à la couleur de l'armée : écrit dans la couleur de l'armée, il
-          // devenait illisible sur un fond de la même teinte (rouge Tyranide sur un fond rouge).
-          const Name = <span style={{ color:"#f4e4b0", fontStyle:"normal", fontFamily:"'Cinzel',serif", fontSize:"13px", borderBottom:`1px solid ${acc}`, paddingBottom:"1px" }}>{c.name}</span>;
-          const pts = c.pts > 0 ? `${c.pts.toLocaleString("fr")} points` : null;
-          const wip = c.item.paintStatus === "wip";
-          const army = c.army ? `l'armée ${c.army}` : "ton armée";
-          const Rank = <span style={{ color:"#e0c060", fontStyle:"normal" }}>« {c.rank} »</span>;
-          const V = wip ? "Achève" : "Peins", v = wip ? "achève" : "peins";
-          const Pts = pts ? <> : {pts}</> : null;
-          // Trois formules par cas. Le tirage dépend du jour et de la relique : la phrase reste
-          // la même toute la journée, et change le lendemain ou quand le conseil change.
-          const variants =
-              c.kind === "oath" ? [
-                <>Tu as juré. {Name} attend ton pinceau avant toute autre.</>,
-                <>Un serment brûle encore : {Name} passe avant tout le reste.</>,
-                <>La bougie se consume. {Name} d'abord, le reste ensuite.</> ]
-            : c.kind === "fate" ? [
-                <>Le Dé a parlé : {Name}. On ne discute pas le Destin.</>,
-                <>Le Destin a désigné {Name}. L'Archiviste ne fait que transmettre.</>,
-                <>Tu as accepté l'ordre du Dé. {Name} t'attend sur l'établi.</> ]
-            : c.kind === "complete" ? [
-                <>{V} {Name} : c'est la dernière relique, et {army} sera entièrement consacrée.</>,
-                <>Il ne reste que {Name}. Un dernier effort, et {army} n'aura plus une once de gris.</>,
-                <>Une seule relique sépare {army} de la perfection : {Name}.</> ]
-            : c.kind === "promotion" ? [
-                <>{V} {Name} : {pts}, et {army} passe au rang {Rank}.</>,
-                <>{Name} vaut {pts}. C'est assez pour porter {army} au rang {Rank}.</>,
-                <>Le rang {Rank} est à portée : {v} {Name}, et {army} l'obtient.</> ]
-            : c.rank ? [
-                <>{V} {Name}{Pts}. Il ne manquera plus que {c.gap.toLocaleString("fr")} points à {army} pour le rang {Rank}.</>,
-                <>{V} {Name}{Pts}. Le rang {Rank} ne sera plus qu'à {c.gap.toLocaleString("fr")} points pour {army}.</>,
-                <>{wip ? "Termine" : "Commence par"} {Name} : ensuite, {army} sera à {c.gap.toLocaleString("fr")} points du rang {Rank}.</> ]
-            : [ <>{V} {Name}{pts ? <> : {pts} de plus pour {army}.</> : <> : {army} l'attend.</>}</> ];
-          const line = variants[(dayNum + String(c.item.id).split("").reduce((a, ch) => a + ch.charCodeAt(0), 0)) % variants.length];
-          return (
-            <div className="hc-bare orn" onClick={() => onOpenInInventory && onOpenInInventory(c.faction, c.item.id)}
-              style={{ background:"#08060488", border:"1px solid #1c1a1699", borderLeft:`3px solid ${acc}`, padding:"12px 14px", marginBottom:"12px", cursor:"pointer", touchAction:"manipulation" }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:"6px" }}>
-                <span style={{ color:"#b8922a", fontSize:"11px", letterSpacing:"3px", fontFamily:"'Cinzel',serif" }}>CONSEIL DE L'ARCHIVISTE</span>
-                <span style={{ color:"#8a7a58", fontSize:"14px" }}>›</span>
-              </div>
-              <div style={{ color:"#e8dfc0", fontSize:"14px", fontFamily:"'Crimson Pro',Georgia,serif", fontStyle:"italic", lineHeight:1.5 }}>{line}</div>
-            </div>
-          );
-        })()}
 
         {/* ── Tarot du Reliquaire : rappel de la lame de la semaine ── */}
         {tarotUnlocked && (
@@ -1087,34 +1058,6 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
             <span style={{ color:"#8a7a58", fontSize:"14px", flexShrink:0 }}>›</span>
           </div>
         )}
-
-        {/* ── Rappel du Chapelain ── */}
-        {(() => {
-          const lp = appState.lastPaintAt;
-          if (!lp) return null;
-          const days = Math.floor((Date.now() - new Date(lp).getTime()) / 86400000);
-          if (days < 14) return null;
-          // Trois formules par palier ; elle change chaque jour (le nombre de jours sert de tirage)
-          const tiers = days >= 60 ? [
-              `☠ ${days} jours sans coup de pinceau. Le Chapelain a cessé de prier pour toi.`,
-              `☠ ${days} jours. Tes pinceaux ont été déclarés disparus au combat.`,
-              `☠ ${days} jours de silence. Même la pile de honte s'inquiète.` ]
-            : days >= 30 ? [
-              `⸸ ${days} jours d'inactivité. L'Empereur détourne le regard.`,
-              `⸸ ${days} jours sans peindre. Les pots sèchent, la foi aussi.`,
-              `⸸ ${days} jours. Le Chapelain a demandé de tes nouvelles. Sèchement.` ]
-            : [
-              `⚠ Frère, ${days} jours sans peindre. L'Empereur observe.`,
-              `⚠ ${days} jours sans peindre, frère. L'établi prend la poussière.`,
-              `⚠ ${days} jours. Une couche, une seule, et l'honneur est sauf.` ];
-          const msg = tiers[days % tiers.length];
-          const col = days >= 60 ? "#c04040" : days >= 30 ? "#a05030" : "#8a7a2a";
-          return (
-            <div onClick={() => onNav && onNav("shame")} style={{ background:"#0e0806cc", borderLeft:`3px solid ${col}`, padding:"8px 12px", marginBottom:"8px", cursor:onNav?"pointer":"default", touchAction:"manipulation" }}>
-              <div style={{ color:col, fontSize:"12.5px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic" }}>{msg}</div>
-            </div>
-          );
-        })()}
 
         {/* ── Mise en place de la collection (7 premiers jours) : remplace le Shame-o-meter ── */}
         {enrolDaysLeft(appState) > 0 && (() => {
