@@ -20,7 +20,13 @@ const WAHA_SORORITAS = new Set(["Morvenn Vahl","Saint Celestine","Junith Eruita"
   "Penitent Engines","Paragon Warsuits","Retributor Squad","Seraphim Squad",
   "Zephyrim Squad","Novitiates","Castigator","Exorcist","Immolator","Sororitas Rhino"]);
 
+// Noms dont la page Wahapedia diffère du nom dans l'app (vérifié à la main)
+const WAHA_SLUG_OVERRIDES = {
+  "Lictors": "Lictor",   // la fiche Wahapedia est au singulier (16 octobre 2026)
+};
+
 export function wahapediaUrl(unitName, faction) {
+  if (WAHA_SLUG_OVERRIDES[unitName]) unitName = WAHA_SLUG_OVERRIDES[unitName];
   let factionSlug = WAHA_FACTIONS[faction] || "space-marines";
   if (faction === "IM" && WAHA_SORORITAS.has(unitName)) factionSlug = "adepta-sororitas";
   const slug = unitName
