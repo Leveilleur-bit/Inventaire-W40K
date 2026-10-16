@@ -296,10 +296,10 @@ Fond de l'Accueil (7 octobre)
   d'une armée, poids en points, bilan de l'année…), l'autre jour un fragment de lore (de préférence sur
   une armée possédée). `lib/archivist.jsx`, textes de lore dans `data/archives.jsx`. Lore seul pendant
   l'enrôlement.
-- Ordre de l'Accueil (validé) : bannière · ordre du Dé du Destin · jauge · chiffres clés · serment ·
-  mission du jour · mission de la semaine et Avent · fête / visite · message du Chapelain · tarot ·
-  Archiviste · dernière activité · alerte de sauvegarde (en dernier).
-- Servo-crâne : bouton rond animé, perché sur le coin haut droit du premier cartouche (ordre du Dé),
+- Ordre de l'Accueil (validé le 16 oct.) : bannière · mission du jour (Bénédiction) · jauge · chiffres clés ·
+  serment · ordre du Dé du Destin · Avent et mission de la semaine · fête / visite · message du Chapelain ·
+  tarot · Archiviste · dernière activité · alerte de sauvegarde (en dernier).
+- Servo-crâne : bouton rond animé, perché sur le coin haut droit du premier cartouche (Bénédiction),
   juste sous la bannière (le ⚜ « fonder la croisade » à côté s'il n'y a pas de croisade).
 
 ### Liens Wahapedia (16 octobre 2026)
