@@ -302,6 +302,13 @@ Fond de l'Accueil (7 octobre)
 - Servo-crâne : bouton rond animé, perché sur le coin haut droit du premier cartouche (ordre du Dé),
   juste sous la bannière (le ⚜ « fonder la croisade » à côté s'il n'y a pas de croisade).
 
+### Liens Wahapedia (16 octobre 2026)
+- Le lien du Lictor menait à une page introuvable (nom « Lictors » au pluriel dans l'app).
+- Nouveau système : `data/wahapediaPages.jsx` liste les fiches vérifiées sur Wahapedia (493 unités :
+  SM, IK, TY, CSM avec Death Guard / Thousand Sons / World Eaters / Emperor's Children, IM, AS, AM).
+  Une unité absente de la liste ouvre la page de son armée : plus jamais de page introuvable.
+- Avant, les armées autres que SM, TY, IK, IM, CSM pointaient toutes vers les Space Marines.
+
 ## Ce qui a été vérifié, et ce qui ne l'a pas été
 
 - Vérifié par Claude : l'app compile ; aucune variable manquante ; sauvegarde locale testée avec

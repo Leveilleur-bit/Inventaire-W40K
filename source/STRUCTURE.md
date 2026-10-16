@@ -42,6 +42,7 @@
 | `data/prices.json` | **Prix boutique** : c'est ce fichier qu'on modifie en cas de hausse de prix |
 | `data/prices.jsx` | Chargement des prix boutique |
 | `data/lore.jsx` | Citations, Tarot, phrases de célébration |
+| `data/wahapediaPages.jsx` | Fiches Wahapedia vérifiées (nom d'unité → adresse) |
 | `data/archives.jsx` | Fragments de lore de l'Archiviste (général et par armée) |
 | `data/advent.jsx` | Feuilleton de l'Avent « La Veille du Reliquaire » (24 épisodes) |
 | `data/tarot.jsx` | Tarot : jeux d'armée, lames renversées, lames personnelles, tirage en trois (illustrations dans public/tarot/) |

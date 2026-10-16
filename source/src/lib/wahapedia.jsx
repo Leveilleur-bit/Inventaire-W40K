@@ -4,38 +4,20 @@
 
 // Wahapedia URL: spaces→hyphens, Title-Case each word, remove apostrophes/special chars
 // Format: wahapedia.ru/wh40k10ed/factions/[faction]/[Unit-Name]
+import { WAHA_PAGES } from '../data/wahapediaPages.jsx';
+
+// Page d'armée Wahapedia (secours quand la fiche exacte n'est pas connue)
 const WAHA_FACTIONS = {
-  "SM": "space-marines",
-  "TY": "tyranids",
-  "IK": "imperial-knights",
-  "IM": "agents-of-the-imperium",
-  "CSM": "chaos-space-marines",
+  SM:"space-marines", TY:"tyranids", IK:"imperial-knights", IM:"imperial-agents", CSM:"chaos-space-marines",
+  AM:"astra-militarum", AS:"adepta-sororitas", NC:"necrons", AE:"aeldari", AC:"adeptus-custodes", OR:"orks",
+  GC:"genestealer-cults", AD:"adeptus-mechanicus", CK:"chaos-knights", DR:"drukhari", TA:"t-au-empire",
+  LD:"chaos-daemons", LV:"leagues-of-votann", GK:"grey-knights",
 };
 
-// Certaines unités IM sont sur adepta-sororitas plutôt que agents-of-the-imperium
-const WAHA_SORORITAS = new Set(["Morvenn Vahl","Saint Celestine","Junith Eruita",
-  "Triumph of Saint Katherine","Canoness","Palatine","Dialogus","Hospitaller",
-  "Imagifier","Battle Sisters Squad","Dominion Squad","Celestian Sacresants",
-  "Repentia Squad","Arco-flagellants","Death Cult Assassins","Mortifiers",
-  "Penitent Engines","Paragon Warsuits","Retributor Squad","Seraphim Squad",
-  "Zephyrim Squad","Novitiates","Castigator","Exorcist","Immolator","Sororitas Rhino"]);
-
-// Noms dont la page Wahapedia diffère du nom dans l'app (vérifié à la main)
-const WAHA_SLUG_OVERRIDES = {
-  "Lictors": "Lictor",   // la fiche Wahapedia est au singulier (16 octobre 2026)
-};
-
+// Fiche exacte si elle a été vérifiée (data/wahapediaPages.jsx), sinon la page de l'armée.
 export function wahapediaUrl(unitName, faction) {
-  if (WAHA_SLUG_OVERRIDES[unitName]) unitName = WAHA_SLUG_OVERRIDES[unitName];
-  let factionSlug = WAHA_FACTIONS[faction] || "space-marines";
-  if (faction === "IM" && WAHA_SORORITAS.has(unitName)) factionSlug = "adepta-sororitas";
-  const slug = unitName
-    .replace(/([a-z])'([A-Z])/g, "$1-$2") // apostrophe before uppercase → hyphen (El'Jonson → El-Jonson)
-    .replace(/'/g, "")                      // all other apostrophes → remove (Kor'sarro, 's, etc.)
-    .replace(/[^a-zA-Z0-9\s-]/g, "")      // other special chars → remove
-    .trim()
-    .split(/\s+/)
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1)) // Title-Case each word
-    .join("-");
-  return `https://wahapedia.ru/wh40k10ed/factions/${factionSlug}/${slug}`;
+  const base = "https://wahapedia.ru/wh40k10ed/factions/";
+  const page = WAHA_PAGES[`${unitName}|${faction}`];
+  if (page) return base + page;
+  return base + (WAHA_FACTIONS[faction] || "space-marines") + "/";
 }
