@@ -8,6 +8,7 @@ import { FACTIONS } from '../data/factions.jsx';
 import { POINTS_DB, getModelCount } from '../data/points.jsx';
 import { findUnit } from '../data/units.jsx';
 import { LORE_BY_FACTION, LORE_GENERAL } from '../data/archives.jsx';
+import { localDay } from './utils.jsx';
 
 const MOIS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
 const longDate = (d) => { const [y, m, j] = d.split("-").map(Number); return `${j === 1 ? "1er" : j} ${MOIS[m - 1]} ${y}`; };
@@ -17,7 +18,7 @@ const daysBetween = (a, b) => Math.round((new Date(b + "T12:00:00") - new Date(a
 // Date d'entrée d'une relique : son identifiant contient l'instant de création (uid), sinon la date d'achat
 function addedDay(it) {
   const n = Number(it.id);
-  if (Number.isFinite(n) && n > 1.5e15) { const d = new Date(n / 1000); if (d.getFullYear() > 2015) return d.toISOString().slice(0, 10); }
+  if (Number.isFinite(n) && n > 1.5e15) { const d = new Date(n / 1000); if (d.getFullYear() > 2015) return localDay(d); }
   if (it.purchasedAt) return (it.purchasedAt.length === 7 ? it.purchasedAt + "-01" : it.purchasedAt);
   return null;
 }

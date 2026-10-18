@@ -309,6 +309,16 @@ Fond de l'Accueil (7 octobre)
   Une unité absente de la liste ouvre la page de son armée : plus jamais de page introuvable.
 - Avant, les armées autres que SM, TY, IK, IM, CSM pointaient toutes vers les Space Marines.
 
+### Tour de l'app (18 octobre 2026)
+- Testé : 8 onglets × 3 profils (collection fournie, appareil neuf, enrôlement), dates délicates
+  (Avent, 24 et 31 déc., 1er janv., semaine 53, février), sauvegarde .zip puis restauration sur
+  appareil neuf (identique), stabilité (300 changements d'onglet : pas de fuite). Aucune erreur JS.
+- Corrigé : suppression d'une photo de Parade demandait deux confirmations ; supprimer la photo
+  utilisée en fond d'accueil laisse maintenant le fond par défaut ; supprimer une relique libère
+  l'ordre du Dé et le serment qui la visaient (avant : carte du Dé disparue, serment intenable) ;
+  titre « Jugement annuel » coupé à droite (aperçu/officiel déplacé dans la carte) ; l'Archiviste
+  date les ajouts au jour local et non UTC.
+
 ## Ce qui a été vérifié, et ce qui ne l'a pas été
 
 - Vérifié par Claude : l'app compile ; aucune variable manquante ; sauvegarde locale testée avec

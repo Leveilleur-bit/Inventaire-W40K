@@ -374,7 +374,10 @@ export function App() {
     ...s, inventory:[...s.inventory,{id:uid(),...entry}]
   }));
   // La confirmation est demandée par la fiche de la relique (message plus précis) : pas une deuxième ici
-  const deleteInventory = id => updateApp(s => ({ ...s, inventory:s.inventory.filter(i=>i.id!==id) }));
+  // Supprimer une relique libère aussi l'ordre du Dé et le serment qui la visaient (sinon ils resteraient bloqués)
+  const deleteInventory = id => updateApp(s => ({ ...s, inventory:s.inventory.filter(i=>i.id!==id),
+    ...(s.fateChoice?.id === id ? { fateChoice: null } : {}),
+    ...(s.oath?.unitId === id ? { oath: null } : {}) }));
   const updatePhoto     = (id,photo) => updateApp(s => ({ ...s, inventory:s.inventory.map(i=>i.id===id?{...i,photo}:i) }));
   // Données de la cérémonie d'un colosse (pour une consécration, ou pour la revoir depuis sa fiche)
   const buildColossusData = (item, inv, history) => {
@@ -654,7 +657,11 @@ export function App() {
   const addPaintCatalog = entry => updateApp(s => ({ ...s, paintCatalog:[...(s.paintCatalog||[]),entry] }));
   const deletePaintWish = id    => updateApp(s => ({ ...s, paintWishlist:(s.paintWishlist||[]).filter(p=>p.id!==id) }));
   const addParade    = entry => updateApp(s => ({ ...s, parade:[...(s.parade||[]),entry] }));
-  const deleteParade = id    => askConfirm("Supprimer cette photo ?", () => updateApp(s => ({ ...s, parade:(s.parade||[]).filter(p=>p.id!==id) })), "#b8922a", "SUPPRIMER", true);
+  // La confirmation est demandée par la Parade elle-même (sinon elle apparaissait deux fois)
+  const deleteParade = id    => updateApp(s => {
+    const gone = (s.parade||[]).find(p => p.id === id);
+    return { ...s, parade:(s.parade||[]).filter(p=>p.id!==id), ...(gone && s.homeBackground && s.homeBackground === gone.photo ? { homeBackground: null } : {}) };
+  });
 
   if (loadError) return (
     <div style={{ background:"#020202", height:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"24px", fontFamily:"'Cinzel',serif", gap:"16px" }}>

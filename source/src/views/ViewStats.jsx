@@ -912,10 +912,10 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
           const pastJudgments = judgments.filter(j => j.year !== year).sort((a,b)=>b.year-a.year);
           return (
             <div style={{ padding:"0 14px", marginBottom:"14px" }}>
-              <div className="enlum" style={{ color:"#d8c8ac", marginBottom:"10px" }}><span className="enlum-mark">⚖</span><span style={{ fontSize:"12px", letterSpacing:"4px", fontFamily:"'Cinzel',serif", whiteSpace:"nowrap" }}>JUGEMENT ANNUEL · {year}{sealed ? " · OFFICIEL" : " · APERÇU"}</span><span className="enlum-mark">⚖</span></div>
+              <div className="enlum" style={{ color:"#d8c8ac", marginBottom:"10px" }}><span className="enlum-mark">⚖</span><span style={{ fontSize:"12px", letterSpacing:"4px", fontFamily:"'Cinzel',serif", whiteSpace:"nowrap" }}>JUGEMENT ANNUEL · {year}</span><span className="enlum-mark">⚖</span></div>
               <div className="hc-bare orn" style={{ background:"linear-gradient(180deg,#0f0a0a 0%,#080505 100%)", border:`1px solid ${verdict.col}44`, borderTop:`2px solid ${verdict.col}`, padding:"16px 14px", textAlign:"center" }}>
                 <div style={{ fontSize:"22px", marginBottom:"4px" }}>⚖</div>
-                <div style={{ color:"#b3a48c", fontSize:"10px", letterSpacing:"3px", fontFamily:"'Cinzel',serif" }}>VERDICT DE L'ORDO HERETICUS</div>
+                <div style={{ color:"#b3a48c", fontSize:"10px", letterSpacing:"3px", fontFamily:"'Cinzel',serif" }}>{sealed ? "VERDICT OFFICIEL" : "APERÇU DU VERDICT"} · ORDO HERETICUS</div>
                 <div style={{ color:verdict.col, fontSize:"17px", fontFamily:"'Cinzel Decorative','Cinzel',serif", fontWeight:"900", margin:"4px 0 8px" }}>{verdict.t}</div>
                 <div style={{ color:"#c8bfa8", fontSize:"13px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", lineHeight:1.5, marginBottom:"10px" }}>« {verdict.d} »</div>
                 <div className="hc-bare" style={{ background:"#00000066", border:"1px solid #1c1a16", padding:"8px 10px" }}>
