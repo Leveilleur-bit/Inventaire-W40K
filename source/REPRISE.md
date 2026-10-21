@@ -320,7 +320,7 @@ Fond de l'Accueil (7 octobre)
   date les ajouts au jour local et non UTC.
 
 ### STATS : sections repliables (21 octobre 2026)
-- Par faction, Trophées (x/16), Valeur (€) et Achats prévus (€) sont repliables (composant `Fold`
+- Par faction, Trophées (x/16), Valeur (€), Achats prévus (€) et Cartes à partager sont repliables (composant `Fold`
   dans ViewStats.jsx), fermés par défaut, résumé visible sur la ligne. L'état ouvert/fermé est
   retenu sur le téléphone (localStorage `stats-fold-*`).
 

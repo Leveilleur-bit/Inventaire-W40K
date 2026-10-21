@@ -1211,6 +1211,8 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
             style={{ width:"100%", padding:"12px", background:"#080604", border:"1px solid #1c1a16", color:"#d8c8ac", fontFamily:"'Cinzel',serif", fontSize:"11.5px", letterSpacing:"3px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:"8px", touchAction:"manipulation" }}>
             <ScrollGlyph size={15} /> CHRONIQUES DE LA CROISADE
           </button>
+          <div style={{ marginTop:"8px" }}>
+          <Fold id="cartes" mark="⚜" title="CARTES À PARTAGER">
           <button onClick={() => { setCardFaction(null); genCard(cardPhoto, null); }}
             style={{ width:"100%", padding:"12px", marginTop:"8px", background:"linear-gradient(135deg,#14100a,#0a0806)", border:"1px solid #b8922a55", color:"#b8922a", fontFamily:"'Cinzel',serif", fontSize:"11.5px", letterSpacing:"3px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:"8px", touchAction:"manipulation" }}>
             <span style={{ fontSize:"14px" }}>⚜</span> CARTE DE CROISADE À PARTAGER
@@ -1253,6 +1255,8 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
               </div>
             );
           })()}
+          </Fold>
+          </div>
         </div>
 
         {/* ── Modal Carte de recruteur ── */}
