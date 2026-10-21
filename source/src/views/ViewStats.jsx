@@ -11,6 +11,25 @@ import { playSfx } from '../lib/sfx.jsx';
 import { colossusCount } from '../lib/colossus.jsx';
 import { computeTrophies, enrolDaysLeft } from '../lib/trophies.jsx';
 
+// ── Section repliable (fermée par défaut ; l'état est retenu sur ce téléphone) ──
+function Fold({ id, mark, title, summary, children }) {
+  const key = "stats-fold-" + id;
+  const [open, setOpen] = useState(() => { try { return localStorage.getItem(key) === "1"; } catch { return false; } });
+  const toggle = () => { const n = !open; setOpen(n); try { localStorage.setItem(key, n ? "1" : "0"); } catch {} };
+  return (
+    <>
+      <button onClick={toggle} aria-expanded={open}
+        style={{ width:"100%", background:"rgba(10,8,6,0.55)", border:"1px solid #2a2418", borderLeft:"2px solid #b8922a88", padding:"11px 14px", marginBottom: open ? "10px" : "0", display:"flex", alignItems:"center", gap:"10px", cursor:"pointer", touchAction:"manipulation", textAlign:"left" }}>
+        <span style={{ color:"#b8922a", fontSize:"13px" }}>{mark}</span>
+        <span style={{ flex:1, color:"#d8c8ac", fontSize:"12px", letterSpacing:"3px", fontFamily:"'Cinzel',serif" }}>{title}</span>
+        {summary != null && <span style={{ color:"#e0c060", fontSize:"12.5px", fontFamily:"'Cinzel',serif", whiteSpace:"nowrap" }}>{summary}</span>}
+        <span style={{ color:"#8a7a58", fontSize:"12px", transform: open ? "rotate(180deg)" : "none", transition:"transform 0.2s" }}>▾</span>
+      </button>
+      {open && <div style={{ animation:"viewFade 0.25s ease both" }}>{children}</div>}
+    </>
+  );
+}
+
 export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, paintHistory, openChronicle, confirm, onSealJudgment }) {
   const [showRetro, setShowRetro] = useState(false);
   const [retroYear, setRetroYear] = useState(null);
@@ -697,7 +716,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
         {/* ── PAR FACTION ────────────────── */}
         {factionStats.length>0 && (
           <div style={{ marginBottom:"20px" }}>
-            <div className="enlum" style={{ color:"#d8c8ac", marginBottom:"10px" }}><span className="enlum-mark">❖</span><span style={{ fontSize:"12px", letterSpacing:"4px", fontFamily:"'Cinzel',serif", whiteSpace:"nowrap" }}>PAR FACTION</span><span className="enlum-mark">❖</span></div>
+            <Fold id="factions" mark="❖" title="PAR FACTION" summary={`${factionStats.length} armée${factionStats.length>1?"s":""}`}>
             {factionStats.map(({ key, f, models, units, painted, paintedModels, pts, byRole, uniqueUnits }) => {
               const pct = models ? Math.round(paintedModels/models*100) : 0;
               const topRoles = Object.entries(byRole).sort((a,b)=>b[1]-a[1]); // toutes : avec 4 max, 4 Chevaliers sur 21 n'apparaissaient nulle part
@@ -761,6 +780,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
                 </div>
               );
             })}
+            </Fold>
           </div>
         )}
 
@@ -870,7 +890,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
           const unlocked = badges.filter(b => b.got).length;
           return (
             <div style={{ padding:"0 14px", marginBottom:"14px" }}>
-              <div className="enlum" style={{ color:"#d8c8ac", marginBottom:"10px" }}><span className="enlum-mark">⚑</span><span style={{ fontSize:"12px", letterSpacing:"4px", fontFamily:"'Cinzel',serif", whiteSpace:"nowrap" }}>SALLE DES TROPHÉES · {unlocked}/{badges.length}</span><span className="enlum-mark">⚑</span></div>
+              <Fold id="trophees" mark="⚑" title="TROPHÉES" summary={`${unlocked}/${badges.length}`}>
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px" }}>
                 {badges.map(b => (
                   <div key={b.name} className="hc-bare" style={{ background: b.got ? "linear-gradient(135deg,rgba(20,16,10,0.6),rgba(10,8,6,0.72))" : "rgba(6,5,5,0.6)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:`1px solid ${b.got?"#b8922a44":"#1c1a18"}`, padding:"9px 10px", display:"flex", gap:"8px", alignItems:"center" }}>
@@ -885,6 +905,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
                   </div>
                 ))}
               </div>
+              </Fold>
             </div>
           );
         })()}
@@ -1289,7 +1310,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
           }).filter(x=>x.count>0);
           return collectionValue > 0 ? (
             <div style={{ marginBottom:"20px" }}>
-              <div className="enlum" style={{ color:"#d8c8ac", marginBottom:"10px" }}><span className="enlum-mark">✦</span><span style={{ fontSize:"12px", letterSpacing:"4px", fontFamily:"'Cinzel',serif", whiteSpace:"nowrap" }}>VALEUR COLLECTION</span><span className="enlum-mark">✦</span></div>
+              <Fold id="valeur" mark="✦" title="VALEUR" summary={`${Math.round(collectionValue).toLocaleString('fr')} €`}>
               <div className="hc-bare orn" style={{ background:"rgba(10,12,8,0.6)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:"1px solid #2a3a1a", borderLeft:"3px solid #5a8a3a", padding:"12px 16px", marginBottom:"8px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                 <div>
                   <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"2px" }}>TOTAL COLLECTION</div>
@@ -1308,6 +1329,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
                 </div>
               ))}
               <div style={{ color:"#6a5a48", fontSize:"11px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", marginTop:"6px", textAlign:"center" }}>* Prix boutique officiel de référence — pas ce que tu as réellement payé (soldes, occasion, box...)</div>
+              </Fold>
             </div>
           ) : null;
         })()}
@@ -1325,7 +1347,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
           }, 0);
           return (
             <div style={{ marginBottom:"20px" }}>
-              <div className="enlum" style={{ color:"#d8c8ac", marginBottom:"10px" }}><span className="enlum-mark">✧</span><span style={{ fontSize:"12px", letterSpacing:"4px", fontFamily:"'Cinzel',serif", whiteSpace:"nowrap" }}>ACQUISITIONS FUTURES</span><span className="enlum-mark">✧</span></div>
+              <Fold id="achats" mark="✧" title="ACHATS PRÉVUS" summary={`${Math.round(toSpend).toLocaleString('fr')} €`}>
               <div style={{ display:"flex", gap:"6px", marginBottom:"8px" }}>
                 {[
                   { label:"SOUHAITÉ", count:wanted.length,   color:"#b8922a", icon:"✦" },
@@ -1346,6 +1368,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
                 </div>
                 <div style={{ color:"#b8922a", fontSize:"20px", fontFamily:"'Cinzel',serif", fontWeight:"700" }}>{Math.round(toSpend).toLocaleString('fr')} €</div>
               </div>
+              </Fold>
             </div>
           );
         })()}
