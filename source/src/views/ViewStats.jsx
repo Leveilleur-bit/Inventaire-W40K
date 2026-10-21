@@ -23,7 +23,7 @@ function Fold({ id, mark, title, summary, children }) {
         <span style={{ color:"#b8922a", fontSize:"13px" }}>{mark}</span>
         <span style={{ flex:1, color:"#d8c8ac", fontSize:"12px", letterSpacing:"3px", fontFamily:"'Cinzel',serif" }}>{title}</span>
         {summary != null && <span style={{ color:"#e0c060", fontSize:"12.5px", fontFamily:"'Cinzel',serif", whiteSpace:"nowrap" }}>{summary}</span>}
-        <span style={{ color:"#8a7a58", fontSize:"12px", transform: open ? "rotate(180deg)" : "none", transition:"transform 0.2s" }}>▾</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b8922a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, transform: open ? "rotate(180deg)" : "none", transition:"transform 0.2s" }}><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       {open && <div style={{ animation:"viewFade 0.25s ease both" }}>{children}</div>}
     </>
@@ -715,7 +715,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
 
         {/* ── PAR FACTION ────────────────── */}
         {factionStats.length>0 && (
-          <div style={{ marginBottom:"20px" }}>
+          <div style={{ padding:"0 14px", marginBottom:"14px" }}>
             <Fold id="factions" mark="❖" title="PAR FACTION" summary={`${factionStats.length} armée${factionStats.length>1?"s":""}`}>
             {factionStats.map(({ key, f, models, units, painted, paintedModels, pts, byRole, uniqueUnits }) => {
               const pct = models ? Math.round(paintedModels/models*100) : 0;
@@ -936,7 +936,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
               <div className="enlum" style={{ color:"#d8c8ac", marginBottom:"10px" }}><span className="enlum-mark">⚖</span><span style={{ fontSize:"12px", letterSpacing:"4px", fontFamily:"'Cinzel',serif", whiteSpace:"nowrap" }}>JUGEMENT ANNUEL · {year}</span><span className="enlum-mark">⚖</span></div>
               <div className="hc-bare orn" style={{ background:"linear-gradient(180deg,#0f0a0a 0%,#080505 100%)", border:`1px solid ${verdict.col}44`, borderTop:`2px solid ${verdict.col}`, padding:"16px 14px", textAlign:"center" }}>
                 <div style={{ fontSize:"22px", marginBottom:"4px" }}>⚖</div>
-                <div style={{ color:"#b3a48c", fontSize:"10px", letterSpacing:"3px", fontFamily:"'Cinzel',serif" }}>{sealed ? "VERDICT OFFICIEL" : "APERÇU DU VERDICT"} · ORDO HERETICUS</div>
+                <div style={{ color:"#b3a48c", fontSize:"10px", letterSpacing:"3px", fontFamily:"'Cinzel',serif" }}>{sealed ? "VERDICT SCELLÉ · ORDO HERETICUS" : "VERDICT DE L'ORDO HERETICUS"}</div>
                 <div style={{ color:verdict.col, fontSize:"17px", fontFamily:"'Cinzel Decorative','Cinzel',serif", fontWeight:"900", margin:"4px 0 8px" }}>{verdict.t}</div>
                 <div style={{ color:"#c8bfa8", fontSize:"13px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", lineHeight:1.5, marginBottom:"10px" }}>« {verdict.d} »</div>
                 <div className="hc-bare" style={{ background:"#00000066", border:"1px solid #1c1a16", padding:"8px 10px" }}>
@@ -1212,7 +1212,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
             <ScrollGlyph size={15} /> CHRONIQUES DE LA CROISADE
           </button>
           <div style={{ marginTop:"8px" }}>
-          <Fold id="cartes" mark="⚜" title="CARTES À PARTAGER">
+          <Fold id="cartes" mark="✠" title="CARTES À PARTAGER">
           <button onClick={() => { setCardFaction(null); genCard(cardPhoto, null); }}
             style={{ width:"100%", padding:"12px", marginTop:"8px", background:"linear-gradient(135deg,#14100a,#0a0806)", border:"1px solid #b8922a55", color:"#b8922a", fontFamily:"'Cinzel',serif", fontSize:"11.5px", letterSpacing:"3px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:"8px", touchAction:"manipulation" }}>
             <span style={{ fontSize:"14px" }}>⚜</span> CARTE DE CROISADE À PARTAGER
@@ -1313,7 +1313,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
             return { k, v, val, count };
           }).filter(x=>x.count>0);
           return collectionValue > 0 ? (
-            <div style={{ marginBottom:"20px" }}>
+            <div style={{ padding:"0 14px", marginBottom:"14px" }}>
               <Fold id="valeur" mark="✦" title="VALEUR" summary={`${Math.round(collectionValue).toLocaleString('fr')} €`}>
               <div className="hc-bare orn" style={{ background:"rgba(10,12,8,0.6)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:"1px solid #2a3a1a", borderLeft:"3px solid #5a8a3a", padding:"12px 16px", marginBottom:"8px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                 <div>
@@ -1350,7 +1350,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
             return s + (i.price||(unit?SHOP_PRICES[unit.name]:0)||0) * (i.qty||1);
           }, 0);
           return (
-            <div style={{ marginBottom:"20px" }}>
+            <div style={{ padding:"0 14px", marginBottom:"14px" }}>
               <Fold id="achats" mark="✧" title="ACHATS PRÉVUS" summary={`${Math.round(toSpend).toLocaleString('fr')} €`}>
               <div style={{ display:"flex", gap:"6px", marginBottom:"8px" }}>
                 {[
