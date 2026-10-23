@@ -379,6 +379,7 @@ Servo-crâne assistant (9 octobre)
 - Journal de batailles dans CROISADE.
 - Projets avec échéance.
 - Recettes reliées au stock de peintures.
+- Agent IA dans l'app (photo vers fiche, armée jouable, servo-crâne qui répond) : refusé le 23 oct. 2026.
 
 Proposées le 7 octobre, pas retenues pour l'instant (ni refusées) : cérémonie de promotion mise
 en scène, carte « Il y a un an », Mur des reliques, recherche dans toute la collection, carte de
