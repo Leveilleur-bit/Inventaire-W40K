@@ -390,6 +390,7 @@ Servo-crâne assistant (9 octobre)
 - Journal de batailles dans CROISADE.
 - Projets avec échéance.
 - Recettes reliées au stock de peintures.
+- Retirer « Date d'achat ? » de la liste de la Pile of Shame : l'utilisateur aime la voir là (24 oct. 2026).
 - Voile plus sombre en haut de l'Accueil : refusé le 24 oct. 2026.
 - Agent IA dans l'app (photo vers fiche, armée jouable, servo-crâne qui répond) : refusé le 23 oct. 2026.
 
