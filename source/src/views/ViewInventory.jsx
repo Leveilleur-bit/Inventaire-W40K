@@ -10,6 +10,9 @@ import { computeHonors } from '../lib/honors.jsx';
 import { isColossus } from '../lib/colossus.jsx';
 import { FactionIcon } from '../components/heraldry.jsx';
 
+// Recherche insensible aux accents et aux majuscules
+const norm = (t) => (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
 // Filtre de statut : "unpainted" (« Non peint ») = monté, sur grappe, ou sans statut
 const matchPaint = (i, key) => key === "all" ? true
   : key === "unpainted" ? (!i.paintStatus || i.paintStatus === "unpainted" || i.paintStatus === "sprue")
@@ -30,6 +33,10 @@ export function ViewInventory({ onUpdateColosse, onReplayCeremony, paintHistory,
   useBackButton(!!faction, React.useCallback(() => setFaction(null), []));
   useEffect(() => { if (focusItem) setFaction(focusItem.faction); }, [focusItem]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [globalQuery, setGlobalQuery] = useState("");   // recherche dans toutes les armées (page des armées)
+  const [localFocus, setLocalFocus] = useState(null);   // relique à ouvrir après un choix dans la recherche globale
+  const focus = focusItem || localFocus;
+  const focusHandled = () => { setLocalFocus(null); onFocusHandled && onFocusHandled(); };
   const [chapterFilter, setChapterFilter] = useState("all");
   const [viewMode, setViewMode] = useState("list");
   const [paintFilter, setPaintFilter] = useState("all");
@@ -67,6 +74,43 @@ export function ViewInventory({ onUpdateColosse, onReplayCeremony, paintHistory,
           <div style={{ color:"#9a8a6a", fontSize:"12px", letterSpacing:"2px", fontFamily:"'Cinzel',serif", marginTop:"4px" }}>{withUnits.length} ARMÉES · {grandTotal} FIGURINES · {grandTotal?Math.round(grandPainted/grandTotal*100):0}% PEINT</div>
         </div>
         <div className="cascade" style={{ flex:1, overflowY:"auto", padding:"12px" }}>
+          {inventory.length > 0 && (
+            <div style={{ position:"relative", marginBottom:"12px" }}>
+              <input value={globalQuery} onChange={e => setGlobalQuery(e.target.value)} placeholder="Chercher dans toute la collection…"
+                style={{ width:"100%", background:"#0a0806", border:"1px solid #2a2418", color:"#e8dfc0", padding:"11px 34px 11px 12px", fontSize:"15px", fontFamily:"'Crimson Pro',serif", outline:"none", boxSizing:"border-box" }} />
+              {globalQuery && <button onClick={() => setGlobalQuery("")} aria-label="Effacer"
+                style={{ position:"absolute", right:"6px", top:"50%", transform:"translateY(-50%)", background:"none", border:"none", color:"#c8b9a0", cursor:"pointer", fontSize:"15px", padding:"6px" }}>✕</button>}
+            </div>
+          )}
+          {norm(globalQuery) ? (() => {
+            const q = norm(globalQuery);
+            const hits = inventory.map(i => ({ i, u: findUnit(i.faction, i.unitId) }))
+              .filter(({ i, u }) => u && (norm(u.name).includes(q) || norm(i.nickname).includes(q) || norm(i.note).includes(q)))
+              .slice(0, 60);
+            if (!hits.length) return <div style={{ color:"#9a8a6a", textAlign:"center", padding:"24px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", fontSize:"14px" }}>Aucune relique ne correspond.</div>;
+            return hits.map(({ i, u }) => {
+              const fac = FACTIONS[i.faction] || {};
+              const st = PAINT_STATUS[i.paintStatus] || PAINT_STATUS.unpainted;
+              const figs = getModelCount(u.name, i.qty || 1, i.modelCount);
+              return (
+                <button key={i.id} className="hc-bare" onClick={() => { setSearchQuery(""); setChapterFilter("all"); setPaintFilter("all"); setCollapsedRoles({}); setLocalFocus({ faction: i.faction, itemId: i.id }); setFaction(i.faction); setGlobalQuery(""); }}
+                  style={{ width:"100%", textAlign:"left", background:"linear-gradient(135deg,#0f0c08,#080604)", border:"1px solid #1c1a16", borderLeft:`3px solid ${fac.accent || "#b8922a"}`, padding:"10px 12px", marginBottom:"6px", display:"flex", alignItems:"center", gap:"10px", cursor:"pointer", touchAction:"manipulation" }}>
+                  {i.photo
+                    ? <img src={i.photo} alt="" style={{ width:"40px", height:"40px", objectFit:"cover", border:`1px solid ${fac.accent || "#b8922a"}44`, flexShrink:0 }} />
+                    : <span style={{ width:"40px", display:"flex", justifyContent:"center", color:fac.accent, flexShrink:0 }}><FactionIcon faction={i.faction} factionDef={fac} size={20} /></span>}
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ color:"#e8dfc0", fontSize:"13.5px", fontFamily:"'Cinzel',serif", lineHeight:1.2 }}>{u.name}{i.nickname ? <span style={{ color:"#d8c8ac", fontFamily:"'Crimson Pro',serif", fontStyle:"italic" }}> · « {i.nickname} »</span> : null}</div>
+                    <div style={{ fontSize:"12px", fontFamily:"'Crimson Pro',serif", marginTop:"2px", display:"flex", gap:"8px", flexWrap:"wrap" }}>
+                      <span style={{ color:fac.accent }}>{fac.label}</span>
+                      <span style={{ color:st.color === "#2a7a2a" ? "#5a9a4a" : "#b8a882" }}>● {st.label}</span>
+                      <span style={{ color:"#9a8a6a" }}>{figs} fig.</span>
+                    </div>
+                  </div>
+                  <span style={{ color:"#8a7a58", fontSize:"15px", flexShrink:0 }}>›</span>
+                </button>
+              );
+            });
+          })() : <>
           {withUnits.map(({ k, fac, models, painted, pts, ptsPainted, pct }) => (
             <button key={k} className="hc-bare orn" onClick={() => { setFaction(k); setChapterFilter("all"); setPaintFilter("all"); setCollapsedRoles({}); }}
               style={{ width:"100%", textAlign:"left", background:"linear-gradient(180deg,rgba(13,11,8,0.34) 0%,rgba(8,6,4,0.46) 100%)", backdropFilter:"blur(2px)", WebkitBackdropFilter:"blur(2px)", border:`1px solid ${fac.accent}33`, borderLeft:`3px solid ${fac.accent}`, padding:"14px", marginBottom:"10px", cursor:"pointer", touchAction:"manipulation", borderRadius:"var(--rayon)", boxShadow:"var(--ombre-carte)" }}>
@@ -106,6 +150,7 @@ export function ViewInventory({ onUpdateColosse, onReplayCeremony, paintHistory,
               </div>
             </div>
           )}
+          </>}
         </div>
       </div>
     );
@@ -123,8 +168,8 @@ export function ViewInventory({ onUpdateColosse, onReplayCeremony, paintHistory,
       if (!searchQuery.trim()) return true;
       const unit = findUnit(i.faction, i.unitId);
       const name = unit?.name?.toLowerCase() || '';
-      const note = (i.note||'').toLowerCase();
-      return name.includes(searchQuery.toLowerCase()) || note.includes(searchQuery.toLowerCase());
+      const q = norm(searchQuery);
+      return norm(unit?.name).includes(q) || norm(i.nickname).includes(q) || norm(i.note).includes(q);
     })
     .filter(i=> matchPaint(i, paintFilter))
     .map(i => ({ ...i, unit:findUnit(i.faction, i.unitId) }))
@@ -280,7 +325,7 @@ export function ViewInventory({ onUpdateColosse, onReplayCeremony, paintHistory,
                       onUpdatePaint={onUpdatePaint} onUpdateQty={onUpdateQty} onUpdateModelCount={onUpdateModelCount} onUpdateNote={onUpdateNote} onUpdateNickname={onUpdateNickname} onUpdatePurchased={onUpdatePurchased} onSplit={onSplit}
                       accent={f.accent} viewMode="grid"
                       dragHandleProps={{}}
-                      autoOpen={focusItem?.itemId === item.id} onAutoOpened={onFocusHandled}
+                      autoOpen={focus?.itemId === item.id} onAutoOpened={focusHandled}
                       paintCatalog={paintCatalog} onSetRecipe={onSetRecipe} onAddPaint={onAddPaint} confirm={confirm}
                       siblings={inventory.filter(i => i.faction===faction && i.unitId===item.unitId && i.id!==item.id)}
                     />
@@ -306,7 +351,7 @@ export function ViewInventory({ onUpdateColosse, onReplayCeremony, paintHistory,
                         onDragEnd,
                         onTouchStart: e => onTouchStart(e, item, role),
                       }}
-                      autoOpen={focusItem?.itemId === item.id} onAutoOpened={onFocusHandled}
+                      autoOpen={focus?.itemId === item.id} onAutoOpened={focusHandled}
                     />
                   </div>
                 ))

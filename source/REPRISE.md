@@ -319,6 +319,12 @@ Fond de l'Accueil (7 octobre)
   titre « Jugement annuel » coupé à droite (aperçu/officiel déplacé dans la carte) ; l'Archiviste
   date les ajouts au jour local et non UTC.
 
+### Recherche globale et STATS alignées (24 octobre 2026)
+- RELIQUES : champ « Chercher dans toute la collection… » sur la page des armées (nom d'unité,
+  surnom, note ; sans accents ni majuscules). Toucher un résultat ouvre l'armée et la fiche
+  (focus local `localFocus` dans ViewInventory). La recherche dans une armée cherche aussi le surnom.
+- STATS : toutes les sections ont la même largeur (suppression du retrait `0 14px` des sections du bas).
+
 ### Ajout d'une unité : filtre par chapitre (24 octobre 2026)
 - Dans la fenêtre d'ajout (collection, wishlist, impression), choisir un chapitre ou une légion
   (Raven Guard, Death Guard…) n'affiche plus que ses unités propres. Les unités communes restent
@@ -384,10 +390,11 @@ Servo-crâne assistant (9 octobre)
 - Journal de batailles dans CROISADE.
 - Projets avec échéance.
 - Recettes reliées au stock de peintures.
+- Voile plus sombre en haut de l'Accueil : refusé le 24 oct. 2026.
 - Agent IA dans l'app (photo vers fiche, armée jouable, servo-crâne qui répond) : refusé le 23 oct. 2026.
 
 Proposées le 7 octobre, pas retenues pour l'instant (ni refusées) : cérémonie de promotion mise
-en scène, carte « Il y a un an », Mur des reliques, recherche dans toute la collection, carte de
+en scène, carte « Il y a un an », Mur des reliques, carte de
 relique à partager, série de peinture, « l'or qui dort » dans SHAME, rappel trimestriel des points.
 
 ## Ce qui reste à faire

@@ -715,7 +715,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
 
         {/* ── PAR FACTION ────────────────── */}
         {factionStats.length>0 && (
-          <div style={{ padding:"0 14px", marginBottom:"14px" }}>
+          <div style={{ marginBottom:"14px" }}>
             <Fold id="factions" mark="❖" title="PAR FACTION" summary={`${factionStats.length} armée${factionStats.length>1?"s":""}`}>
             {factionStats.map(({ key, f, models, units, painted, paintedModels, pts, byRole, uniqueUnits }) => {
               const pct = models ? Math.round(paintedModels/models*100) : 0;
@@ -844,7 +844,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
           const bigFigs = bigOnes.reduce((s,i)=>s+figsOfItem(i),0);
           const bigPts  = bigOnes.reduce((s,i)=>s+ptsOfItem(i),0);
           return (
-            <div style={{ padding:"0 14px", marginBottom:"14px" }}>
+            <div style={{ marginBottom:"14px" }}>
               <div className="enlum" style={{ color:"#d8c8ac", marginBottom:"10px" }}><span className="enlum-mark">☉</span><span style={{ fontSize:"12px", letterSpacing:"4px", fontFamily:"'Cinzel',serif", whiteSpace:"nowrap" }}>PROPHÉTIE DU CHAPELAIN</span><span className="enlum-mark">☉</span></div>
               <div className="hc-bare orn" style={{ background:"linear-gradient(180deg,rgba(13,11,8,0.6) 0%,rgba(8,6,4,0.72) 100%)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:"1px solid #16130e", borderLeft:"2px solid #6a5a3a", padding:"12px 14px" }}>
                 {perMonthPts < 5 ? (
@@ -889,7 +889,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
           const badges = computeTrophies({ inventory, paintHistory, ptsMap, appState });
           const unlocked = badges.filter(b => b.got).length;
           return (
-            <div style={{ padding:"0 14px", marginBottom:"14px" }}>
+            <div style={{ marginBottom:"14px" }}>
               <Fold id="trophees" mark="⚑" title="TROPHÉES" summary={`${unlocked}/${badges.length}`}>
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px" }}>
                 {badges.map(b => (
@@ -932,7 +932,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
             : { t:"HÉRÉSIE PASSIVE", d:"Négligence manifeste. Un océan de plastique gris crie vengeance.", col:"#c04040", sentence:`${figs(needFor(50))}. Immédiatement. C'est un ordre.` };
           const pastJudgments = judgments.filter(j => j.year !== year).sort((a,b)=>b.year-a.year);
           return (
-            <div style={{ padding:"0 14px", marginBottom:"14px" }}>
+            <div style={{ marginBottom:"14px" }}>
               <div className="enlum" style={{ color:"#d8c8ac", marginBottom:"10px" }}><span className="enlum-mark">⚖</span><span style={{ fontSize:"12px", letterSpacing:"4px", fontFamily:"'Cinzel',serif", whiteSpace:"nowrap" }}>JUGEMENT ANNUEL · {year}</span><span className="enlum-mark">⚖</span></div>
               <div className="hc-bare orn" style={{ background:"linear-gradient(180deg,#0f0a0a 0%,#080505 100%)", border:`1px solid ${verdict.col}44`, borderTop:`2px solid ${verdict.col}`, padding:"16px 14px", textAlign:"center" }}>
                 <div style={{ fontSize:"22px", marginBottom:"4px" }}>⚖</div>
@@ -1011,7 +1011,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
           const rank = figsPainted>=40?"⚔ Croisé Légendaire":figsPainted>=25?"✠ Maître Artisan":figsPainted>=12?"◈ Peintre Dévoué":figsPainted>=5?"◈ Apprenti Assidu":"⧗ Frère Hésitant";
           const tf = topFaction ? FACTIONS[topFaction[0]] : null;
           return (
-            <div style={{ padding:"0 14px", marginBottom:"14px" }}>
+            <div style={{ marginBottom:"14px" }}>
               {!showRetro ? (
                 <button onClick={() => setShowRetro(true)}
                   style={{ width:"100%", padding:"14px", background:"linear-gradient(135deg,#14100a 0%,#0a0806 60%,#14100a 100%)", border:"1px solid #b8922a66", borderTop:"2px solid #b8922a", color:"#b8922a", fontFamily:"'Cinzel',serif", fontSize:"12.5px", letterSpacing:"3px", cursor:"pointer", touchAction:"manipulation" }}>
@@ -1074,7 +1074,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
           (paintHistory||[]).forEach(h => { const w = h.day || (h.date ? h.date+"-01" : null); if (w && (!firstDay[h.id] || w < firstDay[h.id])) firstDay[h.id] = w; });
           const paintedNow = inventory.filter(i => i.paintStatus === "painted");
           return (
-            <div style={{ padding:"0 14px", marginBottom:"14px" }}>
+            <div style={{ marginBottom:"14px" }}>
               {!showMirror ? (
                 <button onClick={() => setShowMirror(true)}
                   style={{ width:"100%", padding:"14px", backgroundColor:"#0a0806", backgroundImage:`linear-gradient(rgba(8,6,4,0.5), rgba(8,6,4,0.68)), url(${import.meta.env.BASE_URL}fonds/parchemin.jpg)`, backgroundSize:"cover", backgroundPosition:"center", border:"1px solid #b8922a55", borderTop:"2px solid #b8922a", color:"#d4b060", fontFamily:"'Cinzel',serif", fontSize:"12.5px", letterSpacing:"3px", cursor:"pointer", touchAction:"manipulation", textShadow:"0 1px 3px #000" }}>
@@ -1206,7 +1206,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
         })()}
 
         {/* ── CHRONIQUES ─────────── */}
-        <div style={{ padding:"0 14px", marginBottom:"14px" }}>
+        <div style={{ marginBottom:"14px" }}>
           <button onClick={openChronicle}
             style={{ width:"100%", padding:"12px", background:"#080604", border:"1px solid #1c1a16", color:"#d8c8ac", fontFamily:"'Cinzel',serif", fontSize:"11.5px", letterSpacing:"3px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:"8px", touchAction:"manipulation" }}>
             <ScrollGlyph size={15} /> CHRONIQUES DE LA CROISADE
@@ -1313,7 +1313,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
             return { k, v, val, count };
           }).filter(x=>x.count>0);
           return collectionValue > 0 ? (
-            <div style={{ padding:"0 14px", marginBottom:"14px" }}>
+            <div style={{ marginBottom:"14px" }}>
               <Fold id="valeur" mark="✦" title="VALEUR" summary={`${Math.round(collectionValue).toLocaleString('fr')} €`}>
               <div className="hc-bare orn" style={{ background:"rgba(10,12,8,0.9)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:"1px solid #2a3a1a", borderLeft:"3px solid #5a8a3a", padding:"12px 16px", marginBottom:"8px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                 <div>
@@ -1350,7 +1350,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
             return s + (i.price||(unit?SHOP_PRICES[unit.name]:0)||0) * (i.qty||1);
           }, 0);
           return (
-            <div style={{ padding:"0 14px", marginBottom:"14px" }}>
+            <div style={{ marginBottom:"14px" }}>
               <Fold id="achats" mark="✧" title="ACHATS PRÉVUS" summary={`${Math.round(toSpend).toLocaleString('fr')} €`}>
               <div style={{ display:"flex", gap:"6px", marginBottom:"8px" }}>
                 {[
