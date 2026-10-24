@@ -319,6 +319,11 @@ Fond de l'Accueil (7 octobre)
   titre « Jugement annuel » coupé à droite (aperçu/officiel déplacé dans la carte) ; l'Archiviste
   date les ajouts au jour local et non UTC.
 
+### Ajout d'une unité : filtre par chapitre (24 octobre 2026)
+- Dans la fenêtre d'ajout (collection, wishlist, impression), choisir un chapitre ou une légion
+  (Raven Guard, Death Guard…) n'affiche plus que ses unités propres. Les unités communes restent
+  sous « Tous ».
+
 ### STATS : sections repliables (21 octobre 2026)
 - Par faction, Trophées (x/16), Valeur (€), Achats prévus (€) et Cartes à partager sont repliables (composant `Fold`
   dans ViewStats.jsx), fermés par défaut, résumé visible sur la ligne. L'état ouvert/fermé est

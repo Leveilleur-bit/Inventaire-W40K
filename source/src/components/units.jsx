@@ -156,8 +156,8 @@ export function ModalAddUnit({ faction, inventory, onClose, onAdd, mode="list" }
   const chapters = (faction==="SM"||faction==="CSM") ? ["Tous",...new Set(units.map(u=>u.chapter).filter(Boolean))] : [];
   const available = mode==="list" ? units.filter(u => inventory.some(i => i.unitId===u.id && i.faction===faction)) : units;
   const filtered = available
-    .filter(u => chapterFilter==="Tous" || !u.chapter || u.chapter===chapterFilter || u.chapter==="Générique")
-    .filter(u => chapterFilter==="Tous" || !(u.forbidden||[]).includes(chapterFilter))
+    // Un chapitre choisi n'affiche que ses unités propres (les unités communes sont sous « Tous »)
+    .filter(u => chapterFilter==="Tous" || u.chapter===chapterFilter)
     .filter(u => u.name.toLowerCase().includes(search.toLowerCase()));
   const grouped = filtered.reduce((acc,u) => { if(!acc[u.role]) acc[u.role]=[]; acc[u.role].push(u); return acc; }, {});
 
