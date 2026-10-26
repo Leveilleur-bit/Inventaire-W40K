@@ -191,6 +191,23 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
   // Message du Chapelain : rappel quand rien n'a été peint depuis 14 jours (hors enrôlement)
   const chapReminder = (() => { const lp = appState.lastPaintAt; const days = lp ? Math.floor((Date.now() - new Date(lp).getTime()) / 86400000) : 0;
           if (days < 14 || enrolDaysLeft(appState) > 0) return null;
+          // Une relique « En cours » : on peint, simplement rien n'est encore fini (un colosse prend
+          // des semaines). Pas de reproche : le Chapelain encourage l'ouvrage sur l'établi.
+          const wips = (appState.inventory || []).filter(i => i.paintStatus === "wip");
+          if (wips.length) {
+            const oathOn = appState.oath?.unitId && wips.find(i => i.id === appState.oath.unitId);
+            const big = wips.find(i => isColossus(i, ptsMap || {}));
+            const it = oathOn || big || wips[wips.length - 1];
+            const n = nameOfItem(it);
+            const lines = (oathOn || big) ? [
+              `${n} occupe l'établi. On ne presse pas un tel ouvrage : le Chapelain patiente.`,
+              `${n} avance, couche après couche. Le Chapelain attend sa consécration sans impatience.`,
+              `Un tel ouvrage ne se consacre pas en un jour. ${n} prend forme, et c'est bien.` ] : [
+              `${n} est sur l'établi. Chaque couche compte, frère.`,
+              `L'établi n'est pas vide : ${n} avance. Le Chapelain observe en silence.`,
+              `${n} attend ses dernières couches. Le Chapelain prépare déjà le sceau.` ];
+            return { text: lines[days % lines.length], col: "#b8922a", open: it };
+          }
           const tiers = days >= 60 ? [
               `${days} jours sans coup de pinceau. Le Chapelain a cessé de prier pour toi.`,
               `${days} jours. Tes pinceaux ont été déclarés disparus au combat.`,
@@ -945,7 +962,7 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
 
         {/* ── Message du Chapelain : citation du jour, ou rappel s'il n'y a pas eu de peinture depuis
              14 jours (l'ancien « Rappel du Chapelain » séparé est fusionné ici le 15 octobre 2026) ── */}
-        <div className="hc-bare orn" onClick={() => onNav && onNav(chapReminder ? "shame" : "stats")} style={{ background:"#08060488", border:"1px solid #1c1a1699", borderLeft:`3px solid ${chapReminder ? chapReminder.col : "#b8922a"}`, padding:"14px 16px", marginBottom:"12px", cursor:onNav?"pointer":"default", touchAction:"manipulation" }}>
+        <div className="hc-bare orn" onClick={() => chapReminder?.open && onOpenInInventory ? onOpenInInventory(chapReminder.open.faction, chapReminder.open.id) : (onNav && onNav(chapReminder ? "shame" : "stats"))} style={{ background:"#08060488", border:"1px solid #1c1a1699", borderLeft:`3px solid ${chapReminder ? chapReminder.col : "#b8922a"}`, padding:"14px 16px", marginBottom:"12px", cursor:onNav?"pointer":"default", touchAction:"manipulation" }}>
           {(() => {
             const now = Date.now();
             const hist = appState.paintHistory || [];
@@ -957,6 +974,7 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
             else if (last14 >= 4)  w = { icon:"⚔", text:"La ferveur monte", col:"#b8922a" };
             else if (last14 >= 1)  w = { icon:"✦", text:"Les braises couvent", col:"#8a7a4a" };
             else if (!hist.length && !lp) w = { icon:"✧", text:"Les premières lueurs", col:"#9a8a5a" };
+            else if ((appState.inventory||[]).some(i => i.paintStatus === "wip")) w = { icon:"⚒", text:"L'ouvrage avance", col:"#8a7a4a" };
             else if (daysIdle > 30)w = { icon:"❄", text:"Le silence des forges", col:"#5a6a7a" };
             else                   w = { icon:"☁", text:"Le calme avant la tempête", col:"#6a6a5a" };
             return (
@@ -968,7 +986,7 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
           })()}
           {chapReminder ? <>
             <div style={{ color:chapReminder.col, fontSize:"14.5px", fontFamily:"'Crimson Pro',Georgia,serif", fontStyle:"italic", lineHeight:1.5, marginBottom:"6px" }}>{chapReminder.text}</div>
-            <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>— Le Chapelain · toucher pour voir la pile</div>
+            <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>— Le Chapelain · {chapReminder.open ? "toucher pour voir la relique" : "toucher pour voir la pile"}</div>
           </> : <>
             <div style={{ color:"#e8dfc0", fontSize:"14px", fontFamily:"'Crimson Pro',Georgia,serif", fontStyle:"italic", lineHeight:1.5, marginBottom:"6px" }}>« {citation.text} »</div>
             <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>— {citation.author}</div>

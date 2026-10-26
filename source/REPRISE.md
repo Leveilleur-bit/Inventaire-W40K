@@ -319,6 +319,12 @@ Fond de l'Accueil (7 octobre)
   titre « Jugement annuel » coupé à droite (aperçu/officiel déplacé dans la carte) ; l'Archiviste
   date les ajouts au jour local et non UTC.
 
+### Chapelain et ouvrage en cours (26 octobre 2026)
+- Après 14 jours sans consécration, si une relique est « En cours », le Chapelain ne reproche plus :
+  il encourage en nommant l'ouvrage (priorité : relique du serment, puis colosse, puis la dernière
+  en cours). Toucher la carte ouvre cette relique. L'humeur des forges affiche « ⚒ L'ouvrage avance ».
+  Sans relique en cours, les reproches d'inactivité restent.
+
 ### Recherche globale et STATS alignées (24 octobre 2026)
 - RELIQUES : champ « Chercher dans toute la collection… » sur la page des armées (nom d'unité,
   surnom, note ; sans accents ni majuscules). Toucher un résultat ouvre l'armée et la fiche
