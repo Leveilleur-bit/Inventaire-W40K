@@ -18,6 +18,8 @@ import { ColossusCeremony } from './components/ColossusCeremony.jsx';
 import { LightCeremony } from './components/LightCeremony.jsx';
 import { TrophyCeremony } from './components/TrophyCeremony.jsx';
 import { computeTrophies, enrolDaysLeft } from './lib/trophies.jsx';
+import { activeCurse, curseOnStatus, pickCursed } from './lib/curse.jsx';
+import { Purification } from './components/Purification.jsx';
 import { OathCeremony } from './components/OathCeremony.jsx';
 import { OATH_TIERS, candleDaysFor, figsOfItem, nameOfItem, oathFormula } from './lib/oaths.jsx';
 import { isColossus } from './lib/colossus.jsx';
@@ -105,6 +107,8 @@ export function App() {
   const [colossus, setColossus] = useState(null);   // cérémonie de consécration d'un colosse en cours
   const pendingPromoRef = useRef(null);             // promotion à annoncer après la cérémonie
   const [oathDone, setOathDone] = useState(null);   // cérémonie « Serment tenu » en cours
+  const pendingPurifyRef = useRef(null);            // purification d'une relique maudite, après les autres cérémonies
+  const [purify, setPurify] = useState(null);
   const pendingOathRef = useRef(null);              // serment tenu à annoncer après la cérémonie d'un colosse
   const [trophyQueue, setTrophyQueue] = useState([]);   // trophées tout juste débloqués, en attente d'annonce
   const [trophyShown, setTrophyShown] = useState(null); // cérémonie d'un trophée en cours
@@ -377,7 +381,8 @@ export function App() {
   // Supprimer une relique libère aussi l'ordre du Dé et le serment qui la visaient (sinon ils resteraient bloqués)
   const deleteInventory = id => updateApp(s => ({ ...s, inventory:s.inventory.filter(i=>i.id!==id),
     ...(s.fateChoice?.id === id ? { fateChoice: null } : {}),
-    ...(s.oath?.unitId === id ? { oath: null } : {}) }));
+    ...(s.oath?.unitId === id ? { oath: null } : {}),
+    ...(s.curse?.id === id ? { curse: null } : {}) }));
   const updatePhoto     = (id,photo) => updateApp(s => ({ ...s, inventory:s.inventory.map(i=>i.id===id?{...i,photo}:i) }));
   // Données de la cérémonie d'un colosse (pour une consécration, ou pour la revoir depuis sa fiche)
   const buildColossusData = (item, inv, history) => {
@@ -426,7 +431,7 @@ export function App() {
   }, [loaded, appState]);
   // Un trophée ne s'annonce que lorsque tout le reste est clos (consécration, serment, promotion),
   // après un court silence.
-  const ceremoniesQuiet = loaded && splashDone && !idle && !colossus && !lightCeremony && !oathDone && !promotion;
+  const ceremoniesQuiet = loaded && splashDone && !idle && !colossus && !lightCeremony && !oathDone && !promotion && !purify;
   useEffect(() => {
     if (trophyShown || !trophyQueue.length || !ceremoniesQuiet) return;
     const tm = setTimeout(() => {
@@ -436,6 +441,31 @@ export function App() {
     }, 1200);
     return () => clearTimeout(tm);
   }, [ceremoniesQuiet, trophyQueue, trophyShown]);
+
+  // ── Relique maudite : une par mois au plus, la plus ancienne de la pile, tant qu'aucune n'est active ──
+  useEffect(() => {
+    if (!loaded || enrolDaysLeft(appState) > 0) return;
+    const c = appState.curse;
+    if (c) {
+      const it = (appState.inventory || []).find(i => i.id === c.id);
+      if (!it || it.paintStatus === "painted") updateApp(s => ({ ...s, curse: null }));   // relique disparue ou peinte autrement
+      return;
+    }
+    const ym = localDay().slice(0, 7);
+    if (appState.curseMonth === ym) return;
+    const pick = pickCursed(appState);
+    if (!pick) return;
+    updateApp(s => ({ ...s, curse: { id: pick.id, since: localDay(), frozenAt: null }, curseMonth: ym }));
+    notify(`☠ Une malédiction frappe « ${nameOfItem(pick)} », la plus ancienne relique de ta pile. Vois la Pile of Shame.`, { sticky: true });
+  }, [loaded, appState.inventory, appState.curse, appState.curseMonth]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!ceremoniesQuiet || trophyShown || purify || !pendingPurifyRef.current) return;
+    const tm = setTimeout(() => {
+      if (pendingOathRef.current || pendingPromoRef.current || !pendingPurifyRef.current) return;
+      setPurify(pendingPurifyRef.current); pendingPurifyRef.current = null;
+    }, 700);
+    return () => clearTimeout(tm);
+  }, [ceremoniesQuiet, trophyShown, purify, appState.curse]);
 
   const closeOathCeremony = () => {
     setOathDone(null);
@@ -455,6 +485,8 @@ export function App() {
     if (status==="painted") {
       // Célébration (la vibration part avec le son, voir playSfx plus bas)
       const item = appState.inventory.find(i=>i.id===id);
+      const cursed = activeCurse(appState);
+      if (cursed && cursed.id === id) pendingPurifyRef.current = { name: nameOfItem(item), unitName: findUnit(item.faction, item.unitId)?.name || "", photo: item.photo || null, days: cursed.days, level: cursed.level, levelName: cursed.name };
       const u = item ? findUnit(item.faction, item.unitId) : null;
       const pm = appState.ptsMap || {};
       const pts = item ? ((pm[`${item.faction}:${item.unitId}`] || (u?POINTS_DB[u.name]:0) || 0) * (item.qty||1)) : 0;
@@ -554,6 +586,7 @@ export function App() {
         inventory: finalInventory,
         paintHistory: newHistory,
         lastPaintAt: newLastPaint,
+        ...curseOnStatus(s, id, status),
         oath: newOath,
         oathRecord: newOathRecord,
         ...(oathKeptEntry ? { oathsKept: [...(s.oathsKept||[]), oathKeptEntry] } : {})
@@ -870,6 +903,7 @@ export function App() {
       {colossus && <ColossusCeremony data={colossus} onClose={closeCeremony} />}
       {lightCeremony && !colossus && <LightCeremony key={lightCeremony.key} data={lightCeremony} onClose={closeCeremony} />}
       {trophyShown && <TrophyCeremony key={trophyShown.name} data={trophyShown} onClose={() => setTrophyShown(null)} />}
+      {purify && <Purification data={purify} onClose={() => setPurify(null)} />}
 
       {/* ── Gerbe d'or (figurine peinte, promotion) ── */}
       {burst && <GoldBurst key={burst.key} big={burst.big} onDone={() => setBurst(null)} />}
@@ -954,7 +988,7 @@ export function App() {
         <React.Suspense fallback={<ViewFallback />}>
         {activeView==="home" && <ViewHome ready={splashDone} onCompleteMission={completeMission} onUpdateNickname={updateNickname} onUpdatePhoto={updatePhoto} onSetCrusade={setCrusade} onSetBlessing={setBlessing} onSwearOath={swearOath} onKeepLegacyOath={keepLegacyOath} onSwearOathOn={swearOathOn} onRelightOath={relightOath} onReleaseOath={releaseOath} onBurnParchments={burnParchments} onResolveOath={resolveOath} openChronicle={() => setChronicleOpen(true)} inventory={appState.inventory} appState={appState} paintPct={globalPaintPct} totalModels={homeTotalModels} totalPainted={homeTotalPainted} totalPts={homeTotalPts} onNav={setActiveView} homeBackground={appState.homeBackground} onSetBackground={setHomeBackground} onOpenInInventory={(faction, itemId) => { setInventoryFocus({ faction, itemId }); setActiveView("inventory"); }} confirm={askConfirm} onSetTarotWeek={setTarotWeek} lastExport={lastExport} onExport={downloadBackup} driveSynced={driveStatus==="synced"} onSetBackupDismiss={setBackupDismiss} onSetListName={setListName} listNames={appState.listNames} onUpdatePurchased={updatePurchased} onSetListGoal={setListGoal} listGoals={appState.listGoals} onSetPts={handleSetPts} ptsMap={ptsMap} onServoNewsShown={(day) => updateApp(s => ({ ...s, servoNewsDay: day }))} onUpdatePaint={updatePaint} onMarkReviewed={(id) => updateApp(s => ({ ...s, inventory: s.inventory.map(i => i.id === id ? { ...i, reviewedAt: localDay() } : i) }))} onSetWeekMission={(m) => updateApp(s => ({ ...s, weekMission: m }))} onSetAdvent={(fn) => updateApp(fn)} />}
         {activeView==="lists" && <ViewLists inventory={appState.inventory} ptsMap={ptsMap} listNames={appState.listNames||{}} listGoals={appState.listGoals||{}} onSetName={setListName} onSetGoal={setListGoal} enrolling={enrolDaysLeft(appState) > 0} pilgrimSeen={appState.pilgrimSeen} onPilgrimSeen={(i) => updateApp(s => ({ ...s, pilgrimSeen: i }))} />}
-        {activeView==="inventory" && <ViewInventory serviceCtx={{ fateChoice: appState.fateChoice, oath: appState.oath, oathsKept: appState.oathsKept, listNames: appState.listNames }} onUpdateColosse={updateColosse} onReplayCeremony={replayCeremony} paintHistory={appState.paintHistory||[]} inventory={appState.inventory} ptsMap={ptsMap} onSetPts={handleSetPts} onAdd={addInventory} onDelete={deleteInventory} onUpdatePhoto={updatePhoto} onUpdatePaint={updatePaint} onUpdateQty={updateQty} onUpdateModelCount={updateModelCount} onReorder={reorderInventory} onUpdateNote={updateNote} onUpdateNickname={updateNickname} onUpdatePurchased={updatePurchased} onSplit={splitInventory} paintPct={lawStats.pct} unpainted={lawStats.unpainted} shameLawOff={!!appState.shameLawOff} onSetShameLaw={setShameLaw} onNav={setActiveView} focusItem={inventoryFocus} onFocusHandled={() => setInventoryFocus(null)} paintCatalog={appState.paintCatalog||[]} onSetRecipe={setRecipe} onAddPaint={addPaintCatalog} confirm={askConfirm} />}
+        {activeView==="inventory" && <ViewInventory serviceCtx={{ fateChoice: appState.fateChoice, oath: appState.oath, oathsKept: appState.oathsKept, listNames: appState.listNames, cursesLifted: appState.cursesLifted, curse: enrolDaysLeft(appState) > 0 ? null : activeCurse(appState) }} onUpdateColosse={updateColosse} onReplayCeremony={replayCeremony} paintHistory={appState.paintHistory||[]} inventory={appState.inventory} ptsMap={ptsMap} onSetPts={handleSetPts} onAdd={addInventory} onDelete={deleteInventory} onUpdatePhoto={updatePhoto} onUpdatePaint={updatePaint} onUpdateQty={updateQty} onUpdateModelCount={updateModelCount} onReorder={reorderInventory} onUpdateNote={updateNote} onUpdateNickname={updateNickname} onUpdatePurchased={updatePurchased} onSplit={splitInventory} paintPct={lawStats.pct} unpainted={lawStats.unpainted} shameLawOff={!!appState.shameLawOff} onSetShameLaw={setShameLaw} onNav={setActiveView} focusItem={inventoryFocus} onFocusHandled={() => setInventoryFocus(null)} paintCatalog={appState.paintCatalog||[]} onSetRecipe={setRecipe} onAddPaint={addPaintCatalog} confirm={askConfirm} />}
         {activeView==="stats"    && <ViewStats oath={appState.oath} appState={appState} openChronicle={() => setChronicleOpen(true)} inventory={appState.inventory} lists={appState.lists} ptsMap={ptsMap} wishlist={appState.wishlist||[]} paintHistory={appState.paintHistory||[]} confirm={askConfirm} onSealJudgment={sealJudgment} />}
         {activeView==="wishlist" && <ViewWishlist onNav={setActiveView} paintPct={lawStats.pct} unpainted={lawStats.unpainted} shameLawOff={!!appState.shameLawOff} onSetShameLaw={setShameLaw} wishlist={appState.wishlist||[]} paintWishlist={appState.paintWishlist||[]} printList={appState.printList||[]} ptsMap={ptsMap} onAdd={addWish} onDelete={deleteWish} onSetStatus={setWishStatus} onSetPrice={setWishPrice} onAddPaint={addPaintWish} onDeletePaint={deletePaintWish} onAddPrint={addPrint} onDeletePrint={deletePrint} onUpdatePrint={updatePrint} />}
         {activeView==="parade"   && <ViewParade parade={appState.parade||[]} onAdd={addParade} onDelete={deleteParade} homeBackground={appState.homeBackground} onSetHomeBackground={(photo) => setHomeBackground(appState.homeBackground === photo ? null : photo)} confirm={askConfirm} />}

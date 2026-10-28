@@ -44,6 +44,9 @@ export function buildServiceRecord({ item, unitName, paintHistory = [], honors =
   if (kept) entries.push({ when: longDate(kept.day), label: "Serment", text: kept.text ? `Serment tenu : « ${kept.text} »` : "Objet d'un serment, tenu." });
   else if (item.oathKept) entries.push({ label: "Serment", text: "Objet d'un serment, tenu." });
   else if (ctx.oath?.unitId === item.id) entries.push({ label: "Serment", text: `Objet du serment en cours${ctx.oath.label ? ` : « ${ctx.oath.label} »` : "."}` });
+  const lifted = (ctx.cursesLifted || []).filter(c => c.id === item.id).slice(-1)[0];
+  if (lifted) entries.push({ when: longDate(lifted.since), label: "Malédiction", text: `Frappée de malédiction, puis purifiée par le pinceau ${lifted.days > 0 ? `après ${lifted.days} jour${lifted.days > 1 ? "s" : ""}` : "le jour même"}.` });
+  else if (ctx.curse?.id === item.id) entries.push({ when: longDate(ctx.curse.since), label: "Malédiction", text: `Frappée de malédiction. Degré actuel : ${ctx.curse.name}.` });
   const start = dayOf(bought) || added;
   // (la date d'achat prime : c'est elle qui dit depuis quand la relique attend)
   const hIdx = paintHistory.findIndex(h => h.id === item.id);

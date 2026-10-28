@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { CURSE_COLOR, CURSE_LEVELS, activeCurse, curseFilter } from '../lib/curse.jsx';
 import { FactionIcon, NavIcon } from '../components/heraldry.jsx';
 import { EmptyState, Thumb, pageFond, pageStyle } from '../components/ui.jsx';
 import { FACTIONS } from '../data/factions.jsx';
@@ -123,6 +124,31 @@ export function ViewShame({ onSwearOathOn, inventory, appState, onSetFate, onUpd
             );
           })()}
         </div>
+        {/* Relique maudite (lib/curse.jsx) */}
+        {(() => {
+          if (enrolDaysLeft(appState) > 0) return null;
+          const c = activeCurse(appState);
+          if (!c) return null;
+          const it = c.item, u = findUnit(it.faction, it.unitId);
+          return (
+            <div onClick={() => onOpenInInventory && onOpenInInventory(it.faction, it.id)}
+              style={{ background:"linear-gradient(135deg,#1a0a22,#0a0508)", border:`1px solid ${CURSE_COLOR}55`, borderLeft:`3px solid ${CURSE_COLOR}`, padding:"10px 12px", margin:"0 0 12px", display:"flex", gap:"11px", alignItems:"center", cursor:"pointer", touchAction:"manipulation", boxShadow:`0 0 18px ${CURSE_COLOR}22` }}>
+              <div style={{ width:"52px", height:"52px", flexShrink:0, border:`1px solid ${CURSE_COLOR}88`, overflow:"hidden", background:"#0a0508", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                {it.photo ? <img src={it.photo} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", filter:curseFilter(c.level) }} /> : <span style={{ fontSize:"24px", color:CURSE_COLOR }}>☠</span>}
+              </div>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:"6px" }}>
+                  <span style={{ color:CURSE_COLOR, fontSize:"10px", letterSpacing:"2px", fontFamily:"'Cinzel',serif" }}>☠ RELIQUE MAUDITE</span>
+                  <span style={{ display:"flex", gap:"3px" }}>{CURSE_LEVELS.map((_, k) => <span key={k} style={{ width:"7px", height:"7px", transform:"rotate(45deg)", background: k <= c.level ? CURSE_COLOR : "transparent", border:`1px solid ${CURSE_COLOR}88` }} />)}</span>
+                </div>
+                <div className={c.level >= 3 ? "curse-glitch" : ""} style={{ color:"#ecd8f4", fontSize:"14px", fontFamily:"'Cinzel',serif", fontWeight:"700", lineHeight:1.2, marginTop:"2px" }}>{it.nickname || u?.name}</div>
+                <div style={{ color:"#c8a8d8", fontSize:"12px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", lineHeight:1.35, marginTop:"2px" }}>
+                  <b style={{ fontStyle:"normal", fontFamily:"'Cinzel',serif", fontSize:"11px", fontWeight:"400" }}>{c.name}</b> · {c.frozen ? "corruption figée, l'ouvrage a commencé" : `${c.days} jour${c.days > 1 ? "s" : ""}`}. {c.text}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
         {/* Rappel du dernier ordre du Dé */}
         {appState?.fateChoice && (() => {
           const fc = appState.fateChoice;
@@ -258,20 +284,21 @@ export function ViewShame({ onSwearOathOn, inventory, appState, onSetFate, onUpd
           ? <EmptyState icon="✠" accent="#2a7a2a" title="Pile purgée" sub="Toute figurine a reçu sa consécration. Le Chapelain est fier de toi." />
           : unpainted.map((item, idx) => {
               const ps = PAINT_STATUS[item.paintStatus] || PAINT_STATUS.unpainted;
+              const cz = appState?.curse?.id === item.id && enrolDaysLeft(appState) <= 0 ? activeCurse(appState) : null;
               return (
                 <div key={item.id} onClick={() => onOpenInInventory && onOpenInInventory(item.faction, item.id)}
                   style={{ display:"flex", gap:"12px", alignItems:"center", padding:"8px 0", borderBottom:"1px solid #0d0d0d", animation:`slideLeft 0.2s ${idx*20}ms ease both`, cursor:onOpenInInventory?"pointer":"default", touchAction:"manipulation" }}>
                   {/* Photo */}
                   <div style={{ width:"48px", height:"48px", flexShrink:0, background:"#040404", border:`1px solid ${item.f?.accent||"#1c1c1c"}22`, overflow:"hidden", display:"flex", alignItems:"center", justifyContent:"center" }}>
                     {item.photo
-                      ? <Thumb src={item.photo} px={240} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                      ? <Thumb src={item.photo} px={240} style={{ width:"100%", height:"100%", objectFit:"cover", ...(cz ? { filter: curseFilter(cz.level) } : {}) }} />
                       : <span style={{ opacity:0.3 }}><FactionIcon faction={item.faction} factionDef={item.f} size={20} /></span>
                     }
                   </div>
                   {/* Infos */}
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ color:"#e8dfc0", fontSize:"13px", fontFamily:"'Cinzel',serif", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", textShadow:"0 1px 3px #000, 0 0 7px #000" }}>
-                      {item.unit.name}
+                      {cz && <span className={cz.level >= 3 ? "curse-glitch" : ""} style={{ color:CURSE_COLOR, marginRight:"5px" }}>☠</span>}{item.unit.name}
                     </div>
                     <div style={{ display:"flex", alignItems:"center", gap:"6px", marginTop:"3px" }}>
                       <span><FactionIcon faction={item.faction} factionDef={item.f} size={13} /></span>

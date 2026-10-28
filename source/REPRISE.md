@@ -319,6 +319,21 @@ Fond de l'Accueil (7 octobre)
   titre « Jugement annuel » coupé à droite (aperçu/officiel déplacé dans la carte) ; l'Archiviste
   date les ajouts au jour local et non UTC.
 
+### La Relique maudite (28 octobre 2026)
+- `lib/curse.jsx` : au premier lancement de chaque mois (hors enrôlement), s'il n'y a pas de
+  malédiction active, la relique qui attend depuis le plus longtemps (date d'achat, sinon entrée au
+  registre ; hors « En cours », ordre du Dé et serment) est maudite. Elle le reste tant qu'elle
+  n'est pas peinte (pas de nouvelle malédiction entre-temps). 5 degrés, un par semaine (Murmure,
+  Souillure, Gangrène, Possession, Damnation). « En cours » fige la corruption (`frozenAt`), la
+  quitter la relance en décalant le départ. État : `curse`, `curseMonth`, `cursesLifted`.
+- Affichage : bandeau en haut de la Pile of Shame, ☠ et photo teintée dans la Pile et RELIQUES,
+  encadré dans la fiche, ligne dans l'État de service. Peindre la relique : cérémonie de
+  purification (`components/Purification.jsx`) après les autres cérémonies. Supprimer la relique
+  lève la malédiction.
+- Bug corrigé : une fiche ouverte depuis l'Accueil, le Dé ou la recherche avait le champ « Nom de
+  baptême » vide ; toucher SCELLER effaçait alors le surnom. Le champ part maintenant toujours du
+  surnom actuel.
+
 ### Carte du Pèlerinage et État de service (28 octobre 2026)
 - Pèlerinage (onglet CROISADE, en haut) : la flotte avance d'un monde tous les 500 pts consacrés
   (points des figurines peintes, tout l'historique compte). 5 segmentums × 12 mondes écrits dans

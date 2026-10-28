@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ServiceRecordModal, buildServiceRecord } from './ServiceRecord.jsx';
+import { CURSE_COLOR, curseFilter } from '../lib/curse.jsx';
 import { createPortal } from 'react-dom';
 import { Ic, Input, Label, Overlay, PrimaryBtn, Sheet, SheetHeader, Thumb, btnSm, qtyBtn } from './ui.jsx';
 import { FACTIONS } from '../data/factions.jsx';
@@ -307,6 +308,9 @@ export function InventoryItem({ serviceCtx, paintHistory, item, faction, ptsMap,
   const [nickEdit, setNickEdit] = useState("");
   useBackButton(sheetOpen, React.useCallback(() => setSheetOpen(false), []));
   useEffect(() => { if (autoOpen) { setSheetOpen(true); onAutoOpened && onAutoOpened(); } }, [autoOpen]);
+  // Le champ du nom de baptême part toujours du nom actuel, quelle que soit la façon d'ouvrir la fiche
+  // (avant : ouverte depuis l'Accueil, le Dé ou la recherche, il restait vide, et SCELLER effaçait le surnom)
+  useEffect(() => { if (sheetOpen) setNickEdit(item.nickname || ""); }, [sheetOpen]);
 
 
   const [noteOpen, setNoteOpen] = useState(false);
@@ -338,7 +342,11 @@ export function InventoryItem({ serviceCtx, paintHistory, item, faction, ptsMap,
     const idx = PAINT_KEYS.indexOf(item.paintStatus||"unpainted");
     setStatus(PAINT_KEYS[(idx+1) % PAINT_KEYS.length]);
   };
-  const borderColor = item.paintStatus==="painted" ? PAINT_STATUS.painted.color
+  // Relique maudite (lib/curse.jsx) : teinte, sceau ☠ et ligne de malédiction
+  const cursed = serviceCtx?.curse && serviceCtx.curse.id === item.id ? serviceCtx.curse : null;
+  const curseImg = cursed ? { filter: curseFilter(cursed.level) } : {};
+  const curseMark = cursed ? <span className={cursed.level >= 3 ? "curse-glitch" : ""} style={{ color:CURSE_COLOR, marginRight:"5px" }}>☠</span> : null;
+  const borderColor = cursed ? CURSE_COLOR : item.paintStatus==="painted" ? PAINT_STATUS.painted.color
     : item.paintStatus==="wip" ? PAINT_STATUS.wip.color
     : item.paintStatus==="primed" ? PAINT_STATUS.primed.color
     : accent;
@@ -367,6 +375,15 @@ export function InventoryItem({ serviceCtx, paintHistory, item, faction, ptsMap,
                     </div>
                   )}
                   {honors?.length > 0 && <div style={{ color:"#9a8a6a", fontSize:"12px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", margin:"-6px 0 12px", lineHeight:1.4 }}>{honors.map(h => h.desc).join(" ")}</div>}
+                  {cursed && (
+                    <div style={{ background:"#14081a", border:`1px solid ${CURSE_COLOR}66`, borderLeft:`3px solid ${CURSE_COLOR}`, padding:"9px 11px", margin:"0 0 12px" }}>
+                      <div style={{ color:CURSE_COLOR, fontSize:"10.5px", letterSpacing:"2px", fontFamily:"'Cinzel',serif" }}>☠ RELIQUE MAUDITE · {cursed.name.toUpperCase()}</div>
+                      <div style={{ color:"#d8c0e0", fontSize:"13px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", lineHeight:1.45, marginTop:"3px" }}>{cursed.text}</div>
+                      <div style={{ color:"#a890b0", fontSize:"12px", fontFamily:"'Crimson Pro',serif", marginTop:"4px" }}>
+                        {cursed.frozen ? "La corruption est figée : l'ouvrage a commencé. Peins-la pour la purifier." : `Maudite depuis ${cursed.days} jour${cursed.days > 1 ? "s" : ""}. Passe-la « En cours » pour figer la corruption, peins-la pour la purifier.`}
+                      </div>
+                    </div>
+                  )}
                   {/* Colosse : automatique (300 pts par figurine, ou grand Chevalier), forçable oui / non */}
                   {onUpdateColosse && (
                     <div style={{ display:"flex", flexWrap:"wrap", gap:"8px", alignItems:"center", margin:"-2px 0 12px" }}>
@@ -685,7 +702,7 @@ export function InventoryItem({ serviceCtx, paintHistory, item, faction, ptsMap,
         {/* Photo zone — takes most of the card */}
         <div onClick={() => onEditPhoto(item)} style={{ height:"110px", cursor:"pointer", background:"#040404", position:"relative", overflow:"hidden" }}>
           {item.photo
-            ? <Thumb src={item.photo} px={260} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+            ? <Thumb src={item.photo} px={260} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block", ...curseImg }} />
             : <div style={{ width:"100%", height:"100%", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:"4px" }}>
                 <span style={{ fontSize:"28px", opacity:0.12 }}>{faction==="SM"?"✠":faction==="TY"?"☠":"⚜"}</span>
                 <span style={{ color:accent, fontSize:"10px", opacity:0.3, fontFamily:"'Cinzel',serif", letterSpacing:"2px" }}>PHOTO</span>
@@ -698,7 +715,7 @@ export function InventoryItem({ serviceCtx, paintHistory, item, faction, ptsMap,
           {/* Name at bottom of photo */}
           <div style={{ position:"absolute", bottom:"6px", left:"7px", right:"7px" }}>
             <div style={{ color:"#e8dfc0", fontSize:"11.5px", fontFamily:"'Cinzel',serif", lineHeight:1.2, textShadow:"0 1px 4px #000" }}>
-              {item.qty>1 && <span style={{ color:accent, marginRight:"3px", fontSize:"12px" }}>×{item.qty}</span>}
+              {curseMark}{item.qty>1 && <span style={{ color:accent, marginRight:"3px", fontSize:"12px" }}>×{item.qty}</span>}
               {item.unit.name}{honors?.length > 0 && <span style={{ color:accent, marginLeft:"4px" }}>✦</span>}
             </div>
           </div>
@@ -737,7 +754,7 @@ export function InventoryItem({ serviceCtx, paintHistory, item, faction, ptsMap,
       <div onClick={() => onEditPhoto(item)} style={{ width:"62px", flexShrink:0, cursor:"pointer", borderRight:"1px solid #0c0c0c", overflow:"hidden", position:"relative" }}>
         {item.photo ? (
           <>
-            <Thumb src={item.photo} px={420} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+            <Thumb src={item.photo} px={420} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block", ...curseImg }} />
             <div style={{ position:"absolute", inset:0, background:"linear-gradient(to top,rgba(0,0,0,0.65) 0%,transparent 45%)" }} />
             <div style={{ position:"absolute", bottom:"3px", right:"3px", fontSize:"11px" }}>◉</div>
           </>
@@ -751,10 +768,11 @@ export function InventoryItem({ serviceCtx, paintHistory, item, faction, ptsMap,
       <div style={{ flex:1, padding:"6px 10px", display:"flex", alignItems:"center", gap:"8px" }}>
         <div style={{ flex:1 }}>
           <div style={{ display:"flex", alignItems:"baseline", gap:"6px" }}>
-            <div onClick={() => { setNickEdit(item.nickname||""); setSheetOpen(true); }} style={{ color:"#e8dfc0", fontSize:"14px", fontFamily:"'Cinzel',serif", lineHeight:1.25, cursor:"pointer" }}>{item.unit.name}{honors?.length > 0 && <span title={honors.map(h=>h.label).join(", ")} style={{ color:accent, marginLeft:"5px", fontSize:"12px" }}>✦</span>}</div>
+            <div onClick={() => { setNickEdit(item.nickname||""); setSheetOpen(true); }} style={{ color:"#e8dfc0", fontSize:"14px", fontFamily:"'Cinzel',serif", lineHeight:1.25, cursor:"pointer" }}>{curseMark}{item.unit.name}{honors?.length > 0 && <span title={honors.map(h=>h.label).join(", ")} style={{ color:accent, marginLeft:"5px", fontSize:"12px" }}>✦</span>}</div>
             {modelCount > 1 && <span style={{ color:item.modelCount?accent:"#9a8a78", fontSize:"12px", fontFamily:"'Cinzel',serif" }}>{totalFigs>modelCount?`${modelCount}×${item.qty}`:`${modelCount}`}fig</span>}
           </div>
           {item.nickname && <div style={{ color:accent, fontSize:"11.5px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", marginTop:"1px", opacity:0.85 }}>« {item.nickname} »</div>}
+          {cursed && <div style={{ color:CURSE_COLOR, fontSize:"11.5px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", marginTop:"1px" }}>Maudite · {cursed.name}{cursed.frozen ? " (figée)" : ""}</div>}
           {/* Taille de squad — inline avec le nom, compact */}
           <div style={{ display:"flex", gap:"6px", marginTop:"2px", alignItems:"center", flexWrap:"wrap" }}>
             <PaintCycleBtn status={item.paintStatus||"unpainted"} onCycle={cycleStatus} onSet={(s) => setStatus(s)} />
