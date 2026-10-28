@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { ServiceRecordModal, buildServiceRecord } from './ServiceRecord.jsx';
 import { createPortal } from 'react-dom';
 import { Ic, Input, Label, Overlay, PrimaryBtn, Sheet, SheetHeader, Thumb, btnSm, qtyBtn } from './ui.jsx';
 import { FACTIONS } from '../data/factions.jsx';
@@ -299,7 +300,7 @@ function QtyEditor({ qty, onUpdate, accent }) {
   );
 }
 
-export function InventoryItem({ paintHistory, item, faction, ptsMap, onSetPts, honors, colossus, onUpdateColosse, onReplayCeremony, onDelete, onEditPhoto, onUpdatePaint, onUpdateQty, onUpdateModelCount, onUpdateNote, onUpdateNickname, onUpdatePurchased, onSplit, accent, viewMode, dragHandleProps, autoOpen, onAutoOpened, paintCatalog, onSetRecipe, siblings, onAddPaint, confirm }) {
+export function InventoryItem({ serviceCtx, paintHistory, item, faction, ptsMap, onSetPts, honors, colossus, onUpdateColosse, onReplayCeremony, onDelete, onEditPhoto, onUpdatePaint, onUpdateQty, onUpdateModelCount, onUpdateNote, onUpdateNickname, onUpdatePurchased, onSplit, accent, viewMode, dragHandleProps, autoOpen, onAutoOpened, paintCatalog, onSetRecipe, siblings, onAddPaint, confirm }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [statusPick, setStatusPick] = useState(false); // choix du statut ouvert dans la fiche
   useEffect(() => { if (!sheetOpen) setStatusPick(false); }, [sheetOpen]);
@@ -309,6 +310,8 @@ export function InventoryItem({ paintHistory, item, faction, ptsMap, onSetPts, h
 
 
   const [noteOpen, setNoteOpen] = useState(false);
+  const [recordOpen, setRecordOpen] = useState(false);
+  const closeRecord = React.useCallback(() => setRecordOpen(false), []);
   const [splitOpen, setSplitOpen] = useState(false);
   const [recipeOpen, setRecipeOpen] = useState(false);
   const [recipeSel, setRecipeSel] = useState([]);
@@ -500,6 +503,11 @@ export function InventoryItem({ paintHistory, item, faction, ptsMap, onSetPts, h
                       </div>
                     );
                   })()}
+                  {/* État de service : la vie de la relique sur un parchemin */}
+                  <button onClick={() => setRecordOpen(true)}
+                    style={{ width:"100%", padding:"10px", marginBottom:"8px", background:"#b8922a14", border:"1px solid #b8922a66", color:"#e0c060", fontFamily:"'Cinzel',serif", fontSize:"12px", letterSpacing:"2px", cursor:"pointer", touchAction:"manipulation" }}>
+                    ❦ ÉTAT DE SERVICE
+                  </button>
                   {/* Scinder l'entrée (escouade peinte en plusieurs fois) */}
                   {onSetRecipe && (
                     <button onClick={() => { setRecipeSel(item.recipe || []); setRecipeOpen(true); }}
@@ -527,6 +535,8 @@ export function InventoryItem({ paintHistory, item, faction, ptsMap, onSetPts, h
               </div>
             </div>
           )}
+          {recordOpen && <ServiceRecordModal photo={item.photo} onClose={closeRecord}
+            rec={buildServiceRecord({ item, unitName: item.unit.name, paintHistory, honors: honors || [], colossus, ctx: serviceCtx || {} })} />}
           {noteOpen && (
             <div onClick={() => setNoteOpen(false)} style={{ position:"fixed", inset:0, background:"#000000cc", zIndex:400, display:"flex", alignItems:"center", justifyContent:"center", padding:"24px" }}>
               <div onClick={e => e.stopPropagation()} style={{ width:"100%", maxWidth:"380px", animation:"splashIn 0.28s ease both", background:"linear-gradient(180deg,#14100a 0%,#0a0806 100%)", border:"1px solid #b8922a66", borderTop:"2px solid #b8922a", padding:"16px" }}>

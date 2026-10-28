@@ -721,7 +721,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
               const pct = models ? Math.round(paintedModels/models*100) : 0;
               const topRoles = Object.entries(byRole).sort((a,b)=>b[1]-a[1]); // toutes : avec 4 max, 4 Chevaliers sur 21 n'apparaissaient nulle part
               return (
-                <div key={key} className="hc-bare orn" style={{ background:"linear-gradient(180deg,rgba(19,17,16,0.9) 0%,rgba(13,11,10,0.9) 100%)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:"1px solid #1c1a18", borderLeft:`3px solid ${f.accent}`, padding:"12px 14px", marginBottom:"8px" }}>
+                <div key={key} className="orn" style={{ background:"linear-gradient(180deg,rgba(19,17,16,0.9) 0%,rgba(13,11,10,0.9) 100%)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:"1px solid #1c1a18", borderLeft:`3px solid ${f.accent}`, padding:"12px 14px", marginBottom:"8px" }}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"10px" }}>
                     <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
                       <span><FactionIcon faction={key} factionDef={f} size={22} /></span>
@@ -768,7 +768,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
                   {topRoles.length>0 && (
                     <div style={{ display:"flex", gap:"6px", flexWrap:"wrap" }}>
                       {topRoles.map(([role,cnt]) => (
-                        <div key={role} className="hc-bare" style={{ background:"rgba(8,6,4,0.9)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:`1px solid ${f.accent}22`, padding:"2px 8px", display:"flex", gap:"5px", alignItems:"center" }}>
+                        <div key={role}  style={{ background:"rgba(8,6,4,0.9)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:`1px solid ${f.accent}22`, padding:"2px 8px", display:"flex", gap:"5px", alignItems:"center" }}>
                           <span style={{ color:f.accent, fontSize:"12.5px", fontWeight:"700" }}>{cnt}</span>
                           <span style={{ color:"#d8c8ac", fontSize:"11px", fontFamily:"'Cinzel',serif", letterSpacing:"1px" }}>
                             {{"Seigneur de guerre":"Seigneur","Attaque rapide":"Rapide","Soutien lourd":"Lourd","Chevalier Questoris":"Questoris","Chevalier Dominus":"Dominus","Chevalier Cerastus":"Cerastus","Chevalier Acastus":"Acastus"}[role]||role}
@@ -893,7 +893,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
               <Fold id="trophees" mark="⚑" title="TROPHÉES" summary={`${unlocked}/${badges.length}`}>
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px" }}>
                 {badges.map(b => (
-                  <div key={b.name} className="hc-bare" style={{ background: b.got ? "linear-gradient(135deg,rgba(20,16,10,0.9),rgba(10,8,6,0.9))" : "rgba(6,5,5,0.9)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:`1px solid ${b.got?"#b8922a44":"#1c1a18"}`, padding:"9px 10px", display:"flex", gap:"8px", alignItems:"center" }}>
+                  <div key={b.name}  style={{ background: b.got ? "linear-gradient(135deg,rgba(20,16,10,0.9),rgba(10,8,6,0.9))" : "rgba(6,5,5,0.9)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:`1px solid ${b.got?"#b8922a44":"#1c1a18"}`, padding:"9px 10px", display:"flex", gap:"8px", alignItems:"center" }}>
                     <div style={{ fontSize:"18px", color:"#e8dfc0", display:"flex", filter: b.got ? "none" : "grayscale(1) brightness(0.75)" }}>
                       {b.icon.startsWith("svg:") ? <NavIcon id={b.icon.slice(4)} size={18} color="currentColor" /> : b.icon}
                     </div>
@@ -1315,7 +1315,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
           return collectionValue > 0 ? (
             <div style={{ marginBottom:"14px" }}>
               <Fold id="valeur" mark="✦" title="VALEUR" summary={`${Math.round(collectionValue).toLocaleString('fr')} €`}>
-              <div className="hc-bare orn" style={{ background:"rgba(10,12,8,0.9)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:"1px solid #2a3a1a", borderLeft:"3px solid #5a8a3a", padding:"12px 16px", marginBottom:"8px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+              <div className="orn" style={{ background:"rgba(10,12,8,0.9)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:"1px solid #2a3a1a", borderLeft:"3px solid #5a8a3a", padding:"12px 16px", marginBottom:"8px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                 <div>
                   <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"2px" }}>TOTAL COLLECTION</div>
                   <div style={{ color:"#e8dfc0", fontSize:"11.5px", marginTop:"2px" }}>{inventory.reduce((s,i)=>{ const u=findUnit(i.faction, i.unitId); return s+getModelCount(u?.name, i.qty||1, i.modelCount); },0)} figurines</div>
@@ -1323,7 +1323,7 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
                 <div style={{ color:"#8aba5a", fontSize:"22px", fontFamily:"'Cinzel',serif", fontWeight:"700" }}>{Math.round(collectionValue).toLocaleString('fr')} €*</div>
               </div>
               {byFaction.map(({k,v,val,count}) => (
-                <div key={k} className="hc-bare" style={{ background:"rgba(13,11,10,0.9)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:"1px solid #1a1816", borderLeft:`2px solid ${v.accent}44`, padding:"8px 12px", marginBottom:"4px", display:"flex", alignItems:"center", gap:"10px" }}>
+                <div key={k}  style={{ background:"rgba(13,11,10,0.9)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:"1px solid #1a1816", borderLeft:`2px solid ${v.accent}44`, padding:"8px 12px", marginBottom:"4px", display:"flex", alignItems:"center", gap:"10px" }}>
                   <span style={{ fontSize:"16px" }}>{v.icon}</span>
                   <div style={{ flex:1 }}>
                     <div style={{ color:"#c8b890", fontSize:"12.5px", fontFamily:"'Cinzel',serif" }}>{v.label}</div>
@@ -1358,14 +1358,14 @@ export function ViewStats({ oath, appState, inventory, lists, ptsMap, wishlist, 
                   { label:"COMMANDÉ", count:ordered.length,  color:"#4a7a9a", icon:"⟳" },
                   { label:"REÇU",     count:received.length, color:"#4a8a4a", icon:"✓" },
                 ].map(s => (
-                  <div key={s.label} className="hc-bare" style={{ flex:1, background:"rgba(13,11,10,0.9)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:`1px solid ${s.color}33`, padding:"10px 8px", textAlign:"center" }}>
+                  <div key={s.label}  style={{ flex:1, background:"rgba(13,11,10,0.9)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:`1px solid ${s.color}33`, padding:"10px 8px", textAlign:"center" }}>
                     <div style={{ color:s.color, fontSize:"16px", marginBottom:"3px" }}>{s.icon}</div>
                     <div style={{ color:s.color, fontSize:"18px", fontFamily:"'Cinzel',serif", fontWeight:"700" }}>{s.count}</div>
                     <div style={{ color:"#d8c8ac", fontSize:"10px", letterSpacing:"1px", fontFamily:"'Cinzel',serif" }}>{s.label}</div>
                   </div>
                 ))}
               </div>
-              <div className="hc-bare orn" style={{ background:"rgba(13,11,10,0.9)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:"1px solid #1a1816", padding:"10px 14px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <div className="orn" style={{ background:"rgba(13,11,10,0.9)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)", border:"1px solid #1a1816", padding:"10px 14px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                 <div>
                   <div style={{ color:"#d8c8ac", fontSize:"12px", fontFamily:"'Cinzel',serif", letterSpacing:"2px" }}>BUDGET RESTANT</div>
                   <div style={{ color:"#d8c8ac", fontSize:"12px", marginTop:"2px" }}>hors articles déjà reçus</div>

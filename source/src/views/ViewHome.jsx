@@ -7,6 +7,7 @@ import { AMBIGUOUS_UNITS, POINTS_DB, getModelCount } from '../data/points.jsx';
 import { UNIT_BY_ID, findUnit } from '../data/units.jsx';
 import { useBackButton } from '../hooks/useBackButton.jsx';
 import { compressPhoto, crusadeStartOf, localDay } from '../lib/utils.jsx';
+import { consecratedPoints, pilgrimState, worldAt } from '../data/pilgrimage.jsx';
 import { RARITY, festivalFor, visitForDay } from '../data/events.jsx';
 import { candleDaysFor, candleState, drawParchments, nameOfItem, oathFormula, unitNameOf } from '../lib/oaths.jsx';
 import { playSfx, vibrate } from '../lib/sfx.jsx';
@@ -927,6 +928,26 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
                   : <>Immortalise l'armée <span style={{ color:"#f4e4b0", fontStyle:"normal", fontFamily:"'Cinzel',serif", fontSize:"13px", borderBottom:`1px solid ${f.accent || "#b8922a"}` }}>{army}</span> dans la Parade : une photo de groupe de ses figurines peintes.</>}
               </div>
               {!done && <div style={{ color:"#8a7a58", fontSize:"10.5px", fontFamily:"'Cinzel',serif", letterSpacing:"2px", marginTop:"8px" }}>OUVRIR LA PARADE ›</div>}
+            </div>
+          );
+        })()}
+
+        {/* ── Pèlerinage : un nouveau monde atteint (disparaît dès que la carte de CROISADE a été vue) ── */}
+        {enrolDaysLeft(appState) <= 0 && (() => {
+          const { current } = pilgrimState(consecratedPoints(inventory, ptsMap || {}));
+          const seen = appState.pilgrimSeen;
+          if (current <= 0 || (seen != null && current <= seen)) return null;
+          const w = worldAt(current);
+          const first = seen == null;
+          return (
+            <div className="hc-bare orn" onClick={() => onNav && onNav("lists")}
+              style={{ background:"#08060488", border:"1px solid #1c1a1699", borderLeft:`3px solid ${w.color}`, padding:"12px 14px", marginBottom:"12px", cursor:"pointer", touchAction:"manipulation" }}>
+              <div style={{ color:"#b8922a", fontSize:"11px", letterSpacing:"3px", fontFamily:"'Cinzel',serif", marginBottom:"5px" }}>☩ LE PÈLERINAGE</div>
+              <div style={{ color:"#e8dfc0", fontSize:"14px", fontFamily:"'Crimson Pro',Georgia,serif", fontStyle:"italic", lineHeight:1.5 }}>
+                {first ? "Ta flotte a déjà fait du chemin : elle croise en orbite de " : "Ta flotte a atteint "}
+                <span style={{ color:"#f4e4b0", fontStyle:"normal", fontFamily:"'Cinzel',serif", fontSize:"13px" }}>{w.name}</span>, dans le {w.segment}.
+              </div>
+              <div style={{ color:"#8a7a58", fontSize:"10.5px", fontFamily:"'Cinzel',serif", letterSpacing:"2px", marginTop:"8px" }}>VOIR LA CARTE ›</div>
             </div>
           );
         })()}

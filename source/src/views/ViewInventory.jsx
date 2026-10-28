@@ -18,7 +18,7 @@ const matchPaint = (i, key) => key === "all" ? true
   : key === "unpainted" ? (!i.paintStatus || i.paintStatus === "unpainted" || i.paintStatus === "sprue")
   : i.paintStatus === key;
 
-export function ViewInventory({ onUpdateColosse, onReplayCeremony, paintHistory, inventory, ptsMap, onSetPts, onAdd, onDelete, onUpdatePhoto, onUpdatePaint, onUpdateQty, onUpdateModelCount, onReorder, onUpdateNote, onUpdateNickname, onUpdatePurchased, onSplit, paintPct, unpainted, shameLawOff, onSetShameLaw, onNav, focusItem, onFocusHandled, paintCatalog, onSetRecipe, onAddPaint, confirm }) {
+export function ViewInventory({ serviceCtx, onUpdateColosse, onReplayCeremony, paintHistory, inventory, ptsMap, onSetPts, onAdd, onDelete, onUpdatePhoto, onUpdatePaint, onUpdateQty, onUpdateModelCount, onReorder, onUpdateNote, onUpdateNickname, onUpdatePurchased, onSplit, paintPct, unpainted, shameLawOff, onSetShameLaw, onNav, focusItem, onFocusHandled, paintCatalog, onSetRecipe, onAddPaint, confirm }) {
   // Titres honorifiques de toutes les reliques (recalculés seulement quand la collection change)
   const honorsMap = React.useMemo(() => computeHonors(inventory, paintHistory, ptsMap), [inventory, paintHistory, ptsMap]);
   const scrollDetail = useScrollProgress();
@@ -319,7 +319,7 @@ export function ViewInventory({ onUpdateColosse, onReplayCeremony, paintHistory,
               viewMode==="grid" ? (
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px", marginBottom:"4px" }}>
                   {grouped[role].map((item, idx) => (
-                    <InventoryItem paintHistory={paintHistory} honors={honorsMap.get(item.id)} colossus={isColossus(item, ptsMap)} onUpdateColosse={onUpdateColosse} onReplayCeremony={onReplayCeremony} key={item.id}
+                    <InventoryItem serviceCtx={serviceCtx} paintHistory={paintHistory} honors={honorsMap.get(item.id)} colossus={isColossus(item, ptsMap)} onUpdateColosse={onUpdateColosse} onReplayCeremony={onReplayCeremony} key={item.id}
                       item={item} faction={faction} ptsMap={ptsMap} onSetPts={onSetPts}
                       onDelete={onDelete} onEditPhoto={setEditPhotoItem}
                       onUpdatePaint={onUpdatePaint} onUpdateQty={onUpdateQty} onUpdateModelCount={onUpdateModelCount} onUpdateNote={onUpdateNote} onUpdateNickname={onUpdateNickname} onUpdatePurchased={onUpdatePurchased} onSplit={onSplit}
@@ -338,7 +338,7 @@ export function ViewInventory({ onUpdateColosse, onReplayCeremony, paintHistory,
                     onDragOver={e => onDragOver(e, item)}
                     onDrop={e => onDrop(e, item)}
                   >
-                    <InventoryItem paintHistory={paintHistory} honors={honorsMap.get(item.id)} colossus={isColossus(item, ptsMap)} onUpdateColosse={onUpdateColosse} onReplayCeremony={onReplayCeremony}
+                    <InventoryItem serviceCtx={serviceCtx} paintHistory={paintHistory} honors={honorsMap.get(item.id)} colossus={isColossus(item, ptsMap)} onUpdateColosse={onUpdateColosse} onReplayCeremony={onReplayCeremony}
                       item={item} faction={faction} ptsMap={ptsMap} onSetPts={onSetPts}
                       onDelete={onDelete} onEditPhoto={setEditPhotoItem}
                       onUpdatePaint={onUpdatePaint} onUpdateQty={onUpdateQty} onUpdateModelCount={onUpdateModelCount} onUpdateNote={onUpdateNote} onUpdateNickname={onUpdateNickname} onUpdatePurchased={onUpdatePurchased} onSplit={onSplit}

@@ -7,6 +7,7 @@ import { ROLE_ORDER, UNITS_DB, findUnit } from '../data/units.jsx';
 import { useBackButton } from '../hooks/useBackButton.jsx';
 import { orderedFactionEntries } from '../lib/utils.jsx';
 import { FactionIcon } from '../components/heraldry.jsx';
+import { PilgrimageMap } from '../components/Pilgrimage.jsx';
 
 const GOAL_PRESETS = [1000, 2000, 3000, 5000, 7500, 10000, 15000];
 const fmt = (n) => Number(n).toLocaleString("fr");
@@ -50,7 +51,7 @@ function GoalSheet({ f, name, total, goal, onSave, onClose }) {
   );
 }
 
-export function ViewLists({ inventory, ptsMap, listNames, listGoals, onSetName, onSetGoal }) {
+export function ViewLists({ inventory, ptsMap, listNames, listGoals, onSetName, onSetGoal, enrolling, pilgrimSeen, onPilgrimSeen }) {
   const [goalFor, setGoalFor] = useState(null);   // armée dont on règle l'objectif de points
   useBackButton(!!goalFor, React.useCallback(() => setGoalFor(null), []));
   const [editingFaction, setEditingFaction] = useState(null);
@@ -211,6 +212,7 @@ export function ViewLists({ inventory, ptsMap, listNames, listGoals, onSetName, 
       </div>
 
       <div className="cascade" style={{ flex:1, overflowY:"auto", padding:"10px 12px" }}>
+        <PilgrimageMap pts={factionLists.reduce((s,l)=>s+l.total,0)} enrolling={enrolling} seen={pilgrimSeen} onSeen={onPilgrimSeen} />
         {factionLists.length === 0 && (
           <div style={{ textAlign:"center", padding:"40px 20px", color:"#9a8a6a" }}>
             <div style={{ fontSize:"32px", marginBottom:"12px" }}>⚔</div>

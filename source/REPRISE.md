@@ -319,6 +319,22 @@ Fond de l'Accueil (7 octobre)
   titre « Jugement annuel » coupé à droite (aperçu/officiel déplacé dans la carte) ; l'Archiviste
   date les ajouts au jour local et non UTC.
 
+### Carte du Pèlerinage et État de service (28 octobre 2026)
+- Pèlerinage (onglet CROISADE, en haut) : la flotte avance d'un monde tous les 500 pts consacrés
+  (points des figurines peintes, tout l'historique compte). 5 segmentums × 12 mondes écrits dans
+  `data/pilgrimage.jsx` (Solar → Pacificus → Tempestus → Ultima → Obscurus, fin à la Grande Faille),
+  puis mondes générés de l'Imperium Nihilus sans fin. Carte SVG en serpentin
+  (`components/Pilgrimage.jsx`) : mondes atteints dorés, flotte sur le monde actuel, toucher un
+  monde atteint affiche son fragment, flèches pour revoir les segmentums passés. Verrouillé
+  pendant l'enrôlement. Rappel sur l'Accueil (après la mission de la semaine) quand un monde est
+  atteint, effacé dès que la carte est vue (`appState.pilgrimSeen`).
+- État de service (`components/ServiceRecord.jsx`) : bouton « ❦ ÉTAT DE SERVICE » dans la fiche
+  d'une figurine. Parchemin chronologique : acquisition, entrée au registre (si postérieure),
+  baptême, Dé du Destin, serment (`oathsKept`), temps dans la pile, consécration (rang dans
+  l'historique), colosse, titres. Bouton « EN IMAGE » : image 1080×1350 à enregistrer.
+- STATS : les cartes dans les sections repliables avaient la classe `hc-bare` (fond retiré
+  d'office) : retirée pour qu'elles soient vraiment opaques.
+
 ### Chapelain et ouvrage en cours (26 octobre 2026)
 - Après 14 jours sans consécration, si une relique est « En cours », le Chapelain ne reproche plus :
   il encourage en nommant l'ouvrage (priorité : relique du serment, puis colosse, puis la dernière
