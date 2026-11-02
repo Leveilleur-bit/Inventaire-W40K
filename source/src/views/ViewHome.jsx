@@ -8,6 +8,7 @@ import { UNIT_BY_ID, findUnit } from '../data/units.jsx';
 import { useBackButton } from '../hooks/useBackButton.jsx';
 import { compressPhoto, crusadeStartOf, localDay } from '../lib/utils.jsx';
 import { consecratedPoints, pilgrimState, worldAt } from '../data/pilgrimage.jsx';
+import { workbenchReading, workbenchRelic } from '../lib/workbench.jsx';
 import { RARITY, festivalFor, visitForDay } from '../data/events.jsx';
 import { candleDaysFor, candleState, drawParchments, nameOfItem, oathFormula, unitNameOf } from '../lib/oaths.jsx';
 import { playSfx, vibrate } from '../lib/sfx.jsx';
@@ -58,7 +59,9 @@ export function ViewHome({ ready = true, onKeepLegacyOath, onSwearOathOn, onReli
   const currentWeekKey = isoWeekKey();
   // Lame de la semaine : même tirage qu'avant, habillée selon le jeu de ton armée, parfois renversée
   const thisWeekCard = weeklyCard(currentWeekKey, deckKeyFor(appState), tarotForWeek(currentWeekKey));
-  const tarotPersonal = personalLine(thisWeekCard.numeral, { inventory, paintHistory: appState.paintHistory || [], fateChoice: appState.fateChoice, wishlist: appState.wishlist || [], ptsMap: ptsMap || {}, isColossus: (i) => isColossus(i, ptsMap || {}) });
+  // La lame parle d'abord de la relique sur l'établi (« En cours ») ; sinon, une ligne sur la collection
+  const benchItem = workbenchRelic(appState, ptsMap || {});
+  const tarotPersonal = benchItem ? workbenchReading(thisWeekCard.numeral, benchItem.nickname || findUnit(benchItem.faction, benchItem.unitId)?.name || "ta relique") : personalLine(thisWeekCard.numeral, { inventory, paintHistory: appState.paintHistory || [], fateChoice: appState.fateChoice, wishlist: appState.wishlist || [], ptsMap: ptsMap || {}, isColossus: (i) => isColossus(i, ptsMap || {}) });
   const [tarotImgOk, setTarotImgOk] = useState(true);   // illustration public/tarot/… présente ?
   const [tripleOpen, setTripleOpen] = useState(false);  // tirage en trois lames (fêtes)
   const isNewWeek = tarotUnlocked && appState.lastTarotWeek !== currentWeekKey;

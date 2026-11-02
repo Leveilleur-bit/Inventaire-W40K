@@ -319,6 +319,13 @@ Fond de l'Accueil (7 octobre)
   titre « Jugement annuel » coupé à droite (aperçu/officiel déplacé dans la carte) ; l'Archiviste
   date les ajouts au jour local et non UTC.
 
+### Tarot et relique en cours (2 novembre 2026)
+- `lib/workbench.jsx` : `workbenchRelic` choisit la relique « sur l'établi » (« En cours » : serment,
+  puis colosse, puis la dernière). En jeu « Automatique », le Tarot prend le jeu de son armée
+  (sinon l'armée la plus peinte, comme avant). La ligne ✦ sous la lame applique la lame de la
+  semaine à cette relique (`workbenchReading`, 22 lectures) ; sans relique en cours, l'ancienne
+  ligne sur la collection reste.
+
 ### La Relique maudite (28 octobre 2026)
 - `lib/curse.jsx` : au premier lancement de chaque mois (hors enrôlement), s'il n'y a pas de
   malédiction active, la relique qui attend depuis le plus longtemps (date d'achat, sinon entrée au

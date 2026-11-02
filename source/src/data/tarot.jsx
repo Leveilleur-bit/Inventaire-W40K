@@ -4,6 +4,7 @@
 import { TAROT_CARDS, isoWeekKey } from './lore.jsx';
 import { findUnit } from './units.jsx';
 import { POINTS_DB } from './points.jsx';
+import { workbenchRelic } from '../lib/workbench.jsx';
 
 const hash = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
 
@@ -139,10 +140,13 @@ export const DECKS = {
 export const DECK_CHOICES = [["auto","Automatique"],["base","Impérial"],["TY","Tyranides"],["IK","Chevaliers"],["CSM","Chaos"],["AE","Aeldari"]];
 const FACTION_DECK = { TY:"TY", GC:"TY", IK:"IK", CSM:"CSM", CK:"CSM", LD:"CSM", AE:"AE" };
 
-// Jeu utilisé : réglage du CODEX, ou l'armée qui compte le plus de figurines peintes
+// Jeu utilisé : réglage du CODEX ; en automatique, l'armée de la relique sur l'établi (« En cours »),
+// sinon l'armée qui compte le plus de figurines peintes
 export function deckKeyFor(appState = {}) {
   const pref = appState.tarotDeck || "auto";
   if (pref !== "auto") return pref;
+  const wb = workbenchRelic(appState, appState.ptsMap || {});
+  if (wb) return FACTION_DECK[wb.faction] || "base";
   const count = {};
   (appState.inventory || []).forEach(i => { if (i.paintStatus === "painted") count[i.faction] = (count[i.faction] || 0) + (i.qty || 1); });
   const top = Object.entries(count).sort((a, b) => b[1] - a[1])[0];

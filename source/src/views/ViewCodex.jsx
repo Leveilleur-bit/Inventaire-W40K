@@ -200,7 +200,7 @@ export function ViewCodex({ onSetTarotDeck, lastExport, onExport, onImport, inve
           </div>
         </div>
 
-        {/* ── JEU DU TAROT : impérial, ou celui d'une armée (automatique = armée la plus peinte) ── */}
+        {/* ── JEU DU TAROT : impérial, ou celui d'une armée (automatique = armée de la figurine en cours, sinon la plus peinte) ── */}
 
         {onSetTarotDeck && (() => {
 
@@ -216,7 +216,7 @@ export function ViewCodex({ onSetTarotDeck, lastExport, onExport, onImport, inve
 
               <div style={{ color:"#d8c8ac", fontSize:"11px", letterSpacing:"3px", fontFamily:"'Cinzel',serif" }}>◈ JEU DU TAROT</div>
 
-              <div style={{ color:"#9a8a6a", fontSize:"12px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", margin:"4px 0 10px" }}>Les mêmes 22 lames, dans la voix de ton armée. Automatique : {autoLbl}, ton armée la plus peinte.</div>
+              <div style={{ color:"#9a8a6a", fontSize:"12px", fontFamily:"'Crimson Pro',serif", fontStyle:"italic", margin:"4px 0 10px" }}>Les mêmes 22 lames, dans la voix de ton armée. Automatique : {autoLbl}, l'armée de la figurine en cours (sinon ton armée la plus peinte).</div>
 
               <div style={{ display:"flex", flexWrap:"wrap", gap:"6px" }}>
 
