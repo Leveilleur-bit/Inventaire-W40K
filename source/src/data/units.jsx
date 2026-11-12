@@ -12,6 +12,7 @@ export const UNITS_DB = {
     { id:"sm008", name:"Chaplain",                        role:"QG", chapter:"Générique" },
     { id:"sm009", name:"Chaplain in Terminator Armour",   role:"QG", chapter:"Générique" },
     { id:"sm010", name:"Chaplain on Bike",                role:"QG", chapter:"Générique" },
+    { id:"sm010b", name:"Chaplain with Jump Pack",        role:"QG", chapter:"Générique" },
     { id:"sm011", name:"Apothecary",                      role:"QG", chapter:"Générique" , forbidden:["Space Wolves"]},
     { id:"sm012", name:"Apothecary Biologis",             role:"QG", chapter:"Générique" },
     { id:"sm013", name:"Techmarine",                      role:"QG", chapter:"Générique" },
