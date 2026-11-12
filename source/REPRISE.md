@@ -319,6 +319,13 @@ Fond de l'Accueil (7 octobre)
   titre « Jugement annuel » coupé à droite (aperçu/officiel déplacé dans la carte) ; l'Archiviste
   date les ajouts au jour local et non UTC.
 
+### Livre de la Croisade : récit réécrit (12 novembre 2026)
+- `ViewChronicle.jsx` : titres tirés de l'événement marquant (« Le réveil du Dévoreur »,
+  « L'élévation de… », « Le serment tenu », « La grande consécration », « Sous la bannière de… »),
+  jamais deux fois de suite le même. Récit sans parenthèses ni doublons (promotions et serments
+  dédoublonnés) ; reliques nommées quand il y en a 1 à 3, répartition par armée au-delà ; le
+  colosse et son serment sont liés dans la même suite de phrases.
+
 ### Tarot et relique en cours (2 novembre 2026)
 - `lib/workbench.jsx` : `workbenchRelic` choisit la relique « sur l'établi » (« En cours » : serment,
   puis colosse, puis la dernière). En jeu « Automatique », le Tarot prend le jeu de son armée

@@ -15,6 +15,9 @@ import { isColossus } from '../lib/colossus.jsx';
 const ROMAN = (n) => { const t=[[1000,"M"],[900,"CM"],[500,"D"],[400,"CD"],[100,"C"],[90,"XC"],[50,"L"],[40,"XL"],[10,"X"],[9,"IX"],[5,"V"],[4,"IV"],[1,"I"]]; let r=""; for (const [v,s] of t) while (n>=v) { r+=s; n-=v; } return r; };
 const NUM = ["zéro","une","deux","trois","quatre","cinq","six","sept","huit","neuf","dix","onze","douze"];
 const nb = (n, fem=true) => n <= 12 ? (fem ? NUM[n] : (n===1 ? "un" : NUM[n])) : String(n);
+const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+// « de » devant un nom : du Dévoreur, de la Ruche, des Lames, de l'Ost, d'Ignis, de Sire Gaston
+const deName = (n) => /^Le /.test(n) ? "du " + n.slice(3) : /^La /.test(n) ? "de la " + n.slice(3) : /^Les /.test(n) ? "des " + n.slice(4) : /^L['’]/.test(n) ? "de l'" + n.slice(2) : /^[AEIOUYÉÈÊH]/i.test(n) ? "d'" + n : "de " + n;
 const list = (arr) => arr.length <= 1 ? (arr[0]||"") : arr.slice(0,-1).join(", ") + " et " + arr[arr.length-1];
 
 export function ViewChronicle({ inventory, paintHistory, ptsMap, promotions = [], oathsKept = [], listNames = {}, onClose }) {
@@ -70,6 +73,7 @@ export function ViewChronicle({ inventory, paintHistory, ptsMap, promotions = []
   const unitPts = (it) => (ptsMap?.[`${it.faction}:${it.unitId}`] || POINTS_DB[findUnit(it.faction, it.unitId)?.name] || 0);
   const byId = new Map(inventory.map(i => [i.id, i]));
   const chapterOf = {};
+  let prevTitle = null;
   [...keys].sort().forEach((k, idx) => {
     const ev = groups[k];
     const paintedItems = []; const seenIds = new Set();
@@ -83,28 +87,66 @@ export function ViewChronicle({ inventory, paintHistory, ptsMap, promotions = []
     const named = paintedItems.filter(it => it.nickname).slice(0,2);
     const promos = promotions.filter(p => (p.day||"").slice(0,7) === k);
 
-    // Titre du chapitre
-    let title;
-    if (foundings.length && idx === 0) title = "La fondation";
-    else if (big.length && facs[0]?.[0] === "IK") title = "Le mois des Chevaliers";
-    else if (big.length) title = "Le mois des Colosses";
-    else if (promos.length) title = "Le mois des promotions";
-    else if (facs.length) title = `Le mois ${/^[AEIOUÉÈH]/i.test(armyName(facs[0][0])) ? "d'" : "de "}${armyName(facs[0][0])}`;
-    else if (buys) title = "Le mois des acquisitions";
-    else title = "Un mois de veille";
+    const nameOf = (it) => it.nickname || findUnit(it.faction, it.unitId)?.name || "une relique";
+    const r = paintedItems.length;
+    // Promotions et serments : une seule fois chacun (l'historique peut contenir des doublons)
+    const promoBy = {}; promos.forEach(p => { promoBy[p.faction] = p; });
+    const promoList = Object.values(promoBy);
+    const oathSeen = new Set();
+    const oaths = oathsKept.filter(o => (o.day||"").slice(0,7) === k && !oathSeen.has(o.itemId ?? o.text) && oathSeen.add(o.itemId ?? o.text));
+
+    // Titre : l'événement le plus marquant, sans répéter le titre du chapitre précédent
+    const candidates = [];
+    if (foundings.length && idx === 0) candidates.push("La fondation");
+    if (big[0]) candidates.push(`Le réveil ${deName(nameOf(big[0]))}`);
+    if (promoList[0]) candidates.push(`L'élévation ${deName(armyName(promoList[0].faction))}`);
+    if (oaths.length) candidates.push("Le serment tenu");
+    if (models >= 10) candidates.push("La grande consécration");
+    if (facs[0]) candidates.push(`Sous la bannière ${deName(armyName(facs[0][0]))}`);
+    if (buys) candidates.push("Le mois des acquisitions");
+    candidates.push("Un mois de veille");
+    const title = candidates.find(t => t !== prevTitle) || candidates[0];
+    prevTitle = title;
 
     // Récit
     const S = [];
-    if (models === 0) S.push(buys ? "Aucune relique ne fut consacrée ce mois-là, mais l'arsenal s'agrandit." : "Aucune relique ne fut consacrée ce mois-là.");
-    else if (models === 1) S.push("Une seule relique fut consacrée ce mois-là, mais chaque relique compte.");
-    else S.push(`${nb(models).charAt(0).toUpperCase() + nb(models).slice(1)} figurines furent consacrées ce mois-là.`);
-    if (facs.length > 1) S.push(`L'effort fut mené par ${armyName(facs[0][0])} (${facs[0][1]}), suivi ${list(facs.slice(1).map(([f,n]) => `de ${armyName(f)} (${n})`))}.`);
-    foundings.forEach(f => S.push(`La croisade ${armyName(f)} fut inaugurée.`));
-    big.forEach(it => S.push(`Un colosse fut consacré : ${it.nickname || findUnit(it.faction, it.unitId)?.name}, ${unitPts(it)} points de fer et de foi.`));
-    named.filter(it => !big.includes(it)).forEach(it => S.push(`${findUnit(it.faction, it.unitId)?.name} reçut le nom de « ${it.nickname} ».`));
-    promos.forEach(p => S.push(`L'armée ${armyName(p.faction)} fut élevée au rang de ${p.to}.`));
-    oathsKept.filter(o => (o.day||"").slice(0,7) === k).forEach(o => { const it = byId.get(o.itemId); S.push(it ? `Le serment de consacrer ${it.nickname || findUnit(it.faction, it.unitId)?.name} fut tenu.` : "Un serment de Croisade fut tenu."); });
-    if (buys && models) S.push(`${buys > 1 ? nb(buys, false).charAt(0).toUpperCase()+nb(buys,false).slice(1)+" nouvelles reliques rejoignirent" : "Une nouvelle relique rejoignit"} l'arsenal.`);
+    const bigSet = new Set(big.map(it => it.id));
+    const ptsTxt = (it) => `${unitPts(it).toLocaleString("fr")} points`;
+    if (r === 0) {
+      S.push(buys ? `Aucune relique ne fut consacrée ce mois-là, mais ${buys > 1 ? nb(buys) + " nouvelles reliques rejoignirent" : "une nouvelle relique rejoignit"} l'arsenal.` : "Aucune relique ne fut consacrée ce mois-là. Les pinceaux attendirent leur heure.");
+    } else if (r === 1) {
+      const it = paintedItems[0];
+      S.push(bigSet.has(it.id)
+        ? `Une seule relique fut consacrée ce mois-là, mais quelle relique : ${nameOf(it)}, colosse de ${ptsTxt(it)}.`
+        : `Une seule relique fut consacrée ce mois-là : ${nameOf(it)}${models > 1 ? `, soit ${nb(models)} figurines` : ""}.`);
+    } else if (r <= 3) {
+      S.push(`${cap(nb(r))} reliques furent consacrées ce mois-là${models > r ? `, soit ${nb(models)} figurines` : ""}.`);
+      const others = paintedItems.filter(it => it.id !== big[0]?.id).map(nameOf);
+      S.push(big[0] ? `En tête, ${nameOf(big[0])}, colosse de ${ptsTxt(big[0])}, accompagné de ${list(others)}.` : `Au registre : ${list(others)}.`);
+    } else {
+      S.push(`${cap(nb(models))} figurines furent consacrées ce mois-là.`);
+      if (facs.length === 1) S.push(`Toutes portaient les couleurs de ${armyName(facs[0][0])}.`);
+      else {
+        const [lead, ...rest] = facs;
+        const others = rest.map(([f, n], j) => `${armyName(f)} ${j === 0 ? "en ajouta " : ""}${nb(n)}`);
+        S.push(`${armyName(lead[0])} porta l'essentiel de l'effort avec ${nb(lead[1])} d'entre elles ; ${list(others)}.`);
+      }
+    }
+    // Colosses (déjà nommés si c'était la seule relique)
+    big.forEach((it, j) => {
+      if (r <= 3 && j === 0) return;   // déjà nommé dans la phrase d'ouverture
+      S.push(j === 0 ? `La plus imposante fut ${nameOf(it)}, colosse de ${ptsTxt(it)}.` : `${nameOf(it)} suivit de près, colosse de ${ptsTxt(it)}.`);
+    });
+    // Serments tenus (dits juste après le colosse quand c'est lui)
+    oaths.forEach(o => {
+      const it = byId.get(o.itemId);
+      if (it && bigSet.has(it.id)) S.push(`Le serment prêté sur ce colosse fut ainsi tenu.`);
+      else S.push(it ? `Le serment prêté sur ${nameOf(it)} fut tenu.` : "Un serment de Croisade fut tenu.");
+    });
+    foundings.forEach(f => S.push(`${armyName(f)} ouvrit sa croisade : première relique consacrée sous sa bannière.`));
+    promoList.forEach(p => S.push(`${armyName(p.faction)} s'éleva au rang de ${p.to}.`));
+    named.filter(it => !bigSet.has(it.id) && r > 3).forEach(it => S.push(`${findUnit(it.faction, it.unitId)?.name} y reçut le nom de « ${it.nickname} ».`));
+    if (buys && r) S.push(`${buys > 1 ? cap(nb(buys)) + " nouvelles reliques rejoignirent" : "Une nouvelle relique rejoignit"} l'arsenal.`);
     chapterOf[k] = { num: ROMAN(idx + 1), title, text: S.join(" ") };
   });
 
